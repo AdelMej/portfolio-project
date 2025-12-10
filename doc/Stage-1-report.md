@@ -79,4 +79,3 @@ Company workers, internal tool
 - users can subscribe and pay for a gym session
 - coach can create session
 - administrator can have access to session and users
-- 
