@@ -60,10 +60,10 @@ Kessia, a platform for medical writing
   - server or small app need for defining db needs
 
 - Technical alignment
-  - SQL or mangodb
-  - Python FastAPI
-  - HTML 5, CSS, JavaScript
-  - Stripe
+  - SQL because clear relational structures present with users and sessions
+  - Python FastAPI because experience in Python and object oriented programming concepts
+  - HTML 5, CSS, JavaScript classic frontend stack framework not yet chosen because of lack of experience
+  - Stripe because of availability, payment options and popularity
 
 - Risks
   - no experience with frameworks
