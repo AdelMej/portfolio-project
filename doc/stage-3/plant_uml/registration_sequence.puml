@@ -1,0 +1,44 @@
+@startuml
+participant User
+
+control Controller
+
+entity service
+
+entity persistence
+
+database appDB
+
+User -> Controller : registration request
+activate Controller
+
+Controller -> Controller : verify format
+
+alt invalid format
+	Controller -> User : invalid format error
+
+else valid format
+	Controller -> service : call service
+	activate service
+
+	service -> service : verify domain invariants
+	alt invariant error
+		service -> Controller : invariant error thrown
+		Controller -> User : error message
+
+	else valid input
+		service -> persistence : sends entity for persistence
+		activate persistence
+
+		persistence -> appDB : stores entity
+
+		persistence -> service : registration success
+		deactivate persistence
+
+		service -> Controller : registration success
+		deactivate service
+		Controller -> User : registration success
+		deactivate Controller
+	end
+end
+@enduml
