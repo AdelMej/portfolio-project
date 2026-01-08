@@ -1,31 +1,6 @@
-Login
-┌──────────────────────────────┐
-│      Actual Digital Gym      │
-│------------------------------│
-│  Email:    [____________ ]   │
-│  Password: [____________ ]   │
-│                              │
-│  [ Login ]   [ Register ]    │
-│                              │
-└──────────────────────────────┘
+Des mockups basse fidélité ont été réalisés afin de visualiser les principales interfaces du MVP. 
+Ces écrans couvrent les actions essentielles : 
+consultation des séances, création d’une séance et validation de la présence par le coach.
 
-User Dashboard
-
-┌────────────────────────────────────────┐
-│  Welcome, User                         │
-│----------------------------------------│
-│  Available Gym Sessions                │
-│----------------------------------------│
-│  Session: Yoga                         │
-│  Date: 12/05 - 18:00                   │
-│  Coach: x                              │
-│  Spots left: 5                         │
-│  [ Subscribe ]                         │
-│----------------------------------------│
-│  Session: HIIT                         │
-│  Date: 13/05 - 19:00                   │
-│  Coach: y                              │
-│  Spots left: 2                         │
-│  [ Subscribe ]                         │
-└────────────────────────────────────────┘
-
+MVP Scope
+Créer une séance → Utilisateur s’inscrit → Coach marque la présence.
