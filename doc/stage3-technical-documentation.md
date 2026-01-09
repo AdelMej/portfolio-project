@@ -62,4 +62,4 @@ As a user, I want to receive push notifications, so that I am reminded of upcomi
 
 ## Architecture diagram
 
-![Architecture diagram](./stage-3/Diagram)
+![Architecture diagram](./stage-3/Diagram.png)
