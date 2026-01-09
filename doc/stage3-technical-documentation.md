@@ -14,11 +14,11 @@ This document contains the technical documentation for this project:
 ## Summary
 - [User stories](#user-stories-moscow-prioritization)
 - [Architecture diagram](#architecture-diagram)
-- [Mockup]()
-- [UML diagrams]()
-	- [Component diagram]()
-	- [Class diagram]()
-	- [Sequence diagrams]()
+- [Mockup](#mockup)
+- [UML diagrams](#uml-diagrams)
+	- [Component diagram](#component-diagram)
+	- [Class diagram](#class-diagram)
+	- [Sequence diagrams](#sequence-diagrams)
 - [API specifications]()
 - [SCS and QA strategies]()
 
@@ -86,7 +86,7 @@ Stripe is used as an external payment service. The backend sends payment request
 
 ## Mockup
 
-(Mockup link)[https://www.figma.com/design/wSTX2BrVHm3k0cKqiWuFJX/Actual-Digital-Gym?node-id=0-1&p=f]
+[Mockup link]'https://www.figma.com/design/wSTX2BrVHm3k0cKqiWuFJX/Actual-Digital-Gym?node-id=0-1&p=f)
 
 Low-fidelity mockups were created to visualize the main interfaces of the MVP.
 These screens cover the essential actions:
