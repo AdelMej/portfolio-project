@@ -19,8 +19,8 @@ This document contains the technical documentation for this project:
 	- [Component diagram](#component-diagram)
 	- [Class diagram](#class-diagram)
 	- [Sequence diagrams](#sequence-diagrams)
-- [API specifications]()
-- [SCS and QA strategies]()
+- [API specifications](#api-specifications)
+- [SCS and QA strategies](#scm-and-qa-strategies)
 
 
 ## User stories (MoSCoW Prioritization)
