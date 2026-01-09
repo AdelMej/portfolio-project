@@ -120,7 +120,7 @@ This diagram shows the main loop components of the system:
 
 This class diagram represents the main entity that will be involved in the system:
 - UserEntity represents a user
-- RoleEntity represents a role a user has, can be a coach, and admin or a normal user
+- RoleEntity represents a role a user has, can be a coach, an admin or a normal user
 - SessionEntity represents a gym session
 - PaymentIntent represents a payment intent for when a user pay for a session
 
