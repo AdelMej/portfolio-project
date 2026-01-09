@@ -1,0 +1,33 @@
+SCM & QA Strategy
+
+5.1 Source Control Management (SCM)
+Git is used for version control to manage the project codebase and collaboration.
+
+Branching strategy:
+
+main → contains stable, production-ready code.
+development → integration branch where validated features are merged.
+feature branches → each new feature or fix is developed in a separate branch.
+
+Before merging into the development or main branch, the code is reviewed to ensure correctness and consistency.
+Regular commits are encouraged to keep track of changes and facilitate collaboration.
+
+5.2 QA (Quality Assurance)
+The objective of quality assurance is to ensure that the application is reliable, secure, and easy to maintain.
+
+Testing strategy:
+
+Unit tests → test individual backend functions and logic.
+API tests → verify FastAPI endpoints such as authentication, session creation, and registration.
+Manual tests → validate critical user flows such as registration, session enrollment, and payment.
+
+Tools used:
+Pytest → automated testing for FastAPI backend.
+Postman → manual testing of API endpoints.
+Ruff → maintain clean and consistent backend code (Python / FastAPI).
+
+5.3 Deployment Pipeline
+
+Development → local environment for coding and quick testing.
+Staging → testing environment with a real database and Stripe test keys.
+Production → final deployment with real users and real payments (planned for a later phase).
