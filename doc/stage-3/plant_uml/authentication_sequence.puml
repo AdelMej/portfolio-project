@@ -1,0 +1,46 @@
+@startuml
+participant User
+control Controller
+entity Service
+entity Persistence
+entity JWTProvider
+database appDB
+
+User -> Controller : sends credentials
+activate Controller
+Controller -> Service : sends credentials
+activate Service
+Service -> Persistence : verify email
+activate Persistence
+Persistence -> appDB : query user with email
+activate appDB
+appDB -> Persistence : send the result
+deactivate appDB
+Persistence -> Service : send the result
+deactivate Persistence
+
+Service -> Service : verify email
+alt invalid email
+	Service -> Controller : throw invalid email error
+	Controller -> User : Invalid credentials error
+
+else valid email
+	Service -> Service : verify hashed password
+
+	alt invalid password
+		Service -> Controller: throw invalid password error
+		Controller -> User : Invalid credentials error
+	else valid password
+		Service -> JWTProvider : generate a jwt token
+		activate JWTProvider
+		JWTProvider -> Service : jwt token
+		deactivate JWTProvider
+
+		Service -> Controller : jwt token
+		deactivate Service
+		Controller -> User : token response type bearer
+		deactivate Controller
+	end
+end
+
+@enduml

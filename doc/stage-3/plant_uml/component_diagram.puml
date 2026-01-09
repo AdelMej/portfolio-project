@@ -1,0 +1,24 @@
+@startuml
+
+[Browser]
+[controller]
+[service]
+[persistence]
+database "PostgresSQL"
+
+() "HTTP"
+() "JSON"
+
+[Browser] -right-> "HTTP"
+[Browser] <.down. "JSON"
+
+HTTP -> [controller]
+JSON <.left. [controller]
+
+[controller] -down-> [service]
+
+[service] -> [persistence]
+
+[persistence] -down-> PostgresSQL
+
+@enduml

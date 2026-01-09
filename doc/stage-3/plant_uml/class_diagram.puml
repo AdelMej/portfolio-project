@@ -1,0 +1,40 @@
+@startuml
+class UserEntity {
+	+id: UUID,
+	+email: Email
+	+first_name: string
+	+last_name: string
+	+isDisabled: boolean
+
+	+disable()
+	+enable()
+}
+
+class RoleEntity {
+	id: integer
+	role_name: string
+}
+
+class SessionEntity {
+	+id: UUID
+	+coach: UserEntity
+	+title: string
+	+startAt: Datetime
+	+endAt: Datetime
+	+status: string
+}
+
+class PaymentIntentEntity {
+  +id: UUID
+  +provider: string
+  +payment_intent_id: string
+  +status: string
+  +amount: integer
+}
+
+UserEntity "*" -- "*" SessionEntity
+UserEntity "1" <-- "*" PaymentIntentEntity
+SessionEntity "1" <-- "*" PaymentIntentEntity
+UserEntity "*" -- "*" RoleEntity
+
+@enduml
