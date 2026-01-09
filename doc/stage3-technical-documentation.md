@@ -13,8 +13,8 @@ This document contains the technical documentation for this project:
 
 
 ## Summary
-- [User stories]()
-- [Architecture diagram]()
+- [User stories](#user-stories-moscow-prioritization)
+- [Architecture diagram](#architecture-diagram)
 - [Wireframe]()
 - [Mockup]()
 - [UML diagrams]()
