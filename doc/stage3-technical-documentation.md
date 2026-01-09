@@ -18,9 +18,9 @@ This document contains the technical documentation for this project:
 - [Wireframe]()
 - [Mockup]()
 - [UML diagrams]()
- - [Component diagram]()
- - [Class diagram]()
- - [Sequence diagrams]()
+	- [Component diagram]()
+	- [Class diagram]()
+	- [Sequence diagrams]()
 - [API specifications]()
 - [SCS and QA strategies]()
 
