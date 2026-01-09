@@ -5,7 +5,6 @@
 This document contains the technical documentation for this project:
 - User stories
 - Architecture diagram
-- Wireframe
 - Mockup
 - UML Diagrams (sequence, component, class)
 - API specifications
@@ -15,7 +14,6 @@ This document contains the technical documentation for this project:
 ## Summary
 - [User stories](#user-stories-moscow-prioritization)
 - [Architecture diagram](#architecture-diagram)
-- [Wireframe]()
 - [Mockup]()
 - [UML diagrams]()
 	- [Component diagram]()
@@ -83,3 +81,39 @@ Only the backend API accesses the databases.
 ### Stripe (Payments)
 
 Stripe is used as an external payment service. The backend sends payment requests to Stripe, and Stripe sends webhooks back to the API to confirm payment results.
+
+---
+
+## Mockup
+
+(Mockup link)[https://www.figma.com/design/wSTX2BrVHm3k0cKqiWuFJX/Actual-Digital-Gym?node-id=0-1&p=f]
+
+Low-fidelity mockups were created to visualize the main interfaces of the MVP.
+These screens cover the essential actions:
+viewing sessions, creating a session, and validating attendance by the coach.
+
+### MVP scope
+
+Create a session → User registers → Coach marks attendance.
+
+---
+
+## UML diagrams
+
+### Component diagram
+
+![Component diagram](./stage-3/plant_uml/component_diagram.png)
+
+### Class diagram
+
+![Class diagram](./stage-3/plant_uml/class_diagram.png)
+
+### Sequence diagrams
+
+#### Registration sequence
+
+![Sequence registration](./stage-3/plant_uml/registration_sequence.png)
+
+#### Authentication sequence
+
+![Sequence authentication](./stage-3/plant_uml/authentication_sequence.png)
