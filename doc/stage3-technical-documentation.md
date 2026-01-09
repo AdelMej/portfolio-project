@@ -20,7 +20,7 @@ This document contains the technical documentation for this project:
 - [UML diagrams]()
  - [Component diagram]()
  - [Class diagram]()
- - [Sequence diagrams]
+ - [Sequence diagrams]()
 - [API specifications]()
 - [SCS and QA strategies]()
 
@@ -63,3 +63,23 @@ As a user, I want to receive push notifications, so that I am reminded of upcomi
 ## Architecture diagram
 
 ![Architecture diagram](./stage-3/Diagram.png)
+
+### Front-end (Svelte)
+
+The web application communicates with the backend API using secure HTTPS requests. It allows users to browse sessions, register, and perform payments.
+
+### Backend API (FastAPI)
+
+This is the core of the application. It handles the main business logic through two modules:
+ - Auth, Session and Registration → manages user authentication, sessions, and user registrations.
+ - Session Management → handles session creation, availability, and attendance validation.
+
+### Database (PostgreSQL & NoSQL)
+
+PostgreSQL stores structured data such as users, sessions, registrations, and payment status.
+The NoSQL database is used for logs and activity tracking.
+Only the backend API accesses the databases.
+
+### Stripe (Payments)
+
+Stripe is used as an external payment service. The backend sends payment requests to Stripe, and Stripe sends webhooks back to the API to confirm payment results.
