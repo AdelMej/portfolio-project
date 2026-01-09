@@ -28,33 +28,36 @@ This document contains the technical documentation for this project:
 ### Must have (MVP)
 
 #### User
-As a user, I want to create an account and log in, so that I can access the gym platform.
-As a user, I want to view available gym sessions, so that I can choose a session that fits my schedule.
-As a user, I want to subscribe to a gym session, so that I can participate in it.
-As a user, I want to pay for a gym session online, so that my subscription is confirmed.
+
+- As a user, I want to create an account and log in, so that I can access the gym platform.
+- As a user, I want to view available gym sessions, so that I can choose a session that fits my schedule.
+- As a user, I want to subscribe to a gym session, so that I can participate in it.
+- As a user, I want to pay for a gym session online, so that my subscription is confirmed.
 
 #### Coach
-As a coach, I want to create gym sessions, so that users can subscribe to them.
-As a coach, I want to define the maximum number of participants per session, so that sessions are not overbooked.
+
+- As a coach, I want to create gym sessions, so that users can subscribe to them.
+- As a coach, I want to define the maximum number of participants per session, so that sessions are not overbooked.
 
 #### Administrator
-As an administrator, I want to manage users, coaches, and sessions, so that the platform remains organized and functional.
-As an administrator, I want to view session subscriptions, so that I can monitor gym usage.
+
+- As an administrator, I want to manage users, coaches, and sessions, so that the platform remains organized and functional.
+- As an administrator, I want to view session subscriptions, so that I can monitor gym usage.
 
 ### Should have
 
-As a coach, I want to view the list of subscribed users, so that I can prepare my sessions.
-As a human resources manager, I want to generate an attendance list for each session, so that I can track employee participation.
-As a user, I want to view my subscribed sessions, so that I can manage my gym schedule.
+- As a coach, I want to view the list of subscribed users, so that I can prepare my sessions.
+- As a human resources manager, I want to generate an attendance list for each session, so that I can track employee participation.
+- As a user, I want to view my subscribed sessions, so that I can manage my gym schedule.
 
 ### Could have
 
-As a user, I want to leave a review for a gym session, so that I can provide feedback to the coach.
+- As a user, I want to leave a review for a gym session, so that I can provide feedback to the coach.
 
 ### Won’t Have (Out of scope for MVP)
 
-As a user, I want to receive personalized session recommendations, so that I can discover new workouts.
-As a user, I want to receive push notifications, so that I am reminded of upcoming sessions.
+- As a user, I want to receive personalized session recommendations, so that I can discover new workouts.
+- As a user, I want to receive push notifications, so that I am reminded of upcoming sessions.
 
 ---
 
@@ -126,11 +129,15 @@ This class diagram represents the main entity that will be involved in the syste
 #### Registration sequence
 
 ![Sequence registration](./stage-3/plant_uml/registration_sequence.png)
+
+
 Typical sequence for a registration request
 
 #### Authentication sequence
 
 ![Sequence authentication](./stage-3/plant_uml/authentication_sequence.png)
+
+
 Typical sequence for an authentication request
 
 ---
