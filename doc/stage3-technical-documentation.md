@@ -378,7 +378,7 @@ Typical sequence for an authentication request
 | Description                | an endpoint to register users in a session            |
 | Request body               | N/A            |
 | Success response           | 200 registration successful           |
-| Error responses            | 401 Unauthorized, 403 Forbidden, 400 Bas request            |
+| Error responses            | 401 Unauthorized, 403 Forbidden, 400 Bad request            |
 | Audit action               | USER_REGISTRATION            |
 
 ##### Response body
@@ -409,9 +409,9 @@ Typical sequence for an authentication request
 | title | string | the title of a session |
 | start_at | Datetime | the start date and time of a session |
 | end_at | Datetime| the finishing date and time of the session |
-| attendes | `List[User]` | the list of all attendes of that session |
+| attendes | `List[User]` | the list of all attendees of that session |
 
-##### PUT /sessions/{session_id}/attendance
+#### PUT /sessions/{session_id}/attendance
 
 | Field                      | Description |
 | -------------------------- | ----------- |
@@ -420,7 +420,7 @@ Typical sequence for an authentication request
 | Auth required              | yes (jwt)            |
 | Required permission / role | coach            |
 | Description                | an endpoint to decide who was present or not            |
-| Request body               | `list[registration_is]`            |
+| Request body               | `list[registration_id]`            |
 | Success response           | 204           |
 | Error responses            | 422 Unprocessable content, 401 Unauthorized, 403 Forbidden, 400 Bad request            |
 | Audit action               | COACH_ATTENDANCE            |
