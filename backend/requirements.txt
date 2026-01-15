@@ -8,6 +8,7 @@ sqlalchemy==2.0.29
 argon2-cffi==23.1.0
 zxcvbn==4.4.28
 python-jose[cryptography]==3.3.0
+email-validator==2.3.0
 
 # --- Testing ---
 pytest==8.1.1

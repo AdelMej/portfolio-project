@@ -1,0 +1,27 @@
+---
+services:
+  postgres:
+    image: postgres:16-bookworm
+    container_name: actual_gym_postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init-scripts:/docker-entrypoint-initdb.d:Z
+    ports:
+      - "5432:5432"
+
+  back-end:
+    container_name: actual_gym_backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    depends_on:
+      - postgres
+
+volumes:
+  db_data:

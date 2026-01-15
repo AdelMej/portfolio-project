@@ -1,3 +1,5 @@
+\c audit
+
 -- Safety net: remove PUBLIC access
 REVOKE ALL ON DATABASE audit FROM PUBLIC;
 REVOKE ALL ON SCHEMA audit FROM PUBLIC;

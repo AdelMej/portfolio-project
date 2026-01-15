@@ -1,12 +1,6 @@
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from app.feature.auth.auth_router import router as auth_router
 
 app = FastAPI()
 
-
-@app.get("/")
-async def get():
-    return JSONResponse(
-        status_code=200,
-        content={"ayo": "hello world !"}
-    )
+app.include_router(auth_router)

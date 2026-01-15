@@ -1,10 +1,10 @@
+\c app
+
 CREATE TABLE if not exists app.users (
 	id UUID primary key,
 	
 	email CITEXT not null,
 	password_hash TEXT not null,
-	
-
 
 	disabled_at timestamptz null,
 	created_at TIMESTAMPTZ not null default now(),

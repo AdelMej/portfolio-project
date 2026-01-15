@@ -1,0 +1,3 @@
+\c app
+
+CREATE EXTENSION IF NOT EXISTS citext;
