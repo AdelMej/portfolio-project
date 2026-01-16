@@ -7,6 +7,11 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+    command: >
+      postgres
+      -c log_statement=mod
+      -c log_min_error_statement=error
+      -c log_line_prefix='%m [%p] %u@%d (%r) '
     volumes:
       - db_data:/var/lib/postgresql/data
       - ./db/init-scripts:/docker-entrypoint-initdb.d:Z
