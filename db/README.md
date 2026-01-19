@@ -17,6 +17,49 @@
 
 ---
 
+## Bootstrap Administrator Account
+
+During database initialization, a **bootstrap administrator account** is created automatically.
+
+This account exists to:
+
+- Guarantee initial access to the system
+- Allow first-time configuration
+- Prevent administrative lockout on fresh deployments
+
+### Default Credentials
+
+| Field | Value |
+|------|-------|
+| Email | `admin@localhost` |
+| Password | `admin` |
+| Role | `admin` |
+
+The password is stored **hashed using Argon2id**.
+
+---
+
+### ⚠️ Mandatory Action Before Production
+
+**You MUST change this password before exposing the system publicly.**
+
+Leaving the bootstrap credentials unchanged **compromises the entire system**.
+
+Recommended actions:
+
+- Change the password immediately after first login
+- Optionally disable or remove the bootstrap account once permanent administrators exist
+
+---
+
+### Notes
+
+- The bootstrap administrator:
+  - Is active by default (`disabled_at = NULL`)
+  - Is fully linked to roles and profile tables
+- The account is created by **mandatory seed scripts**
+- No environment-specific logic is applied — operator responsibility is assumed
+
 ## Tables
 
 ## `app.users`
