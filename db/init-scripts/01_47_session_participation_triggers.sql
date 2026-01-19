@@ -1,0 +1,103 @@
+\c app
+
+-- ------------------------------------------------------------------
+-- Triggers: app.session_participation
+--
+-- Purpose:
+-- - Enforce time-based and state-based invariants for session participation
+--
+-- Guarantees:
+-- - Registration closes once the session starts
+-- - Cancellation is forbidden after session start
+-- - Attendance can only be marked after session end
+-- - Cancelled participants cannot be marked as attended
+-- - Once attendance is marked, the row becomes immutable
+-- ------------------------------------------------------------------
+
+-- ------------------------------------------------------------------
+-- Function: tg_session_participation_datetime_guard
+-- ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION app.tg_session_participation_datetime_guard()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_session_start TIMESTAMPTZ;
+    v_session_end   TIMESTAMPTZ;
+BEGIN
+    ------------------------------------------------------------------
+    -- IMMUTABILITY AFTER ATTENDANCE
+    ------------------------------------------------------------------
+    IF TG_OP = 'UPDATE'
+       AND OLD.attended_at IS NOT NULL THEN
+        RAISE EXCEPTION 'Attendance already marked; row is immutable';
+    END IF;
+
+    ------------------------------------------------------------------
+    -- FETCH SESSION START/END
+    ------------------------------------------------------------------
+    SELECT start_at, end_at
+    INTO STRICT v_session_start, v_session_end
+    FROM app.sessions
+    WHERE id = NEW.session_id;
+
+    ------------------------------------------------------------------
+    -- INSERT RULES: registration closed after start
+    ------------------------------------------------------------------
+    IF TG_OP = 'INSERT' THEN
+        IF now() >= v_session_start THEN
+            RAISE EXCEPTION 'Registration is closed for this session';
+        END IF;
+    END IF;
+
+    ------------------------------------------------------------------
+    -- UPDATE RULES
+    ------------------------------------------------------------------
+    IF TG_OP = 'UPDATE' THEN
+
+        ------------------------------------------------------------------
+        -- CANCELLATION RULE
+        -- Only allowed before session start
+        ------------------------------------------------------------------
+        IF OLD.cancelled_at IS NULL
+           AND NEW.cancelled_at IS NOT NULL THEN
+            IF now() >= v_session_start THEN
+                RAISE EXCEPTION 'Cannot cancel after session start';
+            END IF;
+        END IF;
+
+        ------------------------------------------------------------------
+        -- ATTENDANCE RULE
+        -- Only allowed after session end, cancelled participants cannot be marked
+        ------------------------------------------------------------------
+        IF OLD.attended_at IS NULL
+           AND NEW.attended_at IS NOT NULL THEN
+            IF now() < v_session_end THEN
+                RAISE EXCEPTION 'Cannot mark attendance before session end';
+            END IF;
+
+            IF OLD.cancelled_at IS NOT NULL THEN
+                RAISE EXCEPTION 'Cancelled participants cannot be marked as attended';
+            END IF;
+        END IF;
+
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION app.tg_session_participation_datetime_guard() IS
+'Enforces session participation rules: registration, cancellation, attendance, and immutability after attendance.';
+
+-- ------------------------------------------------------------------
+-- Trigger: trg_session_participation_datetime_guard
+-- ------------------------------------------------------------------
+CREATE TRIGGER trg_session_participation_datetime_guard
+BEFORE INSERT OR UPDATE
+ON app.session_participation
+FOR EACH ROW
+EXECUTE FUNCTION app.tg_session_participation_datetime_guard();
+
+COMMENT ON TRIGGER trg_session_participation_datetime_guard ON app.session_participation IS
+'Prevents invalid inserts/updates on session_participation according to session start/end times, cancellation rules, and attendance immutability.';
