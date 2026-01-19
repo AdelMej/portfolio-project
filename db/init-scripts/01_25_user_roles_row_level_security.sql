@@ -16,6 +16,20 @@ ALTER TABLE app.user_roles FORCE ROW LEVEL SECURITY;
 -- - Users can see their own roles
 -- - App-level admins can see all role assignments
 -- ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION app.is_admin(_user_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = app
+AS $$
+    SELECT EXISTS (
+        SELECT 1
+        FROM app.user_roles ur
+        JOIN app.roles r ON r.id = ur.role_id
+        WHERE ur.user_id = _user_id
+          AND r.role_name = 'admin'
+    );
+$$;
 
 CREATE POLICY user_roles_visible
 ON app.user_roles
@@ -27,13 +41,7 @@ USING (
     OR
 
     -- App-level admin
-    EXISTS (
-        SELECT 1
-        FROM app.user_roles ur
-        JOIN app.roles r ON r.id = ur.role_id
-        WHERE ur.user_id = current_setting('app.current_user_id')::uuid
-          AND r.role_name = 'admin'
-    )
+    app.is_admin(current_setting('app.current_user_id')::uuid)
 );
 
 -- ------------------------------------------------------------------
@@ -101,3 +109,4 @@ USING (
         )
     )
 );
+
