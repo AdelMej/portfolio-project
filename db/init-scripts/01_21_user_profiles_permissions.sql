@@ -16,7 +16,7 @@
 GRANT SELECT, UPDATE ON TABLE app.user_profiles TO app_user;
 
 -- app_system: responsible for profile creation
-GRANT INSERT ON TABLE app.user_profiles TO app_system;
+GRANT SELECT, INSERT ON TABLE app.user_profiles TO app_system;
 
 -- ------------------------------------------------------------------
 -- Documentation

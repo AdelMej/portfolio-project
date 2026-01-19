@@ -37,4 +37,4 @@ GRANT SELECT ON app.user_roles TO app_user;
 -- ------------------------------------------------------------------
 
 GRANT INSERT, DELETE ON app.user_roles TO app_user;
-GRANT INSERT, DELETE ON app.user_roles TO app_system;
+GRANT SELECT, INSERT, DELETE ON app.user_roles TO app_system;

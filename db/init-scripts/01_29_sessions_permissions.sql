@@ -23,3 +23,4 @@
 -- ------------------------------------------------------------------
 
 GRANT SELECT, INSERT, UPDATE ON app.sessions TO app_user;
+GRANT SELECT ON app.sessions TO app_system;
