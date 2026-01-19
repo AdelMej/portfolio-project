@@ -78,15 +78,17 @@ Recommended actions:
 - Users start **active** (`disabled_at IS NULL`)
 - Soft deletion = setting `disabled_at`
 - Re-enabling a user = setting `disabled_at` back to `NULL`
-- Hard deletes are **not allowed**
+- Hard deletes are **impossible** (privilege- and policy-enforced)
 
 ---
 
 ### Invariants
 
 - A disabled user is immutable
-- Users may modify **only their own row**
-- Soft deletion is **self-initiated only**
+- Users may modify **their own row only**
+- Soft deletion may be:
+  - self-initiated (non-admin users)
+  - admin-initiated (on other users only)
 - Admins **cannot** soft-delete themselves
 - Admins may disable or re-enable **other users**
 - Admins may **not** modify non-lifecycle fields of other users
@@ -100,6 +102,7 @@ Recommended actions:
 
 - Users can read their own row
 - Admins can read all users
+- System role (`app_system`) may read users for backend operations
 
 #### Update access
 
@@ -130,7 +133,7 @@ Recommended actions:
   - disable users
   - re-enable users
 - Restrictions:
-  - this path applies only to updates on other users
+  - applies only to updates on other users
   - admins updating their own account follow self-update restrictions
   - admins cannot modify any other column on other users
 
@@ -138,8 +141,9 @@ Recommended actions:
 
 ### Delete behavior
 
-- `DELETE` is not permitted
+- `DELETE` is not permitted for any role
 - All deletions are implemented as soft deletes via `UPDATE`
+- Hard deletes are blocked by privileges and RLS
 
 ---
 
@@ -169,29 +173,30 @@ Recommended actions:
 ### Purpose
 
 - Stores user-facing profile information
-- Decoupled from authentication and account lifecycle
+- Decoupled from authentication and account lifecycle (`app.users`)
 - Used for display, discovery, and session-related visibility
 
 ---
 
 ### Lifecycle rules
 
-- Profiles are created **once** at user creation time
+- Profiles are created **once**, at user creation
 - Profiles are **never deleted**
-- No soft-delete mechanism exists for profiles
-- Profile ownership (`user_id`) never changes
+- No soft-delete mechanism exists
+- Profile ownership (`user_id`) is immutable
+- `updated_at` is automatically managed by triggers
 
 ---
 
 ### Invariants
 
 - Exactly one profile per user
-- `user_id` is immutable
+- `user_id` is primary key and immutable
 - Profiles cannot be hard-deleted
 - Profiles cannot be soft-deleted
-- `updated_at` is always system-managed
-- Users may only modify their own profile
+- Users may modify only **their own** profile
 - Admins may **not** modify other users’ profiles
+- System role (`app_system`) is responsible for inserts
 
 ---
 
@@ -205,47 +210,14 @@ A profile is visible if **any** of the following is true:
 - Users share at least one active session (participant ↔ participant)
 - Coach can read participant profiles for their sessions
 - Participant can read their coach’s profile
+- Admins (`app_admin`) may read all profiles
+- System role (`app_system`) may read profiles for backend processing
 
 #### Update access
 
 - **Self update**
   - Users may update **only their own** profile
-  - `user_id` must remain unchanged
-  - `updated_at` is automatically set
-
-- **Admin update**
-  - Admins may update **their own profile only**
-  - Admins cannot update other users’ profiles
-
-#### Insert access
-
-- Profiles may only be created by the system role
-- Application roles cannot insert profiles directly
-
----
-
-### Delete behavior
-
-- `DELETE` is not permitted
-- Profiles are permanent records
-
----
-
-### Relevant scripts
-
-- [Table definition](./01_app/05_user_profiles.sql)
-- [Row level security](./01_app/20_user_profiles_row_level_security.sql)
-- [Permissions](./01_app/21_user_profiles_permissions.sql)
-- [Triggers](./01_app/22_user_profiles_indexes.sql)
-
----
-
-### Notes
-
-- All visibility rules are enforced via RLS
-- Application code cannot bypass profile access rules
-- Profile privacy is derived exclusively from session relationships
-- Admin restrictions are intentional to prevent privilege overreach
+  - `user_id` must r_
 
 ---
 
@@ -341,6 +313,7 @@ A profile is visible if **any** of the following is true:
 - Roles are revoked via `DELETE`
 - Users are **never hard-deleted**, so role cleanup via cascade is not relied upon
 - Role assignments are managed explicitly
+- Admin self-protection rules prevent accidental self-revocation
 
 ---
 
@@ -358,10 +331,13 @@ A profile is visible if **any** of the following is true:
 
 ### Row Level Security (RLS)
 
+> ⚠️ Note: policies must avoid **infinite recursion** when checking admin membership
+
 #### Read access
 
 - Users may read their **own** role assignments
 - Admins may read **all** role assignments
+- `app_system` may read **all** role assignments for automation purposes
 
 #### Write access
 
@@ -388,6 +364,15 @@ A profile is visible if **any** of the following is true:
 
 ---
 
+### Enforcement notes
+
+- All visibility and modification rules are enforced via **RLS**
+- Triggers ensure auditability of role changes
+- Application code **cannot bypass** these rules
+- System role (`app_system`) may override for backend automation
+
+---
+
 ### Relevant scripts
 
 - [Table definition](./01_app/07_users_role.sql)
@@ -397,21 +382,13 @@ A profile is visible if **any** of the following is true:
 
 ---
 
-### Notes
-
-- All authorization rules are enforced at the database level
-- Application code cannot bypass role safety constraints
-- `app_system` exists for controlled automation and recovery
-
----
-
 ## `app.sessions`
 
 ### Purpose
 
 - Core scheduling entity
 - Represents a coach-led session that users may join
-- Acts as the business anchor for participation and payments
+- Acts as the business anchor for participation, attendance, and payments
 
 ---
 
@@ -422,16 +399,17 @@ A profile is visible if **any** of the following is true:
   - `cancelled`
   - `completed`
 - Sessions are **never hard-deleted**
+- Status transitions are strictly enforced
 
 ---
 
 ### Invariants
 
 - `end_at` must be strictly after `start_at`
-- A session always has exactly one coach
+- Each session has exactly one coach
 - Session time range is immutable after creation
-- Status transitions are controlled
-- Hard deletes are not permitted
+- Session status transitions follow business rules
+- Hard deletes are forbidden
 
 ---
 
@@ -439,31 +417,46 @@ A profile is visible if **any** of the following is true:
 
 #### Read access
 
-- Users may read sessions they are allowed to see
-- Coaches may read sessions they own
-- Admins may read all sessions
+- Users may read sessions they are allowed to see:
+  - Coaches can read sessions they own
+  - Participants can read sessions they are registered for
+  - Admins can read all sessions
+  - `app_system` can read all sessions for background tasks
 
 #### Write access
 
 - **Coach**
   - May create sessions
-  - May update their own sessions
+  - May update their own sessions (time, status, description)
   - May cancel their own sessions
 
 - **Admin**
   - May update or cancel any session
-  - May not create sessions
+  - Cannot create sessions
 
 - **Regular users**
-  - Read-only access
-  - No direct modification allowed
+  - Read-only
+  - Cannot directly create, update, or cancel sessions
+
+- **System role (`app_system`)**
+  - Can read/write for automation, reporting, or attendance management
+  - Subject to RLS enforcement
 
 ---
 
 ### Delete behavior
 
 - `DELETE` is not permitted
-- Session cancellation is represented via `status = 'cancelled'`
+- Cancellation is represented via `status = 'cancelled'`
+
+---
+
+### Enforcement notes
+
+- Session visibility and modifications are strictly governed by **RLS policies**
+- Application code cannot bypass session rules
+- Triggers enforce invariants such as timestamps and status consistency
+- Any change outside allowed scope will result in a database-level rejection
 
 ---
 
@@ -474,14 +467,6 @@ A profile is visible if **any** of the following is true:
 - [Permissions](./01_app/29_sessions_permissions.sql)
 - [Indexes](./01_app/30_sessions_indexes.sql)
 - [Triggers](./01_app/31_sessions_triggers.sql)
-
----
-
-### Notes
-
-- Session visibility is further constrained by participation rules
-- Business logic is enforced at the database level
-- Application code cannot bypass scheduling invariants
 
 ---
 
@@ -671,7 +656,7 @@ A profile is visible if **any** of the following is true:
 
 ### Purpose
 
-- One-time invite links used for user registration
+- One-time invite links for user registration
 - Generated by admins or system processes
 - Token-based authentication mechanism
 - Designed for high-volume inserts and short-lived usage
@@ -690,9 +675,9 @@ A profile is visible if **any** of the following is true:
 
 ### Invariants
 
-- A token cannot be used before creation
-- A token cannot be used more than once
-- Token hashes are stored, never plaintext
+- Tokens cannot be used before creation
+- Tokens cannot be used more than once
+- Token hashes are stored securely; plaintext is never persisted
 - Expired tokens are always invalid
 - Tokens are immutable except for `used_at`
 
@@ -711,23 +696,23 @@ A profile is visible if **any** of the following is true:
 - Allowed for:
   - `app_system`
   - App-level admins
-- Intended for:
-  - bulk invite generation
-  - automated provisioning
+- Purpose:
+  - Bulk invite generation
+  - Automated user provisioning
 
 #### Update access
 
 - Allowed for:
   - `app_system`
-- Intended use:
-  - marking token as used (`used_at`)
+- Purpose:
+  - Marking tokens as used (`used_at`)
 
 #### Delete access
 
 - Allowed for:
   - `app_system`
-- Intended for:
-  - cleanup of used or expired tokens
+- Purpose:
+  - Cleanup of used or expired tokens
 
 ---
 
@@ -736,15 +721,15 @@ A profile is visible if **any** of the following is true:
 - Hard deletes are allowed
 - Tokens have no audit value after use
 - Cleanup is expected to be handled via:
-  - background jobs
-  - scheduled tasks (e.g. `pg_cron`)
+  - Background jobs
+  - Scheduled tasks (e.g., `pg_cron`)
 
 ---
 
 ### Relevant scripts
 
 - [Table definition](./01_app/11_invite_tokens.sql)
-- [Row level security](./01_app/38)
+- [Row level security](./01_app/38_invite_tokens_row_level_security.sql)
 - [Permissions](./01_app/41_invite_tokens_permissions.sql)
 - [Indexes](./01_app/42_invite_tokens_indexes.sql)
 - [Triggers](./01_app/43_invite_tokens_triggers.sql)
@@ -754,10 +739,10 @@ A profile is visible if **any** of the following is true:
 ### Notes
 
 - No foreign keys by design (tokens are ephemeral)
-- Tokens should be validated using:
-  - expiration
-  - unused status
-- This table is optimized for write-heavy workloads
+- Validation relies on:
+  - Expiration
+  - Unused status
+- Optimized for write-heavy workloads
 - Cleanup strategy is intentionally externalized
 
 ---
@@ -1003,63 +988,62 @@ A profile is visible if **any** of the following is true:
 
 ### Purpose
 
-- Immutable **financial ledger** for user credits
-- Represents the **single source of truth** for credit balance
+- Immutable **financial ledger** for user credits  
+- Represents the **single source of truth** for credit balances  
 - Records *every* credit movement:
-  - payments
-  - refunds
-  - session usage
-  - admin adjustments
+  - Payments
+  - Refunds
+  - Session usage
+  - Admin adjustments  
 - Business-critical, compliance-grade table
 
 ---
 
 ### Design principles
 
-- **Append-only**
-- No updates, no deletes
-- Balance is stored **explicitly** and validated at insert time
-- Historical integrity is enforced **at the database level**
+- **Append-only**: no updates or deletes  
+- Balance is stored **explicitly** and validated at insert time  
+- Historical integrity enforced **at the database level**  
 - Ledger correctness does **not** rely on application code
 
 ---
 
 ### Ledger semantics
 
-- `amount_cents`
-  - positive → credit added
-  - negative → credit spent
-- `balance_after_cents`
-  - absolute balance **after** applying `amount_cents`
-  - must never be negative
-- `cause`
-  - describes *why* the ledger entry exists
-- `payment_intent_id`
-  - required for payment-related causes
-  - forbidden otherwise
+- `amount_cents`  
+  - Positive → credit added  
+  - Negative → credit spent  
+- `balance_after_cents`  
+  - Absolute balance **after** applying `amount_cents`  
+  - Must never be negative  
+- `cause`  
+  - Describes *why* the ledger entry exists  
+- `payment_intent_id`  
+  - Required for payment-related causes  
+  - Forbidden for all other causes
 
 ---
 
 ### Lifecycle rules
 
-- Ledger entries are created **once**
-- Entries are never modified
-- Entries are never deleted
-- Ledger grows monotonically over time per user
+- Ledger entries are created **once**  
+- Entries are **never modified**  
+- Entries are **never deleted**  
+- Ledger grows monotonically per user  
 - Balance must be consistent with previous entry
 
 ---
 
 ### Invariants
 
-- Ledger is append-only
-- `amount_cents <> 0`
-- `balance_after_cents >= 0`
-- Balances must be **sequential**
-- Entries must be **chronological per user**
+- Ledger is append-only  
+- `amount_cents <> 0`  
+- `balance_after_cents >= 0`  
+- Balances must be **sequential**  
+- Entries must be **chronological per user**  
 - `payment_intent_id` rules:
-  - required for `payment`, `refund`
-  - forbidden for all other causes
+  - Required for `payment` or `refund` causes  
+  - Forbidden otherwise
 
 ---
 
@@ -1067,27 +1051,27 @@ A profile is visible if **any** of the following is true:
 
 #### Read access
 
-- Users can read **their own ledger**
-- Admins can read **all ledger entries**
+- Users can read **their own ledger**  
+- Admins can read **all ledger entries**  
 - System role can read for internal processing
 
 #### Insert access
 
-- **System only**
-- All inserts are validated via triggers
+- **System only**  
+- All inserts validated via triggers
 
 #### Update / Delete access
 
-- Not allowed
+- Not allowed  
 - Explicitly blocked by triggers
 
 ---
 
 ### Write model
 
-- `INSERT` only
-- No `UPDATE`
-- No `DELETE`
+- `INSERT` only  
+- No `UPDATE`  
+- No `DELETE`  
 - Ledger corrections require **new compensating entries**
 
 ---
@@ -1096,21 +1080,21 @@ A profile is visible if **any** of the following is true:
 
 - RLS controls **who** may access data
 - Triggers enforce:
-  - append-only behavior
-  - balance correctness
-  - chronological ordering
-  - cause ↔ payment intent consistency
+  - Append-only behavior
+  - Balance correctness
+  - Chronological ordering
+  - Cause ↔ payment_intent consistency
 - Application code cannot:
-  - rewrite history
-  - skip balances
-  - reorder entries
+  - Rewrite history
+  - Skip balances
+  - Reorder entries
 
 ---
 
 ### Indexing strategy
 
 - `PRIMARY KEY (id)`
-- Index on:
+- Indexes on:
   - `(user_id)`
   - `(user_id, created_at DESC)`
   - `(payment_intent_id)` where not null
