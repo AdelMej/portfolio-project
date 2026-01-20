@@ -3,6 +3,7 @@ fastapi[standard]==0.128.0
 
 # --- Database ---
 sqlalchemy==2.0.29
+asyncpg==0.31.0
 
 # --- Security / Auth ---
 argon2-cffi==23.1.0
