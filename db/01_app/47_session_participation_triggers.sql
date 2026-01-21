@@ -127,7 +127,8 @@ BEGIN
     SELECT COUNT(*)
     INTO participation_count
     FROM app.session_participation
-    WHERE session_id = NEW.session_id;
+    WHERE session_id = NEW.session_id
+		AND cancelled_at IS NULL;
 
     -- Enforce maximum of 6 participants
     IF participation_count >= 6 THEN
