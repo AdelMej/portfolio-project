@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import INTEGER, VARCHAR, DateTime, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
-from app.infrastructure.sqlalchemy.base import Base
+from app.infrastructure.persistence.sqlalchemy.base import Base
 
 
 class Role(Base):

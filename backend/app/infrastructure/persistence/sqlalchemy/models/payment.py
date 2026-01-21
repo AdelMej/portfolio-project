@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import CHAR, UUID, DateTime, Integer, text
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.schema import UniqueConstraint
-from app.infrastructure.sqlalchemy.base import Base
+from app.infrastructure.persistence.sqlalchemy.base import Base
 
 
 class Payment(Base):
