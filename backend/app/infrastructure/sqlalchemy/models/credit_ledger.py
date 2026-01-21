@@ -1,6 +1,6 @@
 from datetime import datetime
 import uuid
-from sqlalchemy import UUID, DateTime, Integer
+from sqlalchemy import UUID, DateTime, Integer, text
 from sqlalchemy.orm import Mapped, mapped_column
 from app.infrastructure.sqlalchemy.base import Base
 from sqlalchemy.dialects.postgresql import ENUM
@@ -39,5 +39,7 @@ class CreditLedger(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        nullable=False
+        nullable=False,
+        server_default=text("now()"),
+        init=False
     )

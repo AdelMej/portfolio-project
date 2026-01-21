@@ -1,5 +1,6 @@
+from datetime import datetime
 import uuid
-from sqlalchemy import UUID
+from sqlalchemy import CHAR, UUID, DateTime, Integer, text
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql.schema import UniqueConstraint
 from app.infrastructure.sqlalchemy.base import Base
@@ -33,4 +34,15 @@ class Payment(Base):
 
     provider: Mapped[str] = mapped_column(nullable=False)
 
+    provider_intent_id: Mapped[str] = mapped_column(nullable=False)
 
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    currency: Mapped[str] = mapped_column(CHAR(3), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+        init=False
+    )

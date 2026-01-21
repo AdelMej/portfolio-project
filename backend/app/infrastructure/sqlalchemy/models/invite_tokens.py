@@ -1,14 +1,20 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import DATETIME, UUID, DateTime
+from sqlalchemy import DATETIME, UUID, DateTime, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 from app.infrastructure.sqlalchemy.base import Base
 
 
 class InviteTokens(Base):
     __tablename__ = "invite_tokens"
-    __table_args__ = {"schema": "app"}
+    __table_args__ = (
+        UniqueConstraint(
+            "token_hash",
+            name="uq_invite_tokens_token_hash"
+        ),
+        {"schema": "app"},
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
 
@@ -27,6 +33,7 @@ class InviteTokens(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
+        server_default=text("now()"),
         init=False
     )
 
