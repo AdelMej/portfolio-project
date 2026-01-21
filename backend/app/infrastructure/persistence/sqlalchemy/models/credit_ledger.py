@@ -1,6 +1,6 @@
 from datetime import datetime
 import uuid
-from sqlalchemy import UUID, DateTime, Integer, text
+from sqlalchemy import UUID, DateTime, ForeignKey, Integer, text
 from sqlalchemy.orm import Mapped, mapped_column
 from app.infrastructure.persistence.sqlalchemy.base import Base
 from sqlalchemy.dialects.postgresql import ENUM
@@ -15,17 +15,23 @@ class CreditLedger(Base):
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
+        ForeignKey("app.users.id"),
         nullable=False
     )
 
     payment_intent_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        nullable=False
+        ForeignKey("app.payment_intents.id"),
+        nullable=True
     )
 
     amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    balance_after_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+    balance_after_cents: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        init=False
+    )
 
     cause: Mapped[CreditCause] = mapped_column(
         ENUM(

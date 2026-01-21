@@ -18,7 +18,7 @@ class AppSettings(BaseSettings):
 
     postgres_host: str
     postgres_port: int = Field(default=5432)
-    postgres_db: str
+    postgres_app_db: str
 
     postgres_app_user: str
     postgres_app_user_password: str
@@ -45,7 +45,7 @@ class AppSettings(BaseSettings):
             f"{password}@"
             f"{self.postgres_host}:"
             f"{self.postgres_port}/"
-            f"{self.postgres_db}"
+            f"{self.postgres_app_db}"
         )
 
     def app_system_dsn(self) -> str:
@@ -62,5 +62,5 @@ class AppSettings(BaseSettings):
             f"{password}@"
             f"{self.postgres_host}:"
             f"{self.postgres_port}/"
-            f"{self.postgres_db}"
+            f"{self.postgres_app_db}"
         )
