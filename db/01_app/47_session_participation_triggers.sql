@@ -99,3 +99,59 @@ EXECUTE FUNCTION app.tg_session_participation_datetime_guard();
 
 COMMENT ON TRIGGER trg_session_participation_datetime_guard ON app.session_participation IS
 'Prevents invalid inserts/updates on session_participation according to session start/end times, cancellation rules, and attendance immutability.';
+
+-- ------------------------------------------------------------------
+-- Trigger: session_participant_limit
+-- ------------------------------------------------------------------
+-- Enforces a hard limit of 6 participants per session.
+--
+-- This invariant is enforced at the database level to avoid
+-- race conditions under concurrent inserts.
+-- ------------------------------------------------------------------
+
+
+-- ------------------------------------------------------------------
+-- Trigger function
+-- ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION app.tg_session_participation_limit()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    participation_count integer;
+BEGIN
+    -- Serialize inserts per session to avoid race conditions
+    PERFORM pg_advisory_xact_lock(NEW.session_id);
+
+    -- Count existing participants for this session
+    SELECT COUNT(*)
+    INTO participation_count
+    FROM app.session_participation
+    WHERE session_id = NEW.session_id;
+
+    -- Enforce maximum of 6 participants
+    IF participation_count >= 6 THEN
+        RAISE EXCEPTION
+            'Session % already has 6 participants',
+            NEW.session_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+-- ------------------------------------------------------------------
+-- Trigger binding
+-- ------------------------------------------------------------------
+CREATE TRIGGER trg_session_participation_limit
+BEFORE INSERT ON app.session_participation
+FOR EACH ROW
+EXECUTE FUNCTION app.tg_session_participation_limit();
+
+
+-- ------------------------------------------------------------------
+-- PostgreSQL documentation
+-- ------------------------------------------------------------------
+COMMENT ON FUNCTION app.tg_session_participation_limit() IS
+'Prevents more than 6 participants from being inserted into a session. Uses an advisory transaction lock on session_id to avoid race conditions.';
