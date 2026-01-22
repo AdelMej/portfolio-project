@@ -125,12 +125,27 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    IF NEW.status <> OLD.status THEN
+    -- ------------------------------------------------------------
+    -- STATUS TRANSITION RULES
+    -- ------------------------------------------------------------
+    IF NEW.status IS DISTINCT FROM OLD.status THEN
 
-        -- only scheduled → cancelled/completed allowed
+        -- scheduled → cancelled (only allowed transition)
         IF OLD.status = 'scheduled'
-           AND NEW.status IN ('cancelled', 'completed') THEN
+           AND NEW.status = 'cancelled' THEN
+
+            IF NEW.cancelled_at IS NULL THEN
+                RAISE EXCEPTION
+                    'cancelled_at must be set when cancelling a session';
+            END IF;
+
             RETURN NEW;
+        END IF;
+
+        -- cancelled → anything (forbidden)
+        IF OLD.status = 'cancelled' THEN
+            RAISE EXCEPTION
+                'Cancelled sessions are immutable';
         END IF;
 
         RAISE EXCEPTION
@@ -138,9 +153,29 @@ BEGIN
             OLD.status, NEW.status;
     END IF;
 
+    -- ------------------------------------------------------------
+    -- CANCELLED_AT INVARIANTS (no status change)
+    -- ------------------------------------------------------------
+
+    -- cancelled_at may only be set when status = cancelled
+    IF OLD.cancelled_at IS NULL
+       AND NEW.cancelled_at IS NOT NULL
+       AND NEW.status <> 'cancelled' THEN
+        RAISE EXCEPTION
+            'cancelled_at can only be set when status is cancelled';
+    END IF;
+
+    -- cancelled_at is immutable once set
+    IF OLD.cancelled_at IS NOT NULL
+       AND NEW.cancelled_at IS DISTINCT FROM OLD.cancelled_at THEN
+        RAISE EXCEPTION
+            'cancelled_at is immutable once set';
+    END IF;
+
     RETURN NEW;
 END;
 $$;
+
 
 COMMENT ON FUNCTION app.tg_sessions_validate_status_transition() IS
 'Ensures sessions can only move from scheduled → cancelled or completed. Prevents other transitions.';

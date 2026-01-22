@@ -50,15 +50,18 @@ COMMENT ON TRIGGER trg_credit_ledger_no_delete ON app.credit_ledger IS
 'Prevents deletion of any ledger entry.';
 
 -- ------------------------------------------------------------------
--- Function: balance consistency guard
+-- Function: compute balance_after_cents
 -- ------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION app.tg_credit_ledger_balance_guard()
+CREATE OR REPLACE FUNCTION app.tg_credit_ledger_compute_balance()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 DECLARE
     v_last_balance INTEGER;
 BEGIN
+    -- Serialize ledger inserts per user to avoid race conditions
+    PERFORM pg_advisory_xact_lock(hashtext(NEW.user_id::text));
+
     -- Fetch the most recent balance for the user
     SELECT balance_after_cents
     INTO v_last_balance
@@ -67,32 +70,30 @@ BEGIN
     ORDER BY created_at DESC
     LIMIT 1;
 
+    -- First ledger entry starts from zero
     IF v_last_balance IS NULL THEN
         v_last_balance := 0;
     END IF;
 
-    IF NEW.balance_after_cents <> v_last_balance + NEW.amount_cents THEN
-        RAISE EXCEPTION
-            'Invalid ledger balance: expected %, got %',
-            v_last_balance + NEW.amount_cents,
-            NEW.balance_after_cents;
-    END IF;
+    -- Force correct balance computation
+    NEW.balance_after_cents := v_last_balance + NEW.amount_cents;
 
     RETURN NEW;
 END;
 $$;
 
-COMMENT ON FUNCTION app.tg_credit_ledger_balance_guard() IS
-'Ensures balance_after_cents is consistent with previous balance plus amount_cents.';
+COMMENT ON FUNCTION app.tg_credit_ledger_compute_balance() IS
+'Computes balance_after_cents as previous balance plus amount_cents. Serializes inserts per user to prevent race conditions.';
 
--- Trigger: validate balance on insert
-CREATE TRIGGER trg_credit_ledger_balance_guard
+
+-- Trigger: compute balance on insert
+CREATE TRIGGER trg_credit_ledger_compute_balance
 BEFORE INSERT ON app.credit_ledger
 FOR EACH ROW
-EXECUTE FUNCTION app.tg_credit_ledger_balance_guard();
+EXECUTE FUNCTION app.tg_credit_ledger_compute_balance();
 
-COMMENT ON TRIGGER trg_credit_ledger_balance_guard ON app.credit_ledger IS
-'Validates balance continuity for each new ledger entry.';
+COMMENT ON TRIGGER trg_credit_ledger_compute_balance ON app.credit_ledger IS
+'Automatically computes ledger balance to guarantee mathematical consistency.';
 
 -- ------------------------------------------------------------------
 -- Function: enforce cause ↔ payment_intent correctness
@@ -162,3 +163,4 @@ EXECUTE FUNCTION app.tg_credit_ledger_time_guard();
 
 COMMENT ON TRIGGER trg_credit_ledger_time_guard ON app.credit_ledger IS
 'Guarantees that ledger entries are inserted in chronological order for each user.';
+
