@@ -1,10 +1,16 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 import uuid
 from sqlalchemy import UUID, DateTime, ForeignKey, Integer, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.persistence.sqlalchemy.base import Base
 from sqlalchemy.dialects.postgresql import ENUM
 from app.domain.credit.credit_cause import CreditCause
+
+
+if TYPE_CHECKING:
+    from .users import User
+    from .payment_intents import PaymentIntent
 
 
 class CreditLedger(Base):
@@ -48,4 +54,16 @@ class CreditLedger(Base):
         nullable=False,
         server_default=text("now()"),
         init=False
+    )
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="credit_ledger_entries",
+        lazy="joined",
+    )
+
+    payment_intent: Mapped["PaymentIntent | None"] = relationship(
+        "PaymentIntent",
+        back_populates="ledger_entries",
+        lazy="joined",
     )

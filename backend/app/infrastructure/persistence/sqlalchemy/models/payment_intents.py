@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.infrastructure.persistence.sqlalchemy.base import Base
 
 
-class PaymentIntents(Base):
+class PaymentIntent(Base):
     __tablename__ = "payment_intents"
     __table_args__ = (
         UniqueConstraint(

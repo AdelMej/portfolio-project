@@ -1,10 +1,13 @@
+from typing import TYPE_CHECKING
 from datetime import datetime
 import uuid
 from sqlalchemy import UUID, DateTime, UniqueConstraint, text
 from app.infrastructure.persistence.sqlalchemy.base import Base
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import CITEXT
 
+if TYPE_CHECKING:
+    from .credit_ledger import CreditLedger
 
 class User(Base):
     __tablename__ = "users"
@@ -40,4 +43,12 @@ class User(Base):
         nullable=False,
         server_default=text("now()"),
         init=False
+    )
+
+    credit_ledger_entries: Mapped[list["CreditLedger"]] = relationship(
+        "CreditLedger",
+        back_populates="user",
+        lazy="selectin",
+        cascade="none",
+        passive_deletes=True,
     )
