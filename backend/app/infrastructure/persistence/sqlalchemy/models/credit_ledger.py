@@ -1,0 +1,69 @@
+from datetime import datetime
+from typing import TYPE_CHECKING
+import uuid
+from sqlalchemy import UUID, DateTime, ForeignKey, Integer, text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.infrastructure.persistence.sqlalchemy.base import Base
+from sqlalchemy.dialects.postgresql import ENUM
+from app.domain.credit.credit_cause import CreditCause
+
+
+if TYPE_CHECKING:
+    from .users import User
+    from .payment_intents import PaymentIntent
+
+
+class CreditLedger(Base):
+    __tablename__ = "credit_ledger"
+    __table_args__ = {"schema": "app"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("app.users.id"),
+        nullable=False
+    )
+
+    payment_intent_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("app.payment_intents.id"),
+        nullable=True
+    )
+
+    amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    balance_after_cents: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        init=False
+    )
+
+    cause: Mapped[CreditCause] = mapped_column(
+        ENUM(
+            CreditCause,
+            name="credit_ledger_cause",
+            schema="app",
+            create_type=False
+        ),
+        nullable=False
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+        init=False
+    )
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="credit_ledger_entries",
+        lazy="joined",
+    )
+
+    payment_intent: Mapped["PaymentIntent | None"] = relationship(
+        "PaymentIntent",
+        back_populates="ledger_entries",
+        lazy="joined",
+    )

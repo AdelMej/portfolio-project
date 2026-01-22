@@ -8,8 +8,7 @@
 
 CREATE TYPE app.session_status AS ENUM (
     'scheduled',
-    'cancelled',
-    'completed'
+    'cancelled'
 );
 
 COMMENT ON TYPE app.session_status IS
@@ -46,6 +45,9 @@ CREATE TABLE IF NOT EXISTS app.sessions (
 
     -- Session lifecycle status
     status app.session_status NOT NULL DEFAULT 'scheduled',
+    
+    -- Session cancellation time
+    cancelled_at TIMESTAMPTZ NULL,
     
     -- Audit fields
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -97,6 +99,9 @@ COMMENT ON COLUMN app.sessions.ends_at IS
 
 COMMENT ON COLUMN app.sessions.status IS
 'Lifecycle status of the session (scheduled, cancelled, completed).';
+
+COMMENT ON COLUMN app.sessions.cancelled_at IS
+'Timestamp when the session was cancelled. NULL if the session was never cancelled.';
 
 COMMENT ON COLUMN app.sessions.created_at IS
 'Timestamp when the session record was created (UTC).';
