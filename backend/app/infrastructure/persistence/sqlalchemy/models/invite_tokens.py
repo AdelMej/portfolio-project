@@ -7,6 +7,28 @@ from app.infrastructure.persistence.sqlalchemy.base import Base
 
 
 class InviteTokens(Base):
+    """Represents a single-use invitation token.
+
+    Invitation tokens are used to grant controlled access to the system,
+    typically for onboarding new users. Tokens are stored as hashes and
+    have a fixed expiration time.
+
+    Tokens are immutable and never deleted. Usage is recorded by setting
+    the `used_at` timestamp, allowing replay prevention, auditing, and
+    abuse detection.
+
+    Attributes:
+        id (uuid.UUID): Unique identifier of the invitation token.
+        token_hash (str): Hash of the invitation token value.
+        expires_at (datetime): Timestamp after which the token is no
+            longer valid.
+        used_at (datetime | None): Timestamp when the token was used, or
+            None if it has not been consumed.
+        created_at (datetime): Timestamp when the token was created.
+        created_by (uuid.UUID): Identifier of the actor who created the
+            invitation token.
+    """
+
     __tablename__ = "invite_tokens"
     __table_args__ = (
         UniqueConstraint(
