@@ -14,6 +14,36 @@ if TYPE_CHECKING:
 
 
 class CreditLedger(Base):
+    """Append-only ledger entry representing a credit mutation for a user.
+
+    This table records all credit balance changes as immutable events.
+    Each entry represents a single credit mutation (positive or
+    negative) and stores the resulting balance after the mutation for
+    auditability and historical reconstruction.
+
+    The ledger is append-only by design:
+    entries are never updated or deleted once created.
+
+    Attributes:
+        id (uuid.UUID): Unique identifier of the ledger entry.
+        user_id (uuid.UUID): Identifier of the user whose balance is
+            affected.
+        payment_intent_id (uuid.UUID | None): Optional payment intent
+            associated with this credit mutation.
+        amount_cents (int): Signed amount applied to the user's balance,
+            in cents. Positive values represent credits, negative values
+            represent debits.
+        balance_after_cents (int): User balance in cents after applying
+            this entry.
+        cause (CreditCause): Business cause of the credit mutation.
+        created_at (datetime): Timestamp when the ledger entry was
+            created.
+
+    Relationships:
+        user (User): User associated with this ledger entry.
+        payment_intent (PaymentIntent | None): Payment intent related to
+            this credit mutation, if applicable.
+    """
     __tablename__ = "credit_ledger"
     __table_args__ = {"schema": "app"}
 
