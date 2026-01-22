@@ -44,3 +44,21 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+@app.get("/health", include_in_schema=False)
+async def health() -> dict[str, str]:
+    """
+    Liveness probe endpoint.
+
+    This endpoint is used to verify that the application process is running
+    and able to handle incoming HTTP requests. It performs no external
+    dependency checks and always returns a static response.
+
+    Intended usage:
+    - Container liveness checks (Docker, Kubernetes)
+    - Basic uptime monitoring
+
+    This endpoint MUST remain fast, side-effect free, and always available.
+    """
+    return {"status": "ok"}
