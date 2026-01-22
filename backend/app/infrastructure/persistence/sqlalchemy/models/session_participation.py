@@ -12,24 +12,28 @@ if TYPE_CHECKING:
 
 
 class SessionParticipation(Base):
-    """Represents a user's participation in a session.
+    """
+    Represents a user's participation in a session.
 
-    A session participation links a user to a session and represents
-    their registration state. Each user may participate in a given
+    A session participation links a user to a session and represents their
+    registration and financial state. Each user may participate in a given
     session at most once, enforced by a composite uniqueness constraint.
 
-    Participation records are created when a user registers for a
-    session and may later be cancelled. Attendance records may be
-    associated with a participation to record actual presence.
+    Participation records are created when a user registers for a session.
+    They may later be paid, cancelled (if unpaid and before the session
+    starts), and finally marked as attended after the session has ended.
+    These lifecycle transitions are enforced at the database level.
 
     Attributes:
         id (uuid.UUID): Unique identifier of the participation record.
         session_id (uuid.UUID): Identifier of the associated session.
         user_id (uuid.UUID): Identifier of the participating user.
+        paid_at (datetime | None): Timestamp when the participation was
+            successfully paid, or None if not yet financially confirmed.
         registered_at (datetime): Timestamp when the user registered
             for the session.
-        cancelled_at (datetime | None): Timestamp when the participation
-            was cancelled, or None if it is still active.
+    cancelled_at (datetime | None): Timestamp when the participation
+        was cancelled, or None if it is still active.
 
     Relationships:
         attendance_entries (list[SessionAttendance]): Attendance records
