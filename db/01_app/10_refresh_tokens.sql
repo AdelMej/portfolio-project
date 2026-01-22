@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS app.refresh_tokens (
     revoked_at TIMESTAMPTZ,
 
     -- Token rotation pointer (next token in chain)
-    replaced_by_token BIGINT,
+    replaced_by_token_id BIGINT,
     
     -- ------------------------------------------------------------------
     -- Foreign keys
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS app.refresh_tokens (
         ON DELETE CASCADE,
 
     CONSTRAINT fk_refresh_tokens_replaced_by
-        FOREIGN KEY (replaced_by_token)
+        FOREIGN KEY (replaced_by_token_id)
         REFERENCES app.refresh_tokens(id),
 
     -- ------------------------------------------------------------------
