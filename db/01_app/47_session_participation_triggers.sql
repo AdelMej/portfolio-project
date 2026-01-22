@@ -2,19 +2,17 @@
 -- Triggers: app.session_participation
 --
 -- Purpose:
--- - Enforce time-based and state-based invariants for session participation
+-- - Enforce time-based, financial, and state-based invariants for session participation
 --
 -- Guarantees:
 -- - Registration closes once the session starts
--- - Cancellation is forbidden after session start
+-- - Payment is allowed only once, before session start, and for non-cancelled participations
+-- - Cancellation is forbidden after payment or session start
 -- - Attendance can only be marked after session end
 -- - Cancelled participants cannot be marked as attended
 -- - Once attendance is marked, the row becomes immutable
 -- ------------------------------------------------------------------
 
--- ------------------------------------------------------------------
--- Function: tg_session_participation_datetime_guard
--- ------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION app.tg_session_participation_datetime_guard()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -54,11 +52,33 @@ BEGIN
     IF TG_OP = 'UPDATE' THEN
 
         ------------------------------------------------------------------
+        -- PAYMENT RULE
+        -- Payment is only allowed once, before session start,
+        -- and for non-cancelled participations
+        ------------------------------------------------------------------
+        IF OLD.paid_at IS NULL
+           AND NEW.paid_at IS NOT NULL THEN
+
+            IF OLD.cancelled_at IS NOT NULL THEN
+                RAISE EXCEPTION 'Cannot pay a cancelled participation';
+            END IF;
+
+            IF now() >= v_session_start THEN
+                RAISE EXCEPTION 'Cannot pay after session start';
+            END IF;
+        END IF;
+
+        ------------------------------------------------------------------
         -- CANCELLATION RULE
-        -- Only allowed before session start
+        -- Only allowed before session start and before payment
         ------------------------------------------------------------------
         IF OLD.cancelled_at IS NULL
            AND NEW.cancelled_at IS NOT NULL THEN
+
+            IF OLD.paid_at IS NOT NULL THEN
+                RAISE EXCEPTION 'Cannot cancel a paid participation';
+            END IF;
+
             IF now() >= v_session_start THEN
                 RAISE EXCEPTION 'Cannot cancel after session start';
             END IF;
@@ -70,6 +90,7 @@ BEGIN
         ------------------------------------------------------------------
         IF OLD.attended_at IS NULL
            AND NEW.attended_at IS NOT NULL THEN
+
             IF now() < v_session_end THEN
                 RAISE EXCEPTION 'Cannot mark attendance before session end';
             END IF;
