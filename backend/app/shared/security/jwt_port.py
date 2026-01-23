@@ -10,11 +10,4 @@ class JwtPort(Protocol):
         user_id: UUID,
     ) -> str: ...
 
-    def issue_refresh_token(
-        self,
-        *,
-        user_id: UUID,
-        token_id: UUID,
-    ) -> str: ...
-
     def decode_access_token(self, token: str) -> Actor: ...

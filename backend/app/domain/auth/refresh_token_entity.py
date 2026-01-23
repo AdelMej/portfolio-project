@@ -4,14 +4,12 @@ from uuid import UUID
 
 
 @dataclass(frozen=True)
-class RefreshToken:
-    id: UUID
+class RefreshTokenEntity:
     user_id: UUID
     token_hash: str
     created_at: datetime                # must be tz-aware UTC
     expires_at: datetime                # must be tz-aware UTC
     revoked_at: datetime | None
-    replaced_by_token_id: UUID | None
 
     def is_revoked(self) -> bool:
         return self.revoked_at is not None
@@ -22,3 +20,10 @@ class RefreshToken:
 
     def is_active(self, *, now: datetime | None = None) -> bool:
         return not self.is_revoked() and not self.is_expired(now=now)
+
+
+@dataclass(frozen=True)
+class NewRefreshTokenEntity:
+    user_id: UUID
+    token_hash: str
+    expires_at: datetime                # must be tz-aware UTC

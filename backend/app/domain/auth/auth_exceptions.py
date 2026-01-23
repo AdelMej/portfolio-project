@@ -12,3 +12,7 @@ class InvalidPasswordError(AuthDomainError):
 
 class InvalidCredentialsError(AuthDomainError):
     pass
+
+
+class UserDisabledError(AuthDomainError):
+    pass

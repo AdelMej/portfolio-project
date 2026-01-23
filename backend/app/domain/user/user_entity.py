@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 @dataclass(frozen=True)
-class User:
+class UserEntity:
     id: UUID
     email: str
     password_hash: str
