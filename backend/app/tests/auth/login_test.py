@@ -140,7 +140,7 @@ async def test_login_revokes_existing_refresh_token():
 
     service = AuthService(InMemoryAuthUoW(storage))
 
-    access, refresh = await service.login(
+    _, _ = await service.login(
         LoginInputDTO(email="test@test.com", password="secret"),
         existing_refresh=old_token_hash,
         refresh_token_ttl=3600,
@@ -226,3 +226,79 @@ async def test_login_disabled_user():
         )
 
     assert len(storage.refresh_tokens) == 0
+
+
+@pytest.mark.anyio
+async def test_login_rotates_existing_refresh_token():
+    storage = InMemoryAuthStorage()
+    user_id = uuid4()
+
+    storage.users[user_id] = UserEntity(
+        id=user_id,
+        email="test@test.com",
+        password_hash="secret",
+        disabled_at=None,
+        disabled_reason=None,
+    )
+    storage.users_by_email["test@test.com"] = user_id
+
+    token_hasher = InMemoryTokenHasher()
+
+    old_refresh_plain = "old_refresh"
+    old_refresh_hash = token_hasher.hash(old_refresh_plain)
+
+    storage.refresh_tokens[old_refresh_hash] = RefreshTokenEntity(
+        user_id=user_id,
+        token_hash=old_refresh_hash,
+        created_at=utcnow() - timedelta(hours=1),
+        expires_at=utcnow() + timedelta(hours=1),
+        revoked_at=None,
+    )
+
+    service = AuthService(InMemoryAuthUoW(storage))
+
+    access, new_refresh = await service.login(
+        input=LoginInputDTO(email="test@test.com", password="secret"),
+        existing_refresh=old_refresh_plain,
+        refresh_token_ttl=3600,
+        jwt=InMemoryJwt(),
+        password_hasher=InMemoryPasswordHasher(),
+        token_hasher=InMemoryTokenHasher(),
+        refresh_token_generator=InMemoryRefreshTokenGenerator(),
+    )
+
+    # old token revoked
+    assert storage.refresh_tokens[old_refresh_hash].revoked_at is not None
+
+    # new token created
+    assert len(storage.refresh_tokens) == 2
+    assert new_refresh != old_refresh_plain
+    assert access.startswith("access:")
+
+
+@pytest.mark.anyio
+async def test_login_fails_for_disabled_user():
+    storage = InMemoryAuthStorage()
+    user_id = uuid4()
+
+    storage.users[user_id] = UserEntity(
+        id=user_id,
+        email="test@test.com",
+        password_hash="secret",
+        disabled_at=utcnow(),
+        disabled_reason="banned",
+    )
+    storage.users_by_email["test@test.com"] = user_id
+
+    service = AuthService(InMemoryAuthUoW(storage))
+
+    with pytest.raises(UserDisabledError):
+        await service.login(
+            input=LoginInputDTO(email="test@test.com", password="secret"),
+            existing_refresh=None,
+            refresh_token_ttl=3600,
+            jwt=InMemoryJwt(),
+            password_hasher=InMemoryPasswordHasher(),
+            token_hasher=InMemoryTokenHasher(),
+            refresh_token_generator=InMemoryRefreshTokenGenerator(),
+        )
