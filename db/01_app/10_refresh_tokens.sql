@@ -89,5 +89,5 @@ COMMENT ON COLUMN app.refresh_tokens.expires_at IS
 COMMENT ON COLUMN app.refresh_tokens.revoked_at IS
 'Timestamp when the refresh token was explicitly revoked.';
 
-COMMENT ON COLUMN app.refresh_tokens.replaced_by_token IS
+COMMENT ON COLUMN app.refresh_tokens.replaced_by_token_id IS
 'Reference to the next refresh token generated during token rotation.';

@@ -39,7 +39,7 @@ COMMENT ON INDEX app.idx_refresh_tokens_active IS
 -- - Security audits
 -- ---------------------------------------------------------------
 CREATE INDEX idx_refresh_tokens_replaced_by
-ON app.refresh_tokens (replaced_by_token);
+ON app.refresh_tokens (replaced_by_token_id);
 
 COMMENT ON INDEX app.idx_refresh_tokens_replaced_by IS
 'Supports fast lookups of tokens replaced by other tokens (rotation chain).';
