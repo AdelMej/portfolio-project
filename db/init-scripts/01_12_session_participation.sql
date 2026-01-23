@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS app.session_participation (
     -- Participating user
     user_id UUID NOT NULL,
 
+    -- Paid timestamp
+    paid_at TIMESTAMPTZ NULL,
+    
     -- Registration timestamp
     registered_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
@@ -73,3 +76,6 @@ COMMENT ON COLUMN app.session_participation.registered_at IS
 
 COMMENT ON COLUMN app.session_participation.cancelled_at IS
 'Timestamp when the participation was cancelled. NULL means the registration is active.';
+
+COMMENT ON COLUMN app.session_participation.paid_at IS
+'Timestamp when the participation was successfully paid. NULL means the registration is not yet financially confirmed.';
