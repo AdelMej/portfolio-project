@@ -1,18 +1,18 @@
 from fastapi import Depends
-from app.infrastructure.persistence.in_memory.auth.auth_uow import (
-    InMemoryAuthUoW
-)
 from app.infrastructure.persistence.in_memory.storage import (
     InMemoryAuthStorage
 )
-from app.feature.auth.auth_UoW_port import AuthUoW
+from app.feature.auth.uow.login_uow import LoginUoWPort
+from app.infrastructure.persistence.in_memory.uow.auth import InMemoryLoginUoW
+from functools import lru_cache
 
 
+@lru_cache
 def get_in_memory_storage() -> InMemoryAuthStorage:
     return InMemoryAuthStorage()
 
 
-def get_in_memory_auth_uow(
+def get_in_memory_login_uow(
         storage: InMemoryAuthStorage = Depends(get_in_memory_storage)
-) -> AuthUoW:
-    return InMemoryAuthUoW(storage)
+) -> LoginUoWPort:
+    return InMemoryLoginUoW(storage)

@@ -8,7 +8,7 @@ from app.feature.auth.repositories.auth_update_repository import (
 from app.shared.utils.time import utcnow
 
 
-class InMemoryAuthUpdateRepo(AuthUpdateRepositoryPort):
+class InMemoryAuthUpdateRepository(AuthUpdateRepositoryPort):
     def __init__(self, storage: InMemoryAuthStorage) -> None:
         self._storage = storage
 

@@ -10,5 +10,8 @@ class AuthReadRepositoryPort(Protocol):
     async def get_user_by_email(self, email: str) -> UserEntity:
         ...
 
-    async def get_refresh_token(self, token_hash: str) -> RefreshTokenEntity:
+    async def get_refresh_token(
+            self,
+            token_hash: str
+    ) -> RefreshTokenEntity | None:
         ...

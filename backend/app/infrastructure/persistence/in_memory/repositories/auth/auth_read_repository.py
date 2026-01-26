@@ -7,7 +7,7 @@ from app.feature.auth.repositories.auth_read_repository import (
 )
 
 
-class InMemoryAuthReadRepo(AuthReadRepositoryPort):
+class InMemoryAuthReadRepository(AuthReadRepositoryPort):
     def __init__(self, storage: InMemoryAuthStorage) -> None:
         self._storage = storage
 

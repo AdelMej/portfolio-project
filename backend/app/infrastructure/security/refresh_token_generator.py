@@ -1,4 +1,4 @@
-from app.shared.security.refresh_token_geneartor_port import (
+from app.shared.security.refresh_token_generator_port import (
     RefreshTokenGeneratorPort
 )
 import secrets

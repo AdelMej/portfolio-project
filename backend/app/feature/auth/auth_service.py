@@ -1,6 +1,6 @@
 from datetime import timedelta
+from app.domain.auth.actor_entity import TokenActor
 from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
-from app.feature.auth.auth_UoW_port import AuthUoW
 from app.feature.auth.auth_dto import (
     LoginInputDTO,
 )
@@ -9,6 +9,7 @@ from app.domain.auth.auth_exceptions import (
     InvalidPasswordError,
     UserDisabledError
 )
+from app.feature.auth.uow.login_uow import LoginUoWPort
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
 from app.shared.security.refresh_token_generator_port import (
@@ -36,13 +37,11 @@ class AuthService:
         _uow: Unit of work providing access to authentication repositories and
             transactional boundaries.
     """
-    def __init__(self, uow: AuthUoW) -> None:
-        self._uow = uow
-
     async def login(
         self,
         input: LoginInputDTO,
         existing_refresh: str | None,
+        uow: LoginUoWPort,
         refresh_token_ttl: int,
         jwt: JwtPort,
         password_hasher: PasswordHasherPort,
@@ -85,39 +84,43 @@ class AuthService:
         email = input.email.strip().lower()
         password = input.password.strip()
 
-        async with self._uow as uow:
-            if not await uow.auth_read.exist_email(email):
-                raise InvalidEmailError()
+        if not await uow.auth_read.exist_email(email):
+            raise InvalidEmailError()
 
-            user = await uow.auth_read.get_user_by_email(email)
+        user = await uow.auth_read.get_user_by_email(email)
 
-            if user.disabled_at is not None:
-                raise UserDisabledError()
+        if user.disabled_at is not None:
+            raise UserDisabledError()
 
-            if not password_hasher.verify(password, user.password_hash):
-                raise InvalidPasswordError()
+        if not password_hasher.verify(password, user.password_hash):
+            raise InvalidPasswordError()
 
-            token = None
-            if existing_refresh:
-                token = await uow.auth_read.get_refresh_token(existing_refresh)
+        token = None
+        if existing_refresh:
+            token = await uow.auth_read.get_refresh_token(existing_refresh)
 
-            if token:
-                await uow.auth_update.revoke_refresh_token(token.token_hash)
+        if token:
+            await uow.auth_update.revoke_refresh_token(token.token_hash)
 
-            refresh_plain = refresh_token_generator.generate()
-            refresh_hash = token_hasher.hash(refresh_plain)
+        refresh_plain = refresh_token_generator.generate()
+        refresh_hash = token_hasher.hash(refresh_plain)
 
-            await uow.auth_creation.create_refresh_token(
-                NewRefreshTokenEntity(
-                    user_id=user.id,
-                    token_hash=refresh_hash,
-                    expires_at=utcnow() + timedelta(seconds=refresh_token_ttl)
-                )
+        await uow.auth_creation.create_refresh_token(
+            NewRefreshTokenEntity(
+                user_id=user.id,
+                token_hash=refresh_hash,
+                expires_at=utcnow() + timedelta(seconds=refresh_token_ttl)
             )
+        )
 
-            return (
-                jwt.issue_access_token(
-                    user_id=user.id
-                ),
-                refresh_plain
-            )
+        token_actor = TokenActor(
+            id=user.id,
+            roles=user.roles,
+        )
+
+        return (
+            jwt.issue_access_token(
+                actor=token_actor
+            ),
+            refresh_plain
+        )
