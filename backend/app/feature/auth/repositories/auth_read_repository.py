@@ -7,7 +7,10 @@ class AuthReadRepositoryPort(Protocol):
     async def exist_email(self, email: str) -> bool:
         ...
 
-    async def get_user_by_email(self, email: str) -> UserEntity:
+    async def get_user_by_email(self, email: str) -> UserEntity | None:
+        ...
+
+    async def system_get_user_by_email(self, email: str) -> UserEntity | None:
         ...
 
     async def get_refresh_token(

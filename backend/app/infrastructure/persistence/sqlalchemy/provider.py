@@ -7,7 +7,7 @@ from app.infrastructure.persistence.sqlalchemy.UoW.auth.login_uow import (
 from app.infrastructure.settings.provider import get_app_system_session
 
 
-def get_login_uow(
+async def get_login_uow(
     session: AsyncSession = Depends(get_app_system_session)
 ) -> LoginUoWPort:
     return SqlAlchemyLoginUoW(session)

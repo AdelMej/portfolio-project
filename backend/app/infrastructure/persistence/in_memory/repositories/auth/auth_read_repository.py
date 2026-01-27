@@ -18,5 +18,9 @@ class InMemoryAuthReadRepository(AuthReadRepositoryPort):
         user_id = self._storage.users_by_email[email]
         return self._storage.users[user_id]
 
+    async def system_get_user_by_email(self, email: str):
+        user_id = self._storage.users_by_email[email]
+        return self._storage.users[user_id]
+
     async def get_refresh_token(self, token_hash: str) -> RefreshTokenEntity:
         return self._storage.refresh_tokens[token_hash]

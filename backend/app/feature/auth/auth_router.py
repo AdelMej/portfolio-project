@@ -121,7 +121,7 @@ async def token(
         httponly=True,
         secure=True,
         samesite="lax",
-        path="/refresh",
+        path="/auth",
         max_age=refresh_ttl
     )
 
@@ -133,4 +133,5 @@ async def token(
 
 @router.get("/me")
 async def me(actor: Actor = Depends(get_current_actor)):
+    print(actor)
     return {"actor": actor.id}

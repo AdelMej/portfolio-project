@@ -87,7 +87,10 @@ class AuthService:
         if not await uow.auth_read.exist_email(email):
             raise InvalidEmailError()
 
-        user = await uow.auth_read.get_user_by_email(email)
+        user = await uow.auth_read.system_get_user_by_email(email)
+
+        if user is None:
+            raise InvalidEmailError()
 
         if user.disabled_at is not None:
             raise UserDisabledError()
@@ -97,21 +100,30 @@ class AuthService:
 
         token = None
         if existing_refresh:
-            token = await uow.auth_read.get_refresh_token(existing_refresh)
-
-        if token:
-            await uow.auth_update.revoke_refresh_token(token.token_hash)
+            refresh_hash = token_hasher.hash(existing_refresh)
+            token = await uow.auth_read.get_refresh_token(refresh_hash)
 
         refresh_plain = refresh_token_generator.generate()
         refresh_hash = token_hasher.hash(refresh_plain)
 
-        await uow.auth_creation.create_refresh_token(
-            NewRefreshTokenEntity(
-                user_id=user.id,
-                token_hash=refresh_hash,
-                expires_at=utcnow() + timedelta(seconds=refresh_token_ttl)
+        if token:
+            await uow.auth_update.rotate_refresh_token(
+                current_token_hash=token.token_hash,
+                new_token=NewRefreshTokenEntity(
+                    user_id=user.id,
+                    token_hash=refresh_hash,
+                    expires_at=utcnow() + timedelta(seconds=refresh_token_ttl)
+                )
             )
-        )
+        else:
+            await uow.auth_update.rotate_refresh_token(
+                current_token_hash=None,
+                new_token=NewRefreshTokenEntity(
+                    user_id=user.id,
+                    token_hash=refresh_hash,
+                    expires_at=utcnow() + timedelta(seconds=refresh_token_ttl)
+                )
+            )
 
         token_actor = TokenActor(
             id=user.id,

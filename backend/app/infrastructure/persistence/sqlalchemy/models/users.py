@@ -118,7 +118,8 @@ class User(Base):
     attendance: Mapped[list["SessionAttendance"]] = relationship(
         "SessionAttendance",
         back_populates="user",
-        lazy="selectin"
+        lazy="selectin",
+        overlaps="attendance_entries",
     )
 
     participations: Mapped[list["SessionParticipation"]] = relationship(

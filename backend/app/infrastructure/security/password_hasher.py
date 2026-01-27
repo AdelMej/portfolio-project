@@ -12,6 +12,6 @@ class Argon2PasswordHasher(PasswordHasherPort):
 
     def verify(self, plain: str, hashed: str) -> bool:
         try:
-            return self._hasher.verify(plain, hashed)
+            return self._hasher.verify(hashed, plain)
         except VerifyMismatchError:
             return False
