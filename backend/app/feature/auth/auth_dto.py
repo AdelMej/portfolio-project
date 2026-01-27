@@ -8,4 +8,4 @@ class LoginInputDTO(BaseModel):
 
 class TokenOutputDTO(BaseModel):
     access_token: str
-    refresh_token: str
+    token_type: str

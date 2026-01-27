@@ -84,15 +84,13 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
-        init=False
+        server_default=text("now()")
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
-        init=False
+        server_default=text("now()")
     )
 
     credit_ledger_entries: Mapped[list["CreditLedger"]] = relationship(

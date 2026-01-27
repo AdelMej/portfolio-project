@@ -10,5 +10,10 @@ class InvalidPasswordError(AuthDomainError):
     pass
 
 
-class InvalidCredentialsError(AuthDomainError):
+
+class UserDisabledError(AuthDomainError):
+    pass
+
+
+class RefreshTokenNotFoundError(AuthDomainError):
     pass
