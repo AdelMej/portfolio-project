@@ -88,7 +88,7 @@ BEGIN
     END IF;
 
     -- Once revoked, replaced_by_token cannot be modified
-    IF OLD.revoked_at IS NOT NULL AND NEW.replaced_by_token <> OLD.replaced_by_token THEN
+    IF OLD.revoked_at IS NOT NULL AND NEW.replaced_by_token_id <> OLD.replaced_by_token_id THEN
         RAISE EXCEPTION 'Cannot modify replaced_by_token after token is revoked';
     END IF;
 

@@ -83,7 +83,11 @@ CREATE TABLE IF NOT EXISTS app.credit_ledger (
 
     -- Balance may never become negative
     CONSTRAINT chk_credit_ledger_balance_not_negative
-        CHECK (balance_after_cents >= 0)
+        CHECK (balance_after_cents >= 0),
+        
+    -- Credit balance can never be null
+    CONSTRAINT chk_credit_ledger_balance_non_null
+		CHECK (balance_after_cents IS NOT NULL)
 );
 
 -- ------------------------------------------------------------------

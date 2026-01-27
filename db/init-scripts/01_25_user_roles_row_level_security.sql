@@ -15,7 +15,9 @@ ALTER TABLE app.user_roles FORCE ROW LEVEL SECURITY;
 --
 -- - Users can see their own roles
 -- - App-level admins can see all role assignments
+-- - app_system can see all role assignments (system ops)
 -- ------------------------------------------------------------------
+
 CREATE OR REPLACE FUNCTION app.is_admin(_user_id uuid)
 RETURNS boolean
 LANGUAGE sql
@@ -43,6 +45,12 @@ USING (
     -- App-level admin
     app.is_admin(current_setting('app.current_user_id')::uuid)
 );
+
+CREATE POLICY user_roles_system_select
+ON app.user_roles
+FOR SELECT
+TO app_system
+USING (TRUE);
 
 -- ------------------------------------------------------------------
 -- INSERT
@@ -89,7 +97,7 @@ USING (
 
         OR
 
-        -- app-level admin
+        -- App-level admin
         EXISTS (
             SELECT 1
             FROM app.user_roles ur

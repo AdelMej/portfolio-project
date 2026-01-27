@@ -140,3 +140,20 @@ WITH CHECK (
 
 COMMENT ON POLICY users_admin_update_others ON app.users IS
 'Allows admins to disable other users; admin actions must explicitly mark admin responsibility.';
+
+-- ------------------------------------------------------------------
+-- Policy: users_select_system
+--
+-- Purpose:
+-- - Allow system-level operations (authentication)
+-- - Used during login before user context exists
+-- ------------------------------------------------------------------
+
+CREATE POLICY users_select_system
+ON app.users
+FOR SELECT
+TO app_system
+USING (true);
+
+COMMENT ON POLICY users_select_system ON app.users IS
+'Allows system role to read user records for authentication and system operations.';

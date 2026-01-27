@@ -41,6 +41,8 @@ GRANT USAGE, SELECT ON SEQUENCES TO app_system;
 -- ------------------------------------------------------------------
 -- app_admin: read-only
 -- ------------------------------------------------------------------
+GRANT CONNECT ON DATABASE audit TO app_admin;
+
 -- Revoke mutation rights
 REVOKE UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA audit FROM app_admin;
 REVOKE INSERT ON ALL TABLES IN SCHEMA audit FROM app_admin;
