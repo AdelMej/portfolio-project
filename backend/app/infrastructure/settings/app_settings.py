@@ -30,6 +30,9 @@ class AppSettings(BaseSettings):
     jwt_algorithm: str
     jwt_access_ttl_seconds: int
     jwt_refresh_ttl_seconds: int
+    jwt_issuer: str
+
+    refresh_token_hmac_secret: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

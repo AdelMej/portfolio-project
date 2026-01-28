@@ -11,41 +11,53 @@ from app.infrastructure.persistence.sqlalchemy.engines import (
 from app.infrastructure.persistence.sqlalchemy.sessions import (
     create_session_factory,
 )
-from app.feature.session.session_router import router as session_router
+from app.feature.auth.auth_router import router as auth_router
+
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(api: FastAPI):
     """Application lifespan handler.
 
     Initializes database engines and session factories and validates
     database connectivity at startup.
     """
+    import app.infrastructure.persistence.sqlalchemy.models  # noqa: F401
+
     settings = AppSettings()  # pyright: ignore[reportCallIssue]
 
-    app_engine = create_app_engine(settings)
-    system_engine = create_system_engine(settings)
+    app_user_engine = create_app_engine(settings.app_user_dsn())
+    app_system_engine = create_system_engine(settings.app_system_dsn())
 
-    async with app_engine.connect() as conn:
-        await conn.execute(text("SELECT 1"))
+    try:
+        async with app_user_engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception as exc:
+        raise RuntimeError("app_user DB connection failed") from exc
 
-    async with system_engine.connect() as conn:
-        await conn.execute(text("SELECT 1"))
+    try:
+        async with app_system_engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception as exc:
+        raise RuntimeError("app_system DB connection failed") from exc
 
-    app.state.settings = settings
-    app.state.app_engine = app_engine
-    app.state.system_engine = system_engine
-    app.state.app_session_factory = create_session_factory(app_engine)
-    app.state.system_session_factory = create_session_factory(system_engine)
+    api.state.settings = settings
+    api.state.app_user_engine = app_user_engine
+    api.state.app_system_engine = app_system_engine
+    api.state.app_user_session_factory = create_session_factory(app_user_engine)
+    api.state.app_system_session_factory = create_session_factory(
+        app_system_engine
+    )
 
     yield
 
-    await app_engine.dispose()
-    await system_engine.dispose()
+    await app_user_engine.dispose()
+    await app_system_engine.dispose()
 
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(session_router)
+app.include_router(auth_router)
+
 
 @app.get("/health", include_in_schema=False)
 async def health() -> dict[str, str]:

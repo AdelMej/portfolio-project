@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class TokenHasherPort(Protocol):
+    def hash(self, raw: str) -> str: ...
+    def verify(self, raw: str, hashed: str) -> bool: ...

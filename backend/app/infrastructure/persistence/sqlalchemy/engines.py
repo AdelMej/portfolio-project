@@ -1,9 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
-from app.infrastructure.settings.app_settings import AppSettings
 
-
-def create_app_engine(settings: AppSettings) -> AsyncEngine:
+def create_app_engine(dsn: str) -> AsyncEngine:
     """Create the application database engine.
 
     Uses the application role which is subject to RLS and business rules.
@@ -15,13 +13,13 @@ def create_app_engine(settings: AppSettings) -> AsyncEngine:
         AsyncEngine: SQLAlchemy async engine.
     """
     return create_async_engine(
-        settings.app_user_dsn(),
+        dsn,
         echo=False,
         pool_pre_ping=True,
     )
 
 
-def create_system_engine(settings: AppSettings) -> AsyncEngine:
+def create_system_engine(dsn: str) -> AsyncEngine:
     """Create the system database engine.
 
     Uses the system role for internal operations that require elevated
@@ -34,7 +32,7 @@ def create_system_engine(settings: AppSettings) -> AsyncEngine:
         AsyncEngine: SQLAlchemy async engine.
     """
     return create_async_engine(
-        settings.app_system_dsn(),
+        dsn,
         echo=False,
         pool_pre_ping=True,
     )

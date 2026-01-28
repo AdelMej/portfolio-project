@@ -77,8 +77,7 @@ class SessionParticipation(Base):
     registered_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
-        init=False
+        server_default=text("now()")
     )
 
     cancelled_at: Mapped[datetime] = mapped_column(
