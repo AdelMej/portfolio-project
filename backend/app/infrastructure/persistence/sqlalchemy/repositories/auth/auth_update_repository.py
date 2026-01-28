@@ -2,7 +2,7 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import text
 from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
-from app.feature.auth.repositories.auth_update_repository import (
+from app.feature.auth.repositories.auth_update_repository_port import (
     AuthUpdateRepositoryPort
 )
 from app.infrastructure.persistence.sqlalchemy.models.refresh_tokens import (

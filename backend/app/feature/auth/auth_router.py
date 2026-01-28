@@ -4,6 +4,7 @@ from app.domain.auth.actor_entity import Actor
 from app.feature.auth.auth_dependencies import get_auth_service
 from app.feature.auth.auth_service import AuthService
 from app.feature.auth.auth_dto import (
+    GetMeOutputDTO,
     LoginInputDTO,
     TokenOutputDTO
 )
@@ -12,8 +13,12 @@ from app.domain.auth.auth_exceptions import (
     InvalidPasswordError,
 )
 from app.feature.auth.auth_exception import InvalidCredentialsError
-from app.feature.auth.uow.login_uow import LoginUoWPort
-from app.infrastructure.persistence.sqlalchemy.provider import get_login_uow
+from app.feature.auth.uow.login_uow_port import LoginUoWPort
+from app.feature.auth.uow.me_uow_port import MeUoWPort
+from app.infrastructure.persistence.sqlalchemy.provider import (
+    get_login_uow,
+    get_me_uow
+)
 from app.infrastructure.security.provider import (
     get_current_actor,
     get_jwt,
@@ -33,7 +38,11 @@ from app.shared.security.token_hasher_port import TokenHasherPort
 router = APIRouter(prefix="/auth")
 
 
-@router.post("/login")
+@router.post(
+    path="/login",
+    response_model=TokenOutputDTO,
+    status_code=200
+    )
 async def login(
     input: LoginInputDTO,
     request: Request,
@@ -48,8 +57,12 @@ async def login(
     ),
     refresh_ttl: int = Depends(get_refresh_token_ttl),
 ) -> TokenOutputDTO:
-    existing_refresh = request.cookies.get("refresh_token")
+    """
+    Authenticate a user and return an access token.
 
+    A refresh token is issued and stored in an HTTP-only cookie.
+    """
+    existing_refresh = request.cookies.get("refresh_token")
     try:
         access, refresh = await service.login(
             input=input,
@@ -95,13 +108,19 @@ async def token(
     ),
     refresh_ttl: int = Depends(get_refresh_token_ttl),
 ) -> TokenOutputDTO:
+    """
+    Authenticate a user and return an access token.
+
+    A refresh token is issued and stored in an HTTP-only cookie.
+    """
     existing_refresh = request.cookies.get("refresh_token")
 
-    input = LoginInputDTO(
-        email=form.username,
-        password=form.password
-    )
     try:
+        input = LoginInputDTO(
+            email=form.username,
+            password=form.password
+        )
+
         access, refresh = await service.login(
             input=input,
             existing_refresh=existing_refresh,
@@ -112,7 +131,7 @@ async def token(
             refresh_token_ttl=refresh_ttl,
             password_hasher=password_hasher
         )
-    except (InvalidEmailError, InvalidPasswordError):
+    except (InvalidEmailError, InvalidPasswordError, ValueError):
         raise InvalidCredentialsError()
 
     response.set_cookie(
@@ -131,7 +150,18 @@ async def token(
     )
 
 
-@router.get("/me")
-async def me(actor: Actor = Depends(get_current_actor)):
-    print(actor)
-    return {"actor": actor.id}
+@router.get(
+    "/me",
+    response_model=GetMeOutputDTO,
+    status_code=200
+)
+async def me(
+    uow: MeUoWPort = Depends(get_me_uow),
+    actor: Actor = Depends(get_current_actor),
+    service: AuthService = Depends(get_auth_service)
+):
+    user = await service.get_me(actor, uow)
+    return GetMeOutputDTO(
+        email=user.email,
+        roles=user.roles
+    )

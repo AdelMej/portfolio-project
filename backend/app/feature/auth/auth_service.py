@@ -1,6 +1,9 @@
 from datetime import timedelta
-from app.domain.auth.actor_entity import TokenActor
+from app.domain.auth.actor_entity import Actor, TokenActor
+from app.domain.auth.permission import Permission
+from app.domain.auth.permission_rules import ensure_has_permission
 from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
+from app.domain.user.user_entity import UserEntity
 from app.feature.auth.auth_dto import (
     LoginInputDTO,
 )
@@ -9,7 +12,8 @@ from app.domain.auth.auth_exceptions import (
     InvalidPasswordError,
     UserDisabledError
 )
-from app.feature.auth.uow.login_uow import LoginUoWPort
+from app.feature.auth.uow.login_uow_port import LoginUoWPort
+from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
 from app.shared.security.refresh_token_generator_port import (
@@ -136,3 +140,12 @@ class AuthService:
             ),
             refresh_plain
         )
+
+    async def get_me(
+        self,
+        actor: Actor,
+        uow: MeUoWPort,
+    ) -> UserEntity:
+
+        ensure_has_permission(actor, Permission.READ_SELF)
+        return await uow.me_read_repository.get(actor.id)
