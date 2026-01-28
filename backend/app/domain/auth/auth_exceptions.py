@@ -20,3 +20,15 @@ class RefreshTokenNotFoundError(AuthDomainError):
 
 class PermissionDeniedError(AuthDomainError):
     pass
+
+
+class ExpiredRefreshTokenError(AuthDomainError):
+    pass
+
+
+class InvalidRefreshTokenError(AuthDomainError):
+    pass
+
+
+class RevokedRefreshTokenError(AuthDomainError):
+    pass

@@ -1,2 +1,2 @@
-class RefreshTokenGeneratorPort:
+class TokenGeneratorPort:
     def generate(self) -> str: ...

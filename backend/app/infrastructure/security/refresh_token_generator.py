@@ -1,9 +1,9 @@
-from app.shared.security.refresh_token_generator_port import (
-    RefreshTokenGeneratorPort
+from app.shared.security.token_generator_port import (
+    TokenGeneratorPort
 )
 import secrets
 
 
-class RefreshTokenGenerator(RefreshTokenGeneratorPort):
+class TokenGenerator(TokenGeneratorPort):
     def generate(self) -> str:
         return secrets.token_urlsafe(64)

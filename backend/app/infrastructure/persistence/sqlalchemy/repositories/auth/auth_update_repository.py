@@ -1,14 +1,9 @@
-from sqlalchemy import update
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import text
 from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
 from app.feature.auth.repositories.auth_update_repository_port import (
     AuthUpdateRepositoryPort
 )
-from app.infrastructure.persistence.sqlalchemy.models.refresh_tokens import (
-    RefreshToken
-)
-from app.shared.utils.time import utcnow
 
 
 class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
@@ -20,13 +15,15 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
 
     async def revoke_refresh_token(self, token_hash: str) -> None:
         await self._session.execute(
-            update(RefreshToken)
-            .where(
-                RefreshToken.token_hash == token_hash,
-                RefreshToken.token_hash.is_(None),
+            text(
+                """
+                UPDATE app.refresh_tokens
+                SET revoked_at = now()
+                WHERE token_hash = :token_hash
+                """
+            ),
+            {"token_hash": token_hash}
             )
-            .values(revoked_at=utcnow())
-        )
 
     async def rotate_refresh_token(
         self,
@@ -66,7 +63,7 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
                     """
                     UPDATE app.refresh_tokens
                     SET
-                        replaced_by_token_id = :new_id
+                        replaced_by_token_id = :new_id,
                         revoked_at = now()
                     WHERE token_hash = :old_hash
                         AND user_id = :user_id

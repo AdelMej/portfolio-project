@@ -2,22 +2,30 @@ from datetime import timedelta
 from app.domain.auth.actor_entity import Actor, TokenActor
 from app.domain.auth.permission import Permission
 from app.domain.auth.permission_rules import ensure_has_permission
-from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
+from app.domain.auth.refresh_token_entity import (
+    NewRefreshTokenEntity,
+)
 from app.domain.user.user_entity import UserEntity
 from app.feature.auth.auth_dto import (
     LoginInputDTO,
 )
 from app.domain.auth.auth_exceptions import (
+    ExpiredRefreshTokenError,
     InvalidEmailError,
     InvalidPasswordError,
+    InvalidRefreshTokenError,
+    RevokedRefreshTokenError,
     UserDisabledError
 )
 from app.feature.auth.uow.login_uow_port import LoginUoWPort
+from app.feature.auth.uow.logout_uow_port import LogoutUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
+from app.feature.auth.uow.refresh_uow_port import RefreshTokenUoWPort
+from app.shared.exceptions.runtime import InvariantViolationError
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
-from app.shared.security.refresh_token_generator_port import (
-    RefreshTokenGeneratorPort
+from app.shared.security.token_generator_port import (
+    TokenGeneratorPort
 )
 from app.shared.security.token_hasher_port import TokenHasherPort
 from app.shared.utils.time import utcnow
@@ -36,10 +44,6 @@ class AuthService:
     injected ports and repositories to perform side effects, making it
     suitable for use across different delivery mechanisms (e.g., HTTP APIs,
     background jobs).
-
-    Attributes:
-        _uow: Unit of work providing access to authentication repositories and
-            transactional boundaries.
     """
     async def login(
         self,
@@ -50,7 +54,7 @@ class AuthService:
         jwt: JwtPort,
         password_hasher: PasswordHasherPort,
         token_hasher: TokenHasherPort,
-        refresh_token_generator: RefreshTokenGeneratorPort
+        token_generator: TokenGeneratorPort
     ) -> tuple[str, str]:
         """Authenticate a user and issue access and refresh tokens.
 
@@ -91,7 +95,7 @@ class AuthService:
         if not await uow.auth_read.exist_email(email):
             raise InvalidEmailError()
 
-        user = await uow.auth_read.system_get_user_by_email(email)
+        user = await uow.auth_read.get_user_by_email(email)
 
         if user is None:
             raise InvalidEmailError()
@@ -107,7 +111,7 @@ class AuthService:
             refresh_hash = token_hasher.hash(existing_refresh)
             token = await uow.auth_read.get_refresh_token(refresh_hash)
 
-        refresh_plain = refresh_token_generator.generate()
+        refresh_plain = token_generator.generate()
         refresh_hash = token_hasher.hash(refresh_plain)
 
         if token:
@@ -149,3 +153,72 @@ class AuthService:
 
         ensure_has_permission(actor, Permission.READ_SELF)
         return await uow.me_read_repository.get(actor.id)
+
+    async def refresh(
+        self,
+        current_refresh_token: str,
+        uow: RefreshTokenUoWPort,
+        jwt: JwtPort,
+        token_hasher: TokenHasherPort,
+        token_generator: TokenGeneratorPort,
+        refresh_ttl: int,
+    ) -> tuple[str, str]:
+        current_refresh_hash = token_hasher.hash(current_refresh_token)
+        current_refresh = await uow.auth_read.get_refresh_token(
+            current_refresh_hash
+        )
+
+        if current_refresh is None:
+            raise InvalidRefreshTokenError()
+
+        if current_refresh.is_expired():
+            raise ExpiredRefreshTokenError()
+
+        if current_refresh.is_revoked():
+            raise RevokedRefreshTokenError()
+
+        user = await uow.auth_read.get_user_by_id(current_refresh.user_id)
+
+        if user is None:
+            raise InvariantViolationError(
+                "Refresh token references missing user",
+                context={
+                    "refresh_token_hash": current_refresh.token_hash,
+                    "user_id": current_refresh.user_id,
+                }
+            )
+
+        new_token_plain = token_generator.generate()
+        new_token_hash = token_hasher.hash(new_token_plain)
+
+        new_refresh_token = NewRefreshTokenEntity(
+            user_id=user.id,
+            token_hash=new_token_hash,
+            expires_at=utcnow() + timedelta(seconds=refresh_ttl)
+        )
+
+        await uow.auth_update.rotate_refresh_token(
+            current_token_hash=current_refresh_hash,
+            new_token=new_refresh_token
+        )
+
+        token_actor = TokenActor(
+            id=user.id,
+            roles=user.roles,
+        )
+
+        access_token = jwt.issue_access_token(
+            actor=token_actor
+        )
+
+        return access_token, new_token_plain
+
+    async def logout(
+        self,
+        token: str,
+        uow: LogoutUoWPort,
+        token_hasher: TokenHasherPort,
+    ) -> None:
+        token_hash = token_hasher.hash(token)
+
+        await uow.auth_update.revoke_refresh_token(token_hash)

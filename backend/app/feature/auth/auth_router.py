@@ -14,28 +14,36 @@ from app.domain.auth.auth_exceptions import (
 )
 from app.feature.auth.auth_exception import InvalidCredentialsError
 from app.feature.auth.uow.login_uow_port import LoginUoWPort
+from app.feature.auth.uow.logout_uow_port import LogoutUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
+from app.feature.auth.uow.refresh_uow_port import RefreshTokenUoWPort
 from app.infrastructure.persistence.sqlalchemy.provider import (
     get_login_uow,
-    get_me_uow
+    get_logout_uow,
+    get_me_uow,
+    get_refresh_uow
 )
 from app.infrastructure.security.provider import (
     get_current_actor,
     get_jwt,
     get_password_hasher,
-    get_refresh_token_generator,
+    get_token_generator,
     get_token_hasher
 )
 from app.infrastructure.settings.provider import get_refresh_token_ttl
+from app.shared.exceptions.commons import UnauthorizedError
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
-from app.shared.security.refresh_token_generator_port import (
-    RefreshTokenGeneratorPort
+from app.shared.security.token_generator_port import (
+    TokenGeneratorPort
 )
 from app.shared.security.token_hasher_port import TokenHasherPort
 
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
+)
 
 
 @router.post(
@@ -52,8 +60,8 @@ async def login(
     password_hasher: PasswordHasherPort = Depends(get_password_hasher),
     jwt: JwtPort = Depends(get_jwt),
     token_hasher: TokenHasherPort = Depends(get_token_hasher),
-    refresh_token_generator: RefreshTokenGeneratorPort = Depends(
-        get_refresh_token_generator
+    token_generator: TokenGeneratorPort = Depends(
+        get_token_generator
     ),
     refresh_ttl: int = Depends(get_refresh_token_ttl),
 ) -> TokenOutputDTO:
@@ -70,7 +78,7 @@ async def login(
             uow=login_uow,
             jwt=jwt,
             token_hasher=token_hasher,
-            refresh_token_generator=refresh_token_generator,
+            token_generator=token_generator,
             refresh_token_ttl=refresh_ttl,
             password_hasher=password_hasher
         )
@@ -98,13 +106,13 @@ async def token(
     request: Request,
     response: Response,
     form: OAuth2PasswordRequestForm = Depends(),
-    login_uow: LoginUoWPort = Depends(get_login_uow),
+    uow: LoginUoWPort = Depends(get_login_uow),
     service: AuthService = Depends(get_auth_service),
     password_hasher: PasswordHasherPort = Depends(get_password_hasher),
     jwt: JwtPort = Depends(get_jwt),
     token_hasher: TokenHasherPort = Depends(get_token_hasher),
-    refresh_token_generator: RefreshTokenGeneratorPort = Depends(
-        get_refresh_token_generator
+    refresh_token_generator: TokenGeneratorPort = Depends(
+        get_token_generator
     ),
     refresh_ttl: int = Depends(get_refresh_token_ttl),
 ) -> TokenOutputDTO:
@@ -124,10 +132,10 @@ async def token(
         access, refresh = await service.login(
             input=input,
             existing_refresh=existing_refresh,
-            uow=login_uow,
+            uow=uow,
             jwt=jwt,
             token_hasher=token_hasher,
-            refresh_token_generator=refresh_token_generator,
+            token_generator=refresh_token_generator,
             refresh_token_ttl=refresh_ttl,
             password_hasher=password_hasher
         )
@@ -150,6 +158,80 @@ async def token(
     )
 
 
+@router.post(
+    path="/refresh",
+    response_model=TokenOutputDTO,
+    status_code=200
+)
+async def refresh(
+    request: Request,
+    response: Response,
+    uow: RefreshTokenUoWPort = Depends(get_refresh_uow),
+    jwt: JwtPort = Depends(get_jwt),
+    service: AuthService = Depends(get_auth_service),
+    token_hasher: TokenHasherPort = Depends(get_token_hasher),
+    token_generator: TokenGeneratorPort = Depends(get_token_generator),
+    refresh_ttl: int = Depends(get_refresh_token_ttl)
+) -> TokenOutputDTO:
+    current_refresh = request.cookies.get("refresh_token")
+
+    if current_refresh is None:
+        raise UnauthorizedError()
+
+    access, refresh = await service.refresh(
+        current_refresh_token=current_refresh,
+        uow=uow,
+        jwt=jwt,
+        token_hasher=token_hasher,
+        token_generator=token_generator,
+        refresh_ttl=refresh_ttl,
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        path="/auth",
+        max_age=refresh_ttl
+    )
+
+    return TokenOutputDTO(
+        access_token=access,
+        token_type="bearer"
+    )
+
+
+@router.post(
+    path="/logout",
+    status_code=204
+)
+async def logout(
+    request: Request,
+    response: Response,
+    uow: LogoutUoWPort = Depends(get_logout_uow),
+    service: AuthService = Depends(get_auth_service),
+    token_hasher: TokenHasherPort = Depends(get_token_hasher)
+) -> None:
+    refresh_token = request.cookies.get("refresh_token")
+
+    if refresh_token is None:
+        print("test")
+        return
+
+    await service.logout(
+        token=refresh_token,
+        uow=uow,
+        token_hasher=token_hasher
+    )
+
+    response.delete_cookie(
+        key="refresh_token",
+        path="/auth"
+    )
+
+
 @router.get(
     "/me",
     response_model=GetMeOutputDTO,
@@ -159,7 +241,7 @@ async def me(
     uow: MeUoWPort = Depends(get_me_uow),
     actor: Actor = Depends(get_current_actor),
     service: AuthService = Depends(get_auth_service)
-):
+) -> GetMeOutputDTO:
     user = await service.get_me(actor, uow)
     return GetMeOutputDTO(
         email=user.email,

@@ -5,7 +5,7 @@ from app.domain.auth.refresh_token_entity import (
 from app.infrastructure.persistence.in_memory.storage import (
     InMemoryAuthStorage
 )
-from app.feature.auth.repositories.auth_update_repository import (
+from app.feature.auth.repositories.auth_update_repository_port import (
     AuthUpdateRepositoryPort
 )
 from app.shared.utils.time import utcnow
