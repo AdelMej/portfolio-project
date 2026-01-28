@@ -112,13 +112,14 @@ class User(Base):
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
         "RefreshToken",
         back_populates="user",
-        lazy="selectin"
+        lazy="raise"
     )
 
     attendance: Mapped[list["SessionAttendance"]] = relationship(
         "SessionAttendance",
         back_populates="user",
-        lazy="selectin"
+        lazy="raise",
+        overlaps="attendance_entries",
     )
 
     participations: Mapped[list["SessionParticipation"]] = relationship(

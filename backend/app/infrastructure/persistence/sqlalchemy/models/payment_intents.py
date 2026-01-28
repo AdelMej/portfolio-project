@@ -89,7 +89,7 @@ class PaymentIntent(Base):
 
     status: Mapped[str] = mapped_column(nullable=False)
 
-    credit_applied: Mapped[int] = mapped_column(INTEGER, nullable=False)
+    credit_applied_cents: Mapped[int] = mapped_column(INTEGER, nullable=False)
 
     amount_cents: Mapped[int] = mapped_column(INTEGER, nullable=False)
 

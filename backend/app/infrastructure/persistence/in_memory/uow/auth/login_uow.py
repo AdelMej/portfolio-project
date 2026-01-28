@@ -16,10 +16,3 @@ class InMemoryLoginUoW(LoginUoWPort):
         self.auth_read = InMemoryAuthReadRepository(storage)
         self.auth_update = InMemoryAuthUpdateRepository(storage)
         self.auth_creation = InMemoryAuthCreationRepository(storage)
-
-    async def __aenter__(self) -> "InMemoryLoginUoW":
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb) -> None:
-        # nothing to rollback in-memory
-        pass

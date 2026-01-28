@@ -37,6 +37,7 @@ ALTER TABLE app.refresh_tokens FORCE ROW LEVEL SECURITY;
 CREATE POLICY refresh_tokens_select_user_admin
 ON app.refresh_tokens
 FOR SELECT
+TO app_user
 USING (
     user_id = current_setting('app.current_user_id', true)::uuid
 
@@ -104,4 +105,3 @@ WITH CHECK (true);
 
 COMMENT ON POLICY refresh_tokens_system_update ON app.refresh_tokens IS
 'Allows app_system to update refresh tokens for revocation or rotation.';
-

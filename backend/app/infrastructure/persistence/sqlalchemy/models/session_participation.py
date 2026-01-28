@@ -88,6 +88,8 @@ class SessionParticipation(Base):
     attendance_entries: Mapped[list["SessionAttendance"]] = relationship(
         "SessionAttendance",
         lazy="selectin",
+        viewonly=True,
+        overlaps="session,user",
     )
 
     session: Mapped["Session"] = relationship(
