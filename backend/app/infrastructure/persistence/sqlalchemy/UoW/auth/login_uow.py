@@ -1,4 +1,4 @@
-from app.feature.auth.uow.login_uow import LoginUoWPort
+from app.feature.auth.uow.login_uow_port import LoginUoWPort
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.infrastructure.persistence.sqlalchemy.repositories.auth import (
     SqlAlchemyAuthUpdateRepository,

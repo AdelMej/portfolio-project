@@ -97,9 +97,16 @@ CREATE OR REPLACE FUNCTION app.tg_admin_update_others_lifecycle_only()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    v_user_id uuid := current_setting('app.current_user_id', true)::uuid;
 BEGIN
     -- Only care about UPDATE
     IF TG_OP <> 'UPDATE' THEN
+        RETURN NEW;
+    END IF;
+
+    -- No user context → system operation → allow
+    IF v_user_id IS NULL THEN
         RETURN NEW;
     END IF;
 
@@ -108,11 +115,11 @@ BEGIN
         SELECT 1
         FROM app.user_roles ur
         JOIN app.roles r ON r.id = ur.role_id
-        WHERE ur.user_id = current_setting('app.current_user_id')::uuid
+        WHERE ur.user_id = v_user_id
           AND r.role_name = 'admin'
     ) THEN
         -- Only restrict when admin is updating someone else
-        IF OLD.id <> current_setting('app.current_user_id')::uuid THEN
+        IF OLD.id <> v_user_id THEN
             -- Allow ONLY disabled_at to change
             IF NEW.disabled_at IS DISTINCT FROM OLD.disabled_at THEN
                 RETURN NEW;

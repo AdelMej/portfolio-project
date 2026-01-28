@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
-from app.feature.auth.repositories.auth_creation_respository import (
+from app.feature.auth.repositories.auth_creation_respository_port import (
     AuthCreationRepositoryPort
 )
 from app.infrastructure.persistence.sqlalchemy.models.refresh_tokens import (

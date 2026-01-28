@@ -37,7 +37,7 @@ def get_app_user_engine(request: Request) -> str:
 
 
 async def get_app_user_session(
-        request: Request
+    request: Request,
 ) -> AsyncGenerator[AsyncSession, None]:
     session: AsyncSession = request.app.state.app_user_session_factory()
     try:
@@ -51,7 +51,7 @@ async def get_app_user_session(
 
 
 async def get_app_system_session(
-        request: Request
+    request: Request
 ) -> AsyncGenerator[AsyncSession, None]:
     session: AsyncSession = request.app.state.app_system_session_factory()
     try:

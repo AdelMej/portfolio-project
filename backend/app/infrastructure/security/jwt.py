@@ -27,7 +27,7 @@ class JoseJwt(JwtPort):
 
         payload = {
             "sub": str(actor.id),
-            "role": [r.value for r in actor.roles],
+            "roles": [r.value for r in actor.roles],
             "iss": self._issuer,
             "iat": now,
             "exp": now + self._access_ttl
@@ -56,6 +56,6 @@ class JoseJwt(JwtPort):
 
         return Actor(
             id=UUID(payload["sub"]),
-            type=payload["role"],
+            type="user",
             permissions=frozenset(permissions),
         )

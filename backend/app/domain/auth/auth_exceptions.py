@@ -10,10 +10,13 @@ class InvalidPasswordError(AuthDomainError):
     pass
 
 
-
 class UserDisabledError(AuthDomainError):
     pass
 
 
 class RefreshTokenNotFoundError(AuthDomainError):
+    pass
+
+
+class PermissionDeniedError(AuthDomainError):
     pass
