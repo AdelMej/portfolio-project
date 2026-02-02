@@ -1,10 +1,10 @@
 class UnauthorizedError(Exception):
-    ...
+    pass
 
 
-class FrobiddenError(Exception):
-    ...
+class ForbiddenError(Exception):
+    pass
 
 
 class NotFoundError(Exception):
-    ...
+    pass

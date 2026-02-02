@@ -6,12 +6,14 @@ from app.feature.auth.uow.login_uow_port import LoginUoWPort
 from app.feature.auth.uow.logout_uow_port import LogoutUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.feature.auth.uow.refresh_uow_port import RefreshTokenUoWPort
+from app.feature.auth.uow.registration_uow_port import RegistrationUoWPort
 from app.infrastructure.persistence.sqlalchemy.UoW.auth import (
     SqlAlchemyMeUoW,
     SqlAlchemyLoginUoW,
     SqlalchemyRefreshTokenUoW,
     SqlAlchemyLogoutUoW
 )
+from app.infrastructure.persistence.sqlalchemy.UoW.auth.registration_uow import SqlAlchemyRegistrationUoW
 from app.infrastructure.security.provider import get_current_actor
 from app.infrastructure.settings.provider import (
     get_app_system_session,
@@ -48,3 +50,9 @@ async def get_logout_uow(
         session: AsyncSession = Depends(get_app_system_session)
 ) -> LogoutUoWPort:
     return SqlAlchemyLogoutUoW(session)
+
+
+async def get_registration_uow(
+        session: AsyncSession = Depends(get_app_system_session)
+) -> RegistrationUoWPort:
+    return SqlAlchemyRegistrationUoW(session)

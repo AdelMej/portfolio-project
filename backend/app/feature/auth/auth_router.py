@@ -6,22 +6,31 @@ from app.feature.auth.auth_service import AuthService
 from app.feature.auth.auth_dto import (
     GetMeOutputDTO,
     LoginInputDTO,
-    TokenOutputDTO
+    RegistrationInputDTO,
+    TokenOutputDTO,
+    MeEmailChangeInputDTO
 )
 from app.domain.auth.auth_exceptions import (
+    AuthDomainError,
     InvalidEmailError,
     InvalidPasswordError,
+    PermissionDeniedError,
 )
-from app.feature.auth.auth_exception import InvalidCredentialsError
+from app.feature.auth.auth_exception import (
+    InvalidCredentialsError,
+    InvalidTokenError
+)
 from app.feature.auth.uow.login_uow_port import LoginUoWPort
 from app.feature.auth.uow.logout_uow_port import LogoutUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.feature.auth.uow.refresh_uow_port import RefreshTokenUoWPort
+from app.feature.auth.uow.registration_uow_port import RegistrationUoWPort
 from app.infrastructure.persistence.sqlalchemy.provider import (
     get_login_uow,
     get_logout_uow,
     get_me_uow,
-    get_refresh_uow
+    get_refresh_uow,
+    get_registration_uow
 )
 from app.infrastructure.security.provider import (
     get_current_actor,
@@ -38,7 +47,11 @@ from app.shared.security.token_generator_port import (
     TokenGeneratorPort
 )
 from app.shared.security.token_hasher_port import TokenHasherPort
+from app.shared.exceptions.commons import ForbiddenError
+import logging
 
+
+logger = logging.getLogger("app.auth")
 
 router = APIRouter(
     prefix="/auth",
@@ -139,7 +152,10 @@ async def token(
             refresh_token_ttl=refresh_ttl,
             password_hasher=password_hasher
         )
-    except (InvalidEmailError, InvalidPasswordError, ValueError):
+    except (InvalidEmailError, InvalidPasswordError, ValueError) as e:
+        logger.info(
+            e.__class__.__name__
+        )
         raise InvalidCredentialsError()
 
     response.set_cookie(
@@ -178,14 +194,20 @@ async def refresh(
     if current_refresh is None:
         raise UnauthorizedError()
 
-    access, refresh = await service.refresh(
-        current_refresh_token=current_refresh,
-        uow=uow,
-        jwt=jwt,
-        token_hasher=token_hasher,
-        token_generator=token_generator,
-        refresh_ttl=refresh_ttl,
-    )
+    try:
+        access, refresh = await service.refresh(
+            current_refresh_token=current_refresh,
+            uow=uow,
+            jwt=jwt,
+            token_hasher=token_hasher,
+            token_generator=token_generator,
+            refresh_ttl=refresh_ttl,
+        )
+    except AuthDomainError as e:
+        logger.info(
+            e.__class__.__name__
+        )
+        raise InvalidTokenError()
 
     response.set_cookie(
         key="refresh_token",
@@ -203,6 +225,23 @@ async def refresh(
     )
 
 
+@router.put(
+    path="/register",
+    status_code=204
+)
+async def register(
+    input: RegistrationInputDTO,
+    uow: RegistrationUoWPort = Depends(get_registration_uow),
+    password_hasher: PasswordHasherPort = Depends(get_password_hasher),
+    service: AuthService = Depends(get_auth_service)
+):
+    await service.register(
+        input=input,
+        uow=uow,
+        password_hasher=password_hasher,
+    )
+
+
 @router.post(
     path="/logout",
     status_code=204
@@ -217,7 +256,6 @@ async def logout(
     refresh_token = request.cookies.get("refresh_token")
 
     if refresh_token is None:
-        print("test")
         return
 
     await service.logout(
@@ -237,13 +275,30 @@ async def logout(
     response_model=GetMeOutputDTO,
     status_code=200
 )
-async def me(
+async def get_me(
     uow: MeUoWPort = Depends(get_me_uow),
     actor: Actor = Depends(get_current_actor),
     service: AuthService = Depends(get_auth_service)
 ) -> GetMeOutputDTO:
-    user = await service.get_me(actor, uow)
+    try:
+        user = await service.get_me(actor, uow)
+    except PermissionDeniedError:
+        raise ForbiddenError()
+
     return GetMeOutputDTO(
         email=user.email,
         roles=user.roles
     )
+
+
+@router.patch(
+    "/me/email-change",
+    status_code=204
+)
+async def email_change_me(
+    input: MeEmailChangeInputDTO,
+    uow: MeUoWPort = Depends(get_me_uow),
+    actor: Actor = Depends(get_current_actor),
+    service: AuthService = Depends(get_auth_service)
+) -> None:
+    await service.email_change_me(actor, uow, input)

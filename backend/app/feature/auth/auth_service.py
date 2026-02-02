@@ -5,11 +5,23 @@ from app.domain.auth.permission_rules import ensure_has_permission
 from app.domain.auth.refresh_token_entity import (
     NewRefreshTokenEntity,
 )
-from app.domain.user.user_entity import UserEntity
+from app.domain.auth.refresh_tokens_rules import (
+    ensure_refresh_token_is_valid
+)
+from app.domain.auth.role import Role
+from app.domain.user.user_entity import NewUserEntity, UserEntity
+from app.domain.user.user_profile_entity import UserProfileEntity
+from app.domain.user.user_profile_rules import (
+    ensure_first_name_is_valid,
+    ensure_last_name_is_valid
+)
 from app.feature.auth.auth_dto import (
     LoginInputDTO,
+    MeEmailChangeInputDTO,
+    RegistrationInputDTO,
 )
 from app.domain.auth.auth_exceptions import (
+    EmailAlreadyExistError,
     ExpiredRefreshTokenError,
     InvalidEmailError,
     InvalidPasswordError,
@@ -21,6 +33,7 @@ from app.feature.auth.uow.login_uow_port import LoginUoWPort
 from app.feature.auth.uow.logout_uow_port import LogoutUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.feature.auth.uow.refresh_uow_port import RefreshTokenUoWPort
+from app.feature.auth.uow.registration_uow_port import RegistrationUoWPort
 from app.shared.exceptions.runtime import InvariantViolationError
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
@@ -29,6 +42,8 @@ from app.shared.security.token_generator_port import (
 )
 from app.shared.security.token_hasher_port import TokenHasherPort
 from app.shared.utils.time import utcnow
+from app.domain.auth.auth_password_rules import ensure_password_is_strong
+from app.domain.auth.auth_email_rules import ensure_email_is_valid
 
 
 class AuthService:
@@ -145,15 +160,6 @@ class AuthService:
             refresh_plain
         )
 
-    async def get_me(
-        self,
-        actor: Actor,
-        uow: MeUoWPort,
-    ) -> UserEntity:
-
-        ensure_has_permission(actor, Permission.READ_SELF)
-        return await uow.me_read_repository.get(actor.id)
-
     async def refresh(
         self,
         current_refresh_token: str,
@@ -163,6 +169,8 @@ class AuthService:
         token_generator: TokenGeneratorPort,
         refresh_ttl: int,
     ) -> tuple[str, str]:
+        ensure_refresh_token_is_valid(current_refresh_token)
+
         current_refresh_hash = token_hasher.hash(current_refresh_token)
         current_refresh = await uow.auth_read.get_refresh_token(
             current_refresh_hash
@@ -222,3 +230,58 @@ class AuthService:
         token_hash = token_hasher.hash(token)
 
         await uow.auth_update.revoke_refresh_token(token_hash)
+
+    async def register(
+        self,
+        input: RegistrationInputDTO,
+        uow: RegistrationUoWPort,
+        password_hasher: PasswordHasherPort,
+    ) -> None:
+        # normalization
+        email = input.email.strip().lower()
+        password = input.password.strip()
+        first_name = input.first_name.strip()
+        last_name = input.last_name.strip()
+
+        ensure_password_is_strong(password)
+        ensure_email_is_valid(email)
+        ensure_first_name_is_valid(first_name)
+        ensure_last_name_is_valid(last_name)
+
+        new_user = NewUserEntity(
+            email=email,
+            password_hash=password_hasher.hash(password),
+            role=Role.USER
+        )
+
+        new_user_profile = UserProfileEntity(
+            first_name=first_name,
+            last_name=last_name
+        )
+
+        await uow.auth_creation.register(new_user, new_user_profile)
+
+    async def get_me(
+        self,
+        actor: Actor,
+        uow: MeUoWPort,
+    ) -> UserEntity:
+
+        ensure_has_permission(actor, Permission.READ_SELF)
+        return await uow.me_read_repository.get(actor.id)
+
+    async def email_change_me(
+        self,
+        actor: Actor,
+        uow: MeUoWPort,
+        input: MeEmailChangeInputDTO,
+    ) -> None:
+        ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        if uow.auth_read_repository.exist_email(input.email):
+            raise EmailAlreadyExistError()
+
+        await uow.me_update_repository.update_email_by_user_id(
+            input.email,
+            actor.id
+        )

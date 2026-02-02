@@ -32,3 +32,83 @@ class InvalidRefreshTokenError(AuthDomainError):
 
 class RevokedRefreshTokenError(AuthDomainError):
     pass
+
+
+class RefreshTokenIsBlankError(AuthDomainError):
+    pass
+
+
+class RefreshTokenTooShortError(AuthDomainError):
+    pass
+
+
+class RefreshTokenTooLongError(AuthDomainError):
+    pass
+
+
+class EmailAlreadyExistError(AuthDomainError):
+    pass
+
+
+class EmailIsBlankError(AuthDomainError):
+    pass
+
+
+class EmailTooShortError(AuthDomainError):
+    pass
+
+
+class EmailTooLongError(AuthDomainError):
+    pass
+
+
+class EmailInvalidAtCountError(AuthDomainError):
+    pass
+
+
+class EmailInvalidLocalPartError(AuthDomainError):
+    pass
+
+
+class EmailLocalPartTooLongError(AuthDomainError):
+    pass
+
+
+class EmailInvalidDomainError(AuthDomainError):
+    pass
+
+
+class EmailSpaceError(AuthDomainError):
+    pass
+
+
+class PasswordIsBlankError(AuthDomainError):
+    pass
+
+
+class PasswordTooShortError(AuthDomainError):
+    pass
+
+
+class PasswordTooLongError(AuthDomainError):
+    pass
+
+
+class PasswordMissingLowercaseError(AuthDomainError):
+    pass
+
+
+class PasswordMissingUppercaseError(AuthDomainError):
+    pass
+
+
+class PasswordMissingDigitError(AuthDomainError):
+    pass
+
+
+class PasswordMissingSpecialCharError(AuthDomainError):
+    pass
+
+
+class PasswordTooWeakError(AuthDomainError):
+    pass
