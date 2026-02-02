@@ -50,6 +50,19 @@ class GetMeOutputDTO(BaseModel):
     roles: set[Role]
 
 
+class GetMeProfileOutputDTO(BaseModel):
+    first_name: str = Field(
+        ...,
+        min_length=MIN_FIRST_NAME_LENGTH,
+        max_length=MAX_FIRST_NAME_LENGTH
+    )
+    last_name: str = Field(
+        ...,
+        min_length=MIN_LAST_NAME_LENGTH,
+        max_length=MAX_LAST_NAME_LENGTH
+    )
+
+
 class MeEmailChangeInputDTO(BaseModel):
     email: EmailStr = Field(
         ...,

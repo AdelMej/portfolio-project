@@ -325,3 +325,12 @@ class AuthService:
             user_id=actor.id,
             password_hash=new_password_hash
         )
+
+    async def get_me_profile(
+        self,
+        actor: Actor,
+        uow: MeUoWPort
+    ) -> UserProfileEntity:
+        ensure_has_permission(actor, Permission.READ_SELF)
+
+        return await uow.me_read_repository.get_profile_by_id(actor.id)

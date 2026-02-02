@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from app.domain.auth.actor_entity import Actor
+from app.domain.user.user_profile_entity import UserProfileEntity
 from app.feature.auth.auth_dependencies import get_auth_service
 from app.feature.auth.auth_service import AuthService
 from app.feature.auth.auth_dto import (
     GetMeOutputDTO,
+    GetMeProfileOutputDTO,
     LoginInputDTO,
     MePasswordChangeInputDTO,
     RegistrationInputDTO,
@@ -322,4 +324,26 @@ async def password_change_me(
         password_hasher=password_hasher,
         actor=actor,
         uow=uow,
+    )
+
+
+@router.get(
+    "/me/profile",
+    status_code=200,
+    response_model=GetMeProfileOutputDTO
+)
+async def get_me_profile(
+    actor: Actor = Depends(get_current_actor),
+    uow: MeUoWPort = Depends(get_me_uow),
+    service: AuthService = Depends(get_auth_service)
+) -> GetMeProfileOutputDTO:
+
+    user_profile: UserProfileEntity = await service.get_me_profile(
+        actor=actor,
+        uow=uow
+    )
+
+    return GetMeProfileOutputDTO(
+        first_name=user_profile.first_name,
+        last_name=user_profile.last_name
     )
