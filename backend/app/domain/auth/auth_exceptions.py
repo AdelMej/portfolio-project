@@ -112,3 +112,11 @@ class PasswordMissingSpecialCharError(AuthDomainError):
 
 class PasswordTooWeakError(AuthDomainError):
     pass
+
+
+class PasswordMissmatchError(AuthDomainError):
+    pass
+
+
+class PasswordReuseError(AuthDomainError):
+    pass

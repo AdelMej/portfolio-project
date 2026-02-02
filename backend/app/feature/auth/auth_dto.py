@@ -58,6 +58,49 @@ class MeEmailChangeInputDTO(BaseModel):
     )
 
 
+class MePasswordChangeInputDTO(BaseModel):
+    old_password: str
+    new_password: str = Field(
+        ...,
+        min_length=MIN_PASSWORD_LENGTH,
+        max_length=MAX_PASSWORD_LENGTH
+    )
+
+    @field_validator("new_password")
+    @classmethod
+    def password_policy(cls, password: str) -> str:
+        password = password.strip()
+
+        if is_blank(password):
+            raise ValueError("password must not be blank")
+
+        if len(password) < MIN_PASSWORD_LENGTH:
+            raise ValueError(
+                "password must be at least {} characters long"
+                .format(MIN_PASSWORD_LENGTH)
+            )
+
+        if len(password) > MAX_PASSWORD_LENGTH:
+            raise ValueError(
+                "password must be less than {} characters"
+                .format(MAX_PASSWORD_LENGTH)
+            )
+
+        if not contains_digit(password):
+            raise ValueError("password must contain a digit")
+
+        if not contains_lowercase(password):
+            raise ValueError("password must contain a lowercase character")
+
+        if not contains_uppercase(password):
+            raise ValueError("password must contain an uppercase character")
+
+        if not contains_special(password):
+            raise ValueError("password must contain a special character")
+
+        return password
+
+
 class RegistrationInputDTO(BaseModel):
     email: EmailStr = Field(
         ...,

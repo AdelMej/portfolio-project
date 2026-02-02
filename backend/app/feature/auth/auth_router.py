@@ -6,6 +6,7 @@ from app.feature.auth.auth_service import AuthService
 from app.feature.auth.auth_dto import (
     GetMeOutputDTO,
     LoginInputDTO,
+    MePasswordChangeInputDTO,
     RegistrationInputDTO,
     TokenOutputDTO,
     MeEmailChangeInputDTO
@@ -302,3 +303,23 @@ async def email_change_me(
     service: AuthService = Depends(get_auth_service)
 ) -> None:
     await service.email_change_me(actor, uow, input)
+
+
+@router.patch(
+    "/me/password-change",
+    status_code=204
+)
+async def password_change_me(
+    input: MePasswordChangeInputDTO,
+    password_hasher: PasswordHasherPort = Depends(get_password_hasher),
+    uow: MeUoWPort = Depends(get_me_uow),
+    actor: Actor = Depends(get_current_actor),
+    service: AuthService = Depends(get_auth_service)
+) -> None:
+
+    await service.password_change_me(
+        input=input,
+        password_hasher=password_hasher,
+        actor=actor,
+        uow=uow,
+    )

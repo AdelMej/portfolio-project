@@ -18,6 +18,7 @@ from app.domain.user.user_profile_rules import (
 from app.feature.auth.auth_dto import (
     LoginInputDTO,
     MeEmailChangeInputDTO,
+    MePasswordChangeInputDTO,
     RegistrationInputDTO,
 )
 from app.domain.auth.auth_exceptions import (
@@ -26,6 +27,8 @@ from app.domain.auth.auth_exceptions import (
     InvalidEmailError,
     InvalidPasswordError,
     InvalidRefreshTokenError,
+    PasswordMissmatchError,
+    PasswordReuseError,
     RevokedRefreshTokenError,
     UserDisabledError
 )
@@ -287,4 +290,38 @@ class AuthService:
         await uow.me_update_repository.update_email_by_user_id(
             email,
             actor.id
+        )
+
+    async def password_change_me(
+        self,
+        input: MePasswordChangeInputDTO,
+        password_hasher: PasswordHasherPort,
+        actor: Actor,
+        uow: MeUoWPort
+    ) -> None:
+        ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        # normalization
+        old_password = input.old_password.strip()
+        new_password = input.new_password.strip()
+
+        ensure_password_is_strong(new_password)
+
+        user = await uow.auth_read_repository.get_user_by_id(actor.id)
+        if not user:
+            raise InvariantViolationError(
+                "Actor doesn't exist"
+            )
+
+        if not password_hasher.verify(old_password, user.password_hash):
+            raise PasswordMissmatchError()
+
+        if password_hasher.verify(new_password, user.password_hash):
+            raise PasswordReuseError()
+
+        new_password_hash = password_hasher.hash(new_password)
+
+        await uow.me_update_repository.update_password_by_id(
+            user_id=actor.id,
+            password_hash=new_password_hash
         )

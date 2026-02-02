@@ -24,3 +24,16 @@ class SqlAlchemyMeUpdateRepository(MeUpdateRepositoryPort):
                 "user_id": user_id
             }
         )
+
+    async def update_password_by_id(self, user_id: UUID, password_hash: str):
+        await self._session.execute(
+            text("""
+                UPDATE app.users
+                SET password_hash = :password_hash
+                WHERE users.id = :user_id
+            """),
+            {
+                "password_hash": password_hash,
+                "user_id": user_id
+            }
+        )
