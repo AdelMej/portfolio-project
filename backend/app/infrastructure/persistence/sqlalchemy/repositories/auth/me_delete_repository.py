@@ -35,19 +35,6 @@ class SqlAlchemyMeDeleteRepository(MeDeleteRepositoryPort):
 
         await self._session.execute(
             text("""
-                UPDATE app.refresh_tokens
-                SET
-                    revoked_at = :revoked_at
-                WHERE user_id = :user_id
-            """),
-            {
-                "revoked_at": utcnow(),
-                "user_id": user_id
-            }
-        )
-
-        await self._session.execute(
-            text("""
                 UPDATE app.users
                 SET
                     email = :email,

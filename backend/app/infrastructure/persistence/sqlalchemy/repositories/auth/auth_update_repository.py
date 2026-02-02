@@ -1,9 +1,11 @@
+from uuid import UUID
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import text
 from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
 from app.feature.auth.repositories.auth_update_repository_port import (
     AuthUpdateRepositoryPort
 )
+from app.shared.utils.time import utcnow
 
 
 class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
@@ -75,3 +77,18 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
                     "user_id": new_token.user_id
                 }
             )
+
+    async def revoke_all_refresh_token(self, user_id: UUID) -> None:
+        await self._session.execute(
+            text("""
+            UPDATE app.refresh_tokens
+            SET
+                revoked_at = :revoked_at
+            WHERE user_id = :user_id
+                AND revoked_at IS NULL
+            """),
+            {
+                "revoked_at": utcnow(),
+                "user_id": user_id
+            }
+        )

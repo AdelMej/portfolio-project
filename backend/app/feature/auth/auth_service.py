@@ -366,6 +366,7 @@ class AuthService:
     async def delete_me(
         self,
         actor: Actor,
+        refresh_uow: RefreshTokenUoWPort,
         uow: MeUoWPort,
         password_hasher: PasswordHasherPort
     ) -> None:
@@ -380,4 +381,8 @@ class AuthService:
         await uow.me_delete_repository.soft_delete_user(
             user_id=actor.id,
             new_password_hash=hashed_password
+        )
+
+        await refresh_uow.auth_update.revoke_all_refresh_token(
+            user_id=actor.id
         )

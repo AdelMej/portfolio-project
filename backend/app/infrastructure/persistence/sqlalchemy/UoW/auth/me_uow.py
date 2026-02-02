@@ -3,7 +3,8 @@ from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.infrastructure.persistence.sqlalchemy.repositories.auth import (
     SqlAlchemyMeReadRepository,
     SqlAlchemyMeUpdateRepository,
-    SqlAlchemyAuthReadRepository
+    SqlAlchemyAuthReadRepository,
+    SqlAlchemyMeDeleteRepository
 )
 
 
@@ -13,4 +14,5 @@ class SqlAlchemyMeUoW(MeUoWPort):
 
         self.me_read_repository = SqlAlchemyMeReadRepository(session)
         self.me_update_repository = SqlAlchemyMeUpdateRepository(session)
+        self.me_delete_repository = SqlAlchemyMeDeleteRepository(session)
         self.auth_read_repository = SqlAlchemyAuthReadRepository(session)

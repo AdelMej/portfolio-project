@@ -376,12 +376,14 @@ async def delete_me(
     response: Response,
     actor: Actor = Depends(get_current_actor),
     uow: MeUoWPort = Depends(get_me_uow),
+    refresh_uow: RefreshTokenUoWPort = Depends(get_refresh_uow),
     service: AuthService = Depends(get_auth_service),
     password_hasher: PasswordHasherPort = Depends(get_password_hasher)
 ) -> None:
 
     await service.delete_me(
         actor=actor,
+        refresh_uow=refresh_uow,
         uow=uow,
         password_hasher=password_hasher,
     )
