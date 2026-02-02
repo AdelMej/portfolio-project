@@ -278,10 +278,13 @@ class AuthService:
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
 
-        if uow.auth_read_repository.exist_email(input.email):
+        # normalization
+        email = input.email.strip().lower()
+
+        if await uow.auth_read_repository.exist_email(email):
             raise EmailAlreadyExistError()
 
         await uow.me_update_repository.update_email_by_user_id(
-            input.email,
+            email,
             actor.id
         )

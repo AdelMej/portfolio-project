@@ -54,7 +54,7 @@ def register_exception_handler(app: FastAPI):
     @app.exception_handler(EmailAlreadyExistError)
     async def email_already_exist(
         request: Request,
-        exc: InvalidCredentialsError
+        exc: EmailAlreadyExistError
     ) -> JSONResponse:
         logger.info(
             "Email change rejected",
@@ -67,5 +67,5 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={"error": "Email is unavailable"},
-            status_code=401
+            status_code=400
         )
