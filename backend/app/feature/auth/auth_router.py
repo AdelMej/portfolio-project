@@ -366,3 +366,27 @@ async def update_me_profile(
         actor=actor,
         uow=uow
     )
+
+
+@router.delete(
+    "/me",
+    status_code=204
+)
+async def delete_me(
+    response: Response,
+    actor: Actor = Depends(get_current_actor),
+    uow: MeUoWPort = Depends(get_me_uow),
+    service: AuthService = Depends(get_auth_service),
+    password_hasher: PasswordHasherPort = Depends(get_password_hasher)
+) -> None:
+
+    await service.delete_me(
+        actor=actor,
+        uow=uow,
+        password_hasher=password_hasher,
+    )
+
+    response.delete_cookie(
+        key="refresh_token",
+        path="/auth"
+    )

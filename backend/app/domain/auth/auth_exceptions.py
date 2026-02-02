@@ -120,3 +120,7 @@ class PasswordMissmatchError(AuthDomainError):
 
 class PasswordReuseError(AuthDomainError):
     pass
+
+
+class AdminCantSelfDeleteError(AuthDomainError):
+    pass
