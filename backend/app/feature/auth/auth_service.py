@@ -20,6 +20,7 @@ from app.feature.auth.auth_dto import (
     MeEmailChangeInputDTO,
     MePasswordChangeInputDTO,
     RegistrationInputDTO,
+    UpdateMeProfileInputDTO,
 )
 from app.domain.auth.auth_exceptions import (
     EmailAlreadyExistError,
@@ -334,3 +335,28 @@ class AuthService:
         ensure_has_permission(actor, Permission.READ_SELF)
 
         return await uow.me_read_repository.get_profile_by_id(actor.id)
+
+    async def update_me_profile(
+        self,
+        input: UpdateMeProfileInputDTO,
+        actor: Actor,
+        uow: MeUoWPort
+    ) -> None:
+        ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        # normalization
+        first_name = input.first_name.strip()
+        last_name = input.last_name.strip()
+
+        ensure_first_name_is_valid(first_name)
+        ensure_last_name_is_valid(last_name)
+
+        profile = UserProfileEntity(
+            first_name=first_name,
+            last_name=last_name
+        )
+
+        await uow.me_update_repository.update_profile_by_id(
+            user_id=actor.id,
+            profile=profile
+        )

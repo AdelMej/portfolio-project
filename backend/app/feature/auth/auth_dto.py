@@ -194,7 +194,64 @@ class RegistrationInputDTO(BaseModel):
 
     @field_validator("last_name")
     @classmethod
-    def last_name_policu(cls, last_name: str) -> str:
+    def last_name_policy(cls, last_name: str) -> str:
+        last_name.strip()
+
+        if is_blank(last_name):
+            raise ValueError("last name must not be blank")
+
+        if len(last_name) < MIN_LAST_NAME_LENGTH:
+            raise ValueError(
+                "last name must be at least {} character long"
+                .format(MIN_LAST_NAME_LENGTH)
+            )
+
+        if len(last_name) > MAX_LAST_NAME_LENGTH:
+            raise ValueError(
+                "last name must be less than {} characters"
+                .format(MAX_LAST_NAME_LENGTH)
+            )
+
+        return last_name
+
+
+class UpdateMeProfileInputDTO(BaseModel):
+    first_name: str = Field(
+        ...,
+        min_length=MIN_FIRST_NAME_LENGTH,
+        max_length=MAX_FIRST_NAME_LENGTH
+    )
+    last_name: str = Field(
+        ...,
+        min_length=MIN_LAST_NAME_LENGTH,
+        max_length=MAX_LAST_NAME_LENGTH
+    )
+
+    @field_validator("first_name")
+    @classmethod
+    def first_name_policy(cls, first_name: str) -> str:
+        first_name = first_name.strip()
+
+        if is_blank(first_name):
+            raise ValueError("first name must not be blank")
+
+        if len(first_name) < MIN_FIRST_NAME_LENGTH:
+            raise ValueError(
+                "first name must be at least {} character long"
+                .format(MIN_FIRST_NAME_LENGTH)
+            )
+
+        if len(first_name) > MAX_FIRST_NAME_LENGTH:
+            raise ValueError(
+                "first name must be less than {} characters"
+                .format(MAX_FIRST_NAME_LENGTH)
+            )
+
+        return first_name
+
+    @field_validator("last_name")
+    @classmethod
+    def last_name_policy(cls, last_name: str) -> str:
         last_name.strip()
 
         if is_blank(last_name):

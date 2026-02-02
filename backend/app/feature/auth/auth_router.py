@@ -11,7 +11,8 @@ from app.feature.auth.auth_dto import (
     MePasswordChangeInputDTO,
     RegistrationInputDTO,
     TokenOutputDTO,
-    MeEmailChangeInputDTO
+    MeEmailChangeInputDTO,
+    UpdateMeProfileInputDTO,
 )
 from app.domain.auth.auth_exceptions import (
     AuthDomainError,
@@ -346,4 +347,22 @@ async def get_me_profile(
     return GetMeProfileOutputDTO(
         first_name=user_profile.first_name,
         last_name=user_profile.last_name
+    )
+
+
+@router.put(
+    "/me/profile",
+    status_code=204
+)
+async def update_me_profile(
+    input: UpdateMeProfileInputDTO,
+    actor: Actor = Depends(get_current_actor),
+    uow: MeUoWPort = Depends(get_me_uow),
+    service: AuthService = Depends(get_auth_service)
+) -> None:
+
+    await service.update_me_profile(
+        input=input,
+        actor=actor,
+        uow=uow
     )
