@@ -16,6 +16,10 @@ from app.infrastructure.settings.provider import (
     get_app_user_session
 )
 
+from app.infrastructure.persistence.sqlalchemy.UoW.session.session_uow import SqlAlchemySessionUoW
+from app.feature.session.session_uow_port import SessionUoWPort
+
+
 
 async def get_login_uow(
     session: AsyncSession = Depends(get_app_system_session)
@@ -34,3 +38,14 @@ async def get_me_uow(
         {"user_id": str(actor.id)},
     )
     return SqlAlchemyMeUoW(session)
+
+async def get_session_uow(
+    actor: Actor = Depends(get_current_actor),
+    session: AsyncSession = Depends(get_app_user_session)
+) -> SessionUoWPort:
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true)"
+        ),
+        {"user_id": str(actor.id)},)
+    return SqlAlchemySessionUoW(session)

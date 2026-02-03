@@ -10,7 +10,7 @@ class Permission(str, Enum):
     DELETE_SELF = "delete:self"
     READ_USERS = "read:users"
     BAN_USER = "ban:user"
-
+    CREATE_SESSION = "session:create"
 
 ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
     Role.USER: {
@@ -30,6 +30,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.READ_SELF,
         Permission.WRITE_SELF,
         Permission.UPDATE_SELF,
-        Permission.DELETE_SELF
+        Permission.DELETE_SELF,
+        Permission.CREATE_SESSION
     }
 }

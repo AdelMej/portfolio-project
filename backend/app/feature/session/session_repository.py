@@ -1,7 +1,7 @@
 from typing import Protocol
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
-
+from app.domain.session.session_entity import SessionEntity
 from app.infrastructure.persistence.sqlalchemy.models.sessions import Session as SessionModel
 
 
@@ -15,9 +15,8 @@ class SessionRepository(Protocol):
 
     async def create_session(
         self,
-        db: AsyncSession,
-        session: SessionModel
-    ) -> SessionModel: ...
+        session: SessionEntity
+    ) -> SessionEntity: ...
 
     async def list_sessions(
         self,

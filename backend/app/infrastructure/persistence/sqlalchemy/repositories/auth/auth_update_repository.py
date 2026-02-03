@@ -66,7 +66,7 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
                     """
                     UPDATE app.refresh_tokens
                     SET
-                        replaced_by_token_id = :new_id
+                        replaced_by_token_id = :new_id,
                         revoked_at = now()
                     WHERE token_hash = :old_hash
                         AND user_id = :user_id

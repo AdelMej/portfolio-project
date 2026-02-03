@@ -13,6 +13,8 @@ from app.infrastructure.persistence.sqlalchemy.sessions import (
 )
 from app.feature.auth.auth_router import router as auth_router
 
+from app.feature.session.session_router import router as session_router
+
 
 @asynccontextmanager
 async def lifespan(api: FastAPI):
@@ -57,7 +59,8 @@ async def lifespan(api: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router)
-
+#Coach sessions
+app.include_router(session_router, prefix="/sessions", tags=["sessions"])
 
 @app.get("/health", include_in_schema=False)
 async def health() -> dict[str, str]:
