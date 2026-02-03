@@ -8,7 +8,7 @@ class Permission(str, Enum):
     WRITE_SELF = "write:self"
     UPDATE_SELF = "update:self"
     DELETE_SELF = "delete:self"
-    NO_SELF_DELETE = "delete:nope"
+    NO_SELF_DELETE = "delete:notSelf"
     READ_USERS = "read:users"
     BAN_USER = "ban:user"
 

@@ -16,13 +16,15 @@ from app.feature.auth.auth_dto import (
 )
 from app.domain.auth.auth_exceptions import (
     AuthDomainError,
+    EmailAlreadyExistError,
     InvalidEmailError,
     InvalidPasswordError,
     PermissionDeniedError,
 )
 from app.feature.auth.auth_exception import (
     InvalidCredentialsError,
-    InvalidTokenError
+    InvalidTokenError,
+    RegistrationFailed
 )
 from app.feature.auth.uow.login_uow_port import LoginUoWPort
 from app.feature.auth.uow.logout_uow_port import LogoutUoWPort
@@ -239,11 +241,14 @@ async def register(
     password_hasher: PasswordHasherPort = Depends(get_password_hasher),
     service: AuthService = Depends(get_auth_service)
 ):
-    await service.register(
-        input=input,
-        uow=uow,
-        password_hasher=password_hasher,
-    )
+    try:
+        await service.register(
+            input=input,
+            uow=uow,
+            password_hasher=password_hasher,
+        )
+    except EmailAlreadyExistError:
+        raise RegistrationFailed()
 
 
 @router.post(
