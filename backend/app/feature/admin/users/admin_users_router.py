@@ -28,7 +28,6 @@ async def admin_get_users(
 ) -> list[GetUserDTO]:
     pass
 
-
 @router.get(
     path="/{user_id}",
     response_model=list[GetUserDTO]
@@ -38,5 +37,5 @@ async def admin_get_user_by_id(
     uow: AdminUserReadUoWPort,
     actor: Actor = Depends(get_current_actor),
     service: AdminUserService = Depends(get_admin_user_service)
-) -> list[GetUserDTO]:
+) -> GetUserDTO:
     pass
