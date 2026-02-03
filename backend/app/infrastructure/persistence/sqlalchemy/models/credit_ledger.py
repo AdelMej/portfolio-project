@@ -55,7 +55,7 @@ class CreditLedger(Base):
         nullable=False
     )
 
-    payment_intent_id: Mapped[uuid.UUID] = mapped_column(
+    payment_intent_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("app.payment_intents.id"),
         nullable=True
@@ -65,8 +65,7 @@ class CreditLedger(Base):
 
     balance_after_cents: Mapped[int] = mapped_column(
         Integer,
-        nullable=False,
-        init=False
+        nullable=False
     )
 
     cause: Mapped[CreditCause] = mapped_column(
@@ -82,8 +81,7 @@ class CreditLedger(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
-        init=False
+        server_default=text("now()")
     )
 
     user: Mapped["User"] = relationship(
@@ -94,6 +92,6 @@ class CreditLedger(Base):
 
     payment_intent: Mapped["PaymentIntent | None"] = relationship(
         "PaymentIntent",
-        back_populates="ledger_entries",
+        back_populates="ledger_entry",
         lazy="joined",
     )

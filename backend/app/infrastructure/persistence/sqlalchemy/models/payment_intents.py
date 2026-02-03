@@ -1,9 +1,21 @@
 from datetime import datetime
 import uuid
-from sqlalchemy import CHAR, INTEGER, UUID, DateTime, ForeignKey, UniqueConstraint, text
+from sqlalchemy import (
+    CHAR,
+    INTEGER,
+    UUID,
+    DateTime,
+    ForeignKey,
+    UniqueConstraint,
+    text
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.persistence.sqlalchemy.base import Base
 from typing import TYPE_CHECKING
+
+from app.infrastructure.persistence.sqlalchemy.models.credit_ledger import (
+    CreditLedger
+)
 
 if TYPE_CHECKING:
     from .users import User
@@ -77,7 +89,7 @@ class PaymentIntent(Base):
 
     status: Mapped[str] = mapped_column(nullable=False)
 
-    credit_applied: Mapped[int] = mapped_column(INTEGER, nullable=False)
+    credit_applied_cents: Mapped[int] = mapped_column(INTEGER, nullable=False)
 
     amount_cents: Mapped[int] = mapped_column(INTEGER, nullable=False)
 
@@ -86,15 +98,13 @@ class PaymentIntent(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
-        init=False
+        server_default=text("now()")
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
-        init=False
+        server_default=text("now()")
     )
 
     user: Mapped["User"] = relationship(
@@ -107,4 +117,9 @@ class PaymentIntent(Base):
         "Session",
         back_populates="session_payment_intents",
         lazy="joined"
+    )
+
+    ledger_entry: Mapped["CreditLedger"] = relationship(
+        back_populates="payment_intent",
+        uselist=False
     )

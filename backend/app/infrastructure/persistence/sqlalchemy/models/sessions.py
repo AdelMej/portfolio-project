@@ -7,6 +7,10 @@ from app.infrastructure.persistence.sqlalchemy.base import Base
 from app.domain.session.session_status import SessionStatus
 from typing import TYPE_CHECKING
 
+from app.infrastructure.persistence.sqlalchemy.models.payment_intents import (
+    PaymentIntent
+)
+
 if TYPE_CHECKING:
     from .payment import Payment
     from .session_attendance import SessionAttendance
@@ -97,15 +101,13 @@ class Session(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
-        init=False
+        server_default=text("now()")
     )
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()"),
-        init=False
+        server_default=text("now()")
     )
 
     session_payments: Mapped[list["Payment"]] = relationship(
@@ -116,7 +118,8 @@ class Session(Base):
     session_attendance: Mapped[list["SessionAttendance"]] = relationship(
         "SessionAttendance",
         back_populates="session",
-        lazy="selectin"
+        lazy="selectin",
+        overlaps="attendance_entries",
     )
 
     session_participations: Mapped[list["SessionParticipation"]] = (
@@ -131,4 +134,8 @@ class Session(Base):
         "User",
         foreign_keys=[coach_id],
         lazy="joined"
+    )
+
+    session_payment_intents: Mapped[list["PaymentIntent"]] = relationship(
+        back_populates="session"
     )

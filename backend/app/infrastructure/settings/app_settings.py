@@ -26,6 +26,14 @@ class AppSettings(BaseSettings):
     postgres_app_system: str
     postgres_app_system_password: str
 
+    jwt_secret: str
+    jwt_algorithm: str
+    jwt_access_ttl_seconds: int
+    jwt_refresh_ttl_seconds: int
+    jwt_issuer: str
+
+    refresh_token_hmac_secret: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

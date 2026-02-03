@@ -1,5 +1,3 @@
-\c app
-
 -- ==================================================================
 -- File: 04_02_admin_seed.sql
 --
@@ -37,9 +35,9 @@ WITH admin_user AS (
         password_hash
     )
     VALUES (
-        gen_random_uuid(),
-        'admin@gym.local',
-        '$argon2id$v=19$m=65536,t=3,p=2$SALT$HASH'
+        '00000000-0000-0000-0000-000000000001',
+        'admin@example.com',
+        '$argon2id$v=19$m=65536,t=3,p=4$UGRYqUO3NS5J8/cKjD09mg$KblEZs8ghdYADYaEwh6EsghQy88rVDpdzEFAWXFswps'
     )
     RETURNING id
 ),

@@ -140,3 +140,41 @@ WITH CHECK (
 
 COMMENT ON POLICY users_admin_update_others ON app.users IS
 'Allows admins to disable other users; admin actions must explicitly mark admin responsibility.';
+
+-- ------------------------------------------------------------------
+-- Policy: users_select_system
+--
+-- Purpose:
+-- - Allow system-level operations (authentication)
+-- - Used during login before user context exists
+-- ------------------------------------------------------------------
+
+CREATE POLICY users_select_system
+ON app.users
+FOR SELECT
+TO app_system
+USING (true);
+
+COMMENT ON POLICY users_select_system ON app.users IS
+'Allows system role to read user records for authentication and system operations.';
+
+-- ------------------------------------------------------------------
+-- Policy: users_insert_system
+--
+-- Purpose:
+-- - Allow system-level user creation during registration
+-- - Used before a user context exists (no current_user_id)
+--
+-- Notes:
+-- - Restricted to app_system role only
+-- - Required for initial account creation
+-- ------------------------------------------------------------------
+
+CREATE POLICY users_insert_system
+ON app.users
+FOR INSERT
+TO app_system
+WITH CHECK (true);
+
+COMMENT ON POLICY users_insert_system ON app.users IS
+'Allows system role to insert new users during registration before a user context exists.';
