@@ -120,6 +120,12 @@ FOR UPDATE
 TO app_user
 USING (
     user_id = current_setting('app.current_user_id')::uuid
+    AND EXISTS (
+        SELECT 1
+        FROM app.users u
+        WHERE u.id = user_profiles.user_id
+          AND u.disabled_at IS NULL
+    )
 )
 WITH CHECK (
     user_id = current_setting('app.current_user_id')::uuid

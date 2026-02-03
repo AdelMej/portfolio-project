@@ -1,7 +1,7 @@
 from app.infrastructure.persistence.in_memory.storage import (
     InMemoryAuthStorage
 )
-from app.feature.auth.repositories.auth_creation_respository import (
+from app.feature.auth.repositories.auth_creation_respository_port import (
     AuthCreationRepositoryPort
 )
 

@@ -12,6 +12,13 @@ from app.infrastructure.persistence.sqlalchemy.sessions import (
     create_session_factory,
 )
 from app.feature.auth.auth_router import router as auth_router
+from app.shared.handlers import register_exception_handlers
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s:     %(name)s - %(message)s",
+)
 
 
 @asynccontextmanager
@@ -43,7 +50,9 @@ async def lifespan(api: FastAPI):
     api.state.settings = settings
     api.state.app_user_engine = app_user_engine
     api.state.app_system_engine = app_system_engine
-    api.state.app_user_session_factory = create_session_factory(app_user_engine)
+    api.state.app_user_session_factory = create_session_factory(
+        app_user_engine
+    )
     api.state.app_system_session_factory = create_session_factory(
         app_system_engine
     )
@@ -55,6 +64,8 @@ async def lifespan(api: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+register_exception_handlers(app)
 
 app.include_router(auth_router)
 

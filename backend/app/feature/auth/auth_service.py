@@ -1,26 +1,55 @@
 from datetime import timedelta
+import secrets
 from app.domain.auth.actor_entity import Actor, TokenActor
 from app.domain.auth.permission import Permission
 from app.domain.auth.permission_rules import ensure_has_permission
-from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
-from app.domain.user.user_entity import UserEntity
+from app.domain.auth.refresh_token_entity import (
+    NewRefreshTokenEntity,
+)
+from app.domain.auth.refresh_tokens_rules import (
+    ensure_refresh_token_is_valid
+)
+from app.domain.auth.role import Role
+from app.domain.user.user_entity import NewUserEntity, UserEntity
+from app.domain.user.user_profile_entity import UserProfileEntity
+from app.domain.user.user_profile_rules import (
+    ensure_first_name_is_valid,
+    ensure_last_name_is_valid
+)
 from app.feature.auth.auth_dto import (
     LoginInputDTO,
+    MeEmailChangeInputDTO,
+    MePasswordChangeInputDTO,
+    RegistrationInputDTO,
+    UpdateMeProfileInputDTO,
 )
 from app.domain.auth.auth_exceptions import (
+    AdminCantSelfDeleteError,
+    EmailAlreadyExistError,
+    ExpiredRefreshTokenError,
     InvalidEmailError,
     InvalidPasswordError,
+    InvalidRefreshTokenError,
+    PasswordMissmatchError,
+    PasswordReuseError,
+    RevokedRefreshTokenError,
     UserDisabledError
 )
 from app.feature.auth.uow.login_uow_port import LoginUoWPort
+from app.feature.auth.uow.logout_uow_port import LogoutUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
+from app.feature.auth.uow.refresh_uow_port import RefreshTokenUoWPort
+from app.feature.auth.uow.registration_uow_port import RegistrationUoWPort
+from app.shared.exceptions.runtime import InvariantViolationError
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
-from app.shared.security.refresh_token_generator_port import (
-    RefreshTokenGeneratorPort
+from app.shared.security.token_generator_port import (
+    TokenGeneratorPort
 )
 from app.shared.security.token_hasher_port import TokenHasherPort
 from app.shared.utils.time import utcnow
+from app.domain.auth.auth_password_rules import ensure_password_is_strong
+from app.domain.auth.auth_email_rules import ensure_email_is_valid
 
 
 class AuthService:
@@ -36,10 +65,6 @@ class AuthService:
     injected ports and repositories to perform side effects, making it
     suitable for use across different delivery mechanisms (e.g., HTTP APIs,
     background jobs).
-
-    Attributes:
-        _uow: Unit of work providing access to authentication repositories and
-            transactional boundaries.
     """
     async def login(
         self,
@@ -50,7 +75,7 @@ class AuthService:
         jwt: JwtPort,
         password_hasher: PasswordHasherPort,
         token_hasher: TokenHasherPort,
-        refresh_token_generator: RefreshTokenGeneratorPort
+        token_generator: TokenGeneratorPort
     ) -> tuple[str, str]:
         """Authenticate a user and issue access and refresh tokens.
 
@@ -91,7 +116,7 @@ class AuthService:
         if not await uow.auth_read.exist_email(email):
             raise InvalidEmailError()
 
-        user = await uow.auth_read.system_get_user_by_email(email)
+        user = await uow.auth_read.get_user_by_email(email)
 
         if user is None:
             raise InvalidEmailError()
@@ -107,7 +132,7 @@ class AuthService:
             refresh_hash = token_hasher.hash(existing_refresh)
             token = await uow.auth_read.get_refresh_token(refresh_hash)
 
-        refresh_plain = refresh_token_generator.generate()
+        refresh_plain = token_generator.generate()
         refresh_hash = token_hasher.hash(refresh_plain)
 
         if token:
@@ -141,6 +166,107 @@ class AuthService:
             refresh_plain
         )
 
+    async def refresh(
+        self,
+        current_refresh_token: str,
+        uow: RefreshTokenUoWPort,
+        jwt: JwtPort,
+        token_hasher: TokenHasherPort,
+        token_generator: TokenGeneratorPort,
+        refresh_ttl: int,
+    ) -> tuple[str, str]:
+        ensure_refresh_token_is_valid(current_refresh_token)
+
+        current_refresh_hash = token_hasher.hash(current_refresh_token)
+        current_refresh = await uow.auth_read.get_refresh_token(
+            current_refresh_hash
+        )
+
+        if current_refresh is None:
+            raise InvalidRefreshTokenError()
+
+        if current_refresh.is_expired():
+            raise ExpiredRefreshTokenError()
+
+        if current_refresh.is_revoked():
+            raise RevokedRefreshTokenError()
+
+        user = await uow.auth_read.get_user_by_id(current_refresh.user_id)
+
+        if user is None:
+            raise InvariantViolationError(
+                "Refresh token references missing user",
+                context={
+                    "refresh_token_hash": current_refresh.token_hash,
+                    "user_id": current_refresh.user_id,
+                }
+            )
+
+        new_token_plain = token_generator.generate()
+        new_token_hash = token_hasher.hash(new_token_plain)
+
+        new_refresh_token = NewRefreshTokenEntity(
+            user_id=user.id,
+            token_hash=new_token_hash,
+            expires_at=utcnow() + timedelta(seconds=refresh_ttl)
+        )
+
+        await uow.auth_update.rotate_refresh_token(
+            current_token_hash=current_refresh_hash,
+            new_token=new_refresh_token
+        )
+
+        token_actor = TokenActor(
+            id=user.id,
+            roles=user.roles,
+        )
+
+        access_token = jwt.issue_access_token(
+            actor=token_actor
+        )
+
+        return access_token, new_token_plain
+
+    async def logout(
+        self,
+        token: str,
+        uow: LogoutUoWPort,
+        token_hasher: TokenHasherPort,
+    ) -> None:
+        token_hash = token_hasher.hash(token)
+
+        await uow.auth_update.revoke_refresh_token(token_hash)
+
+    async def register(
+        self,
+        input: RegistrationInputDTO,
+        uow: RegistrationUoWPort,
+        password_hasher: PasswordHasherPort,
+    ) -> None:
+        # normalization
+        email = input.email.strip().lower()
+        password = input.password.strip()
+        first_name = input.first_name.strip()
+        last_name = input.last_name.strip()
+
+        ensure_password_is_strong(password)
+        ensure_email_is_valid(email)
+        ensure_first_name_is_valid(first_name)
+        ensure_last_name_is_valid(last_name)
+
+        new_user = NewUserEntity(
+            email=email,
+            password_hash=password_hasher.hash(password),
+            role=Role.USER
+        )
+
+        new_user_profile = UserProfileEntity(
+            first_name=first_name,
+            last_name=last_name
+        )
+
+        await uow.auth_creation.register(new_user, new_user_profile)
+
     async def get_me(
         self,
         actor: Actor,
@@ -149,3 +275,114 @@ class AuthService:
 
         ensure_has_permission(actor, Permission.READ_SELF)
         return await uow.me_read_repository.get(actor.id)
+
+    async def email_change_me(
+        self,
+        actor: Actor,
+        uow: MeUoWPort,
+        input: MeEmailChangeInputDTO,
+    ) -> None:
+        ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        # normalization
+        email = input.email.strip().lower()
+
+        if await uow.auth_read_repository.exist_email(email):
+            raise EmailAlreadyExistError()
+
+        await uow.me_update_repository.update_email_by_user_id(
+            email,
+            actor.id
+        )
+
+    async def password_change_me(
+        self,
+        input: MePasswordChangeInputDTO,
+        password_hasher: PasswordHasherPort,
+        actor: Actor,
+        uow: MeUoWPort
+    ) -> None:
+        ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        # normalization
+        old_password = input.old_password.strip()
+        new_password = input.new_password.strip()
+
+        ensure_password_is_strong(new_password)
+
+        user = await uow.auth_read_repository.get_user_by_id(actor.id)
+        if not user:
+            raise InvariantViolationError(
+                "Actor doesn't exist"
+            )
+
+        if not password_hasher.verify(old_password, user.password_hash):
+            raise PasswordMissmatchError()
+
+        if password_hasher.verify(new_password, user.password_hash):
+            raise PasswordReuseError()
+
+        new_password_hash = password_hasher.hash(new_password)
+
+        await uow.me_update_repository.update_password_by_id(
+            user_id=actor.id,
+            password_hash=new_password_hash
+        )
+
+    async def get_me_profile(
+        self,
+        actor: Actor,
+        uow: MeUoWPort
+    ) -> UserProfileEntity:
+        ensure_has_permission(actor, Permission.READ_SELF)
+
+        return await uow.me_read_repository.get_profile_by_id(actor.id)
+
+    async def update_me_profile(
+        self,
+        input: UpdateMeProfileInputDTO,
+        actor: Actor,
+        uow: MeUoWPort
+    ) -> None:
+        ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        # normalization
+        first_name = input.first_name.strip()
+        last_name = input.last_name.strip()
+
+        ensure_first_name_is_valid(first_name)
+        ensure_last_name_is_valid(last_name)
+
+        profile = UserProfileEntity(
+            first_name=first_name,
+            last_name=last_name
+        )
+
+        await uow.me_update_repository.update_profile_by_id(
+            user_id=actor.id,
+            profile=profile
+        )
+
+    async def delete_me(
+        self,
+        actor: Actor,
+        refresh_uow: RefreshTokenUoWPort,
+        uow: MeUoWPort,
+        password_hasher: PasswordHasherPort
+    ) -> None:
+        if Permission.NO_SELF_DELETE in actor.permissions:
+            raise AdminCantSelfDeleteError()
+
+        ensure_has_permission(actor, Permission.DELETE_SELF)
+
+        random_password = secrets.token_urlsafe(128)
+        hashed_password = password_hasher.hash(random_password)
+
+        await uow.me_delete_repository.soft_delete_user(
+            user_id=actor.id,
+            new_password_hash=hashed_password
+        )
+
+        await refresh_uow.auth_update.revoke_all_refresh_token(
+            user_id=actor.id
+        )
