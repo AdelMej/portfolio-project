@@ -251,6 +251,9 @@ class AuthService:
         ensure_first_name_is_valid(first_name)
         ensure_last_name_is_valid(last_name)
 
+        if await uow.auth_read.exist_email(email):
+            raise EmailAlreadyExistError()
+
         new_user = NewUserEntity(
             email=email,
             password_hash=password_hasher.hash(password),
