@@ -1,8 +1,10 @@
+from uuid import UUID
 from app.domain.auth.actor_entity import Actor
 from app.domain.auth.permission import Permission
 from app.domain.auth.permission_rules import ensure_has_permission
 from app.feature.admin.users.admin_users_dto import PaginatedUsersDTO, UserDTO
 from app.feature.admin.users.uow.admin_user_uow_port import AdminUserUoWPort
+from app.shared.exceptions.commons import NotFoundError
 
 
 class AdminUserService:
@@ -37,3 +39,24 @@ class AdminUserService:
             offset=offset,
             has_more=has_more,
         )
+
+    async def get_user(
+        self,
+        user_id: UUID,
+        uow: AdminUserUoWPort,
+        actor: Actor,
+    ) -> UserDTO:
+        ensure_has_permission(actor, Permission.READ_USERS)
+
+        user = await uow.admin_user_read_repository.get_user_by_id(user_id)
+
+        if not user:
+            raise NotFoundError()
+
+        return UserDTO(
+                id=user.id,
+                email=user.email,
+                roles=user.roles,
+                disabled_at=user.disabled_at,
+                created_at=user.created_at
+            )

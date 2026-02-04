@@ -51,4 +51,9 @@ async def admin_get_user_by_id(
     actor: Actor = Depends(get_current_actor),
     service: AdminUserService = Depends(get_admin_user_service)
 ) -> UserDTO:
-    pass
+
+    return await service.get_user(
+        user_id=user_id,
+        uow=uow,
+        actor=actor,
+    )

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from app.domain.auth.role import Role
 from app.domain.user.user_entity import AdminUserRead
 from app.feature.admin.users.repositories import (
@@ -59,3 +61,47 @@ class SqlalchemyAdminUserRead(AdminUserReadRepositoryPort):
                 created_at=row["created_at"],
             ) for row in rows
         ], has_more
+
+    async def get_user_by_id(
+        self,
+        user_id: UUID
+    ) -> AdminUserRead | None:
+        res = await self._session.execute(
+            text("""
+                SELECT
+                    u.id,
+                    u.email,
+                    u.disabled_at,
+                    u.created_at,
+                    COALESCE(
+                        array_agg(DISTINCT r.role_name ORDER by r.role_name),
+                        '{}'
+                    ) AS roles
+                FROM app.users u
+                LEFT JOIN app.user_roles ur
+                    ON ur.user_id = u.id
+                LEFT JOIN app.roles r
+                    ON ur.role_id = r.id
+                WHERE u.id = :user_id
+                GROUP BY
+                    u.id,
+                    u.email,
+                    u.disabled_at,
+                    u.created_at
+            """),
+            {
+                "user_id": str(user_id)
+            }
+        )
+
+        row = res.mappings().one_or_none()
+        if not row:
+            return None
+
+        return AdminUserRead(
+            id=row["id"],
+            email=row["email"],
+            disabled_at=row["disabled_at"],
+            created_at=row["created_at"],
+            roles={Role(role) for role in row["roles"]},
+        )

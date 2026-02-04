@@ -8,7 +8,7 @@
 -- ------------------------------------------------------------------
 -- app_user: coach can insert attendance
 -- ------------------------------------------------------------------
-GRANT INSERT ON TABLE app.session_attendance TO app_user;
+GRANT SELECT, INSERT ON TABLE app.session_attendance TO app_user;
 
 COMMENT ON TABLE app.session_attendance IS
 'Coaches (app_user) can insert attendance records for their sessions only.';

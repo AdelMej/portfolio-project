@@ -1,4 +1,5 @@
 from typing import Protocol
+from uuid import UUID
 
 from app.domain.user.user_entity import AdminUserRead
 
@@ -9,4 +10,10 @@ class AdminUserReadRepositoryPort(Protocol):
         offset: int,
         limit: int
     ) -> tuple[list[AdminUserRead], bool]:
+        ...
+
+    async def get_user_by_id(
+        self,
+        user_id: UUID
+    ) -> AdminUserRead | None:
         ...
