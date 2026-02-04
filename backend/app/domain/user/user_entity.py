@@ -20,3 +20,12 @@ class NewUserEntity:
     email: str
     password_hash: str
     role: Role
+
+
+@dataclass(frozen=True)
+class AdminUserRead:
+    id: UUID
+    email: str
+    disabled_at: datetime | None
+    created_at: datetime
+    roles: set[Role]

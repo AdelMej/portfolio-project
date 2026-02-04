@@ -12,6 +12,9 @@ from app.infrastructure.persistence.sqlalchemy.sessions import (
     create_session_factory,
 )
 from app.feature.auth.auth_router import router as auth_router
+from app.feature.admin.users.admin_users_router import (
+    router as admin_users_router
+)
 from app.shared.handlers import register_exception_handlers
 import logging
 
@@ -68,6 +71,7 @@ app = FastAPI(lifespan=lifespan)
 register_exception_handlers(app)
 
 app.include_router(auth_router)
+app.include_router(admin_users_router)
 
 
 @app.get("/health", include_in_schema=False)
