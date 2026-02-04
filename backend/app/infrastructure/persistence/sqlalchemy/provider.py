@@ -2,18 +2,14 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql.expression import text
 from app.domain.auth.actor_entity import Actor
-from app.feature.auth.uow.login_uow_port import LoginUoWPort
-from app.feature.auth.uow.logout_uow_port import LogoutUoWPort
+from app.feature.auth.uow.auth_uow_port import AuthUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
-from app.feature.auth.uow.refresh_uow_port import RefreshTokenUoWPort
-from app.feature.auth.uow.registration_uow_port import RegistrationUoWPort
 from app.infrastructure.persistence.sqlalchemy.UoW.auth import (
     SqlAlchemyMeUoW,
-    SqlAlchemyLoginUoW,
-    SqlalchemyRefreshTokenUoW,
-    SqlAlchemyLogoutUoW
 )
-from app.infrastructure.persistence.sqlalchemy.UoW.auth.registration_uow import SqlAlchemyRegistrationUoW
+from app.infrastructure.persistence.sqlalchemy.UoW.auth.auth_uow import (
+    SqlAlchemyAuthUoW
+)
 from app.infrastructure.security.provider import get_current_actor
 from app.infrastructure.settings.provider import (
     get_app_system_session,
@@ -21,10 +17,10 @@ from app.infrastructure.settings.provider import (
 )
 
 
-async def get_login_uow(
+async def get_auth_uow(
     session: AsyncSession = Depends(get_app_system_session)
-) -> LoginUoWPort:
-    return SqlAlchemyLoginUoW(session)
+) -> AuthUoWPort:
+    return SqlAlchemyAuthUoW(session)
 
 
 async def get_me_uow(
@@ -38,21 +34,3 @@ async def get_me_uow(
         {"user_id": str(actor.id)},
     )
     return SqlAlchemyMeUoW(session)
-
-
-async def get_refresh_uow(
-        session: AsyncSession = Depends(get_app_system_session)
-) -> RefreshTokenUoWPort:
-    return SqlalchemyRefreshTokenUoW(session)
-
-
-async def get_logout_uow(
-        session: AsyncSession = Depends(get_app_system_session)
-) -> LogoutUoWPort:
-    return SqlAlchemyLogoutUoW(session)
-
-
-async def get_registration_uow(
-        session: AsyncSession = Depends(get_app_system_session)
-) -> RegistrationUoWPort:
-    return SqlAlchemyRegistrationUoW(session)
