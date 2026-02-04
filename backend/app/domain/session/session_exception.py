@@ -1,3 +1,6 @@
+class SessionAlreadyCancelledError(Exception):
+    pass
+
 class SessionDomainError(Exception):
     """Base domain error for session logic."""
     pass

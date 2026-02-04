@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from uuid import UUID
-
+from app.feature.session.session_dto import AttendanceOutputDto
 from app.feature.session.session_dto import SessionCreateRequest, GetOutputDto
 from app.feature.session.session_service import SessionService
 from app.feature.session.session_dependencies import get_session_service
@@ -38,3 +38,33 @@ async def list_sessions(
     service: SessionService = Depends(get_session_service)
 ):
     return await service.list_sessions(UoW)
+
+@router.put("/{session_id}/cancel", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_session(
+    session_id: UUID,
+    actor: Actor = Depends(get_current_actor),
+    UoW: SessionUoWPort = Depends(get_session_uow),
+    service: SessionService = Depends(get_session_service),
+):
+    await service.cancel_session(UoW, actor, session_id)
+
+@router.get("/{session_id}/attendance",response_model=list[AttendanceOutputDto])
+async def get_attendance(
+    session_id: UUID,
+    actor: Actor = Depends(get_current_actor),
+    UoW: SessionUoWPort = Depends(get_session_uow),
+    service: SessionService = Depends(get_session_service),
+):
+    return await service.get_attendance(UoW, actor, session_id)
+
+@router.put("/{session_id}/attendance", status_code=204)
+async def put_attendance(
+    session_id: UUID,
+    actor: Actor = Depends(get_current_actor),
+    UoW: SessionUoWPort = Depends(get_session_uow),
+    service: SessionService = Depends(get_session_service),
+):
+    """
+    Register the current actor as attending the session.
+    """
+    await service.put_attendance(UoW, actor, session_id)

@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 from app.domain.auth.role import Role
 from app.domain.user.user_entity import UserEntity
+from app.domain.user.user_profile_entity import UserProfileEntity
 from app.feature.auth.repositories.me_read_repository_port import (
     MeReadRepositoryPort
 )
@@ -48,4 +49,23 @@ class SqlAlchemyMeReadRepository(MeReadRepositoryPort):
             roles=roles,
             disabled_at=row["disabled_at"],
             disabled_reason=row["disabled_reason"]
+        )
+
+    async def get_profile_by_id(self, user_id: UUID) -> UserProfileEntity:
+        res = await self._session.execute(
+            text("""
+            SELECT up.first_name, up.last_name
+            FROM app.user_profiles up
+            WHERE user_id = :user_id
+            """),
+            {
+                "user_id": user_id
+            }
+        )
+
+        row = res.mappings().one()
+
+        return UserProfileEntity(
+            first_name=row["first_name"],
+            last_name=row["last_name"]
         )

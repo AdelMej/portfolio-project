@@ -12,7 +12,7 @@ from app.infrastructure.security.in_memory.refresh_token_generator import (
 )
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
-from app.shared.security.refresh_token_generator_port import (
+from app.shared.security.token_generator_port import (
     RefreshTokenGeneratorPort
 )
 from app.shared.security.token_hasher_port import TokenHasherPort

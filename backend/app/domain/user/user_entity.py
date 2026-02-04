@@ -13,3 +13,10 @@ class UserEntity:
     roles: set[Role]
     disabled_at: datetime | None
     disabled_reason: str | None
+
+
+@dataclass(frozen=True)
+class NewUserEntity:
+    email: str
+    password_hash: str
+    role: Role

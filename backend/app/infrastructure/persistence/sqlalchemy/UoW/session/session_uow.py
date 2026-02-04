@@ -7,3 +7,4 @@ class SqlAlchemySessionUoW:
   
     def __init__(self, session: AsyncSession):
         self.session_repo = SqlAlchemySessionRepository(session)
+        

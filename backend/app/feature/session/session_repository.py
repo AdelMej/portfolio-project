@@ -1,17 +1,15 @@
 from typing import Protocol
-from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from app.domain.session.session_entity import SessionEntity
-from app.infrastructure.persistence.sqlalchemy.models.sessions import Session as SessionModel
+from app.feature.session.session_dto import AttendanceOutputDto
 
 
 class SessionRepository(Protocol):
 
     async def get_session_by_id(
         self,
-        db: AsyncSession,
         session_id: UUID
-    ) -> SessionModel | None: ...
+    ) -> SessionEntity | None: ...
 
     async def create_session(
         self,
@@ -20,13 +18,21 @@ class SessionRepository(Protocol):
 
     async def list_sessions(
         self,
-        db: AsyncSession,
         coach_id: UUID | None = None
-    ) -> list[SessionModel]: ...
+    ) -> list[SessionEntity]: ...
 
     async def update_session(
         self,
-        db: AsyncSession,
-        session: SessionModel
-    ) -> SessionModel: ...
+        session: SessionEntity
+    ) -> SessionEntity: ...
     
+    async def cancel_session(
+            self, 
+            session_id: UUID
+    ) -> bool:
+        """Returns True if updated, False if not found"""
+
+    async def get_attendance(
+            self, 
+            session_id: UUID
+    ) -> list[AttendanceOutputDto]: ...
