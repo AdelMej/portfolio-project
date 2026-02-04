@@ -37,6 +37,8 @@ from app.domain.auth.auth_exceptions import (
     AdminCantSelfDeleteError,
     RefreshTokenNotFoundError,
     UserDisabledError,
+    AdminCantSelfRevokeError,
+    BaseRoleCannotBeRevokedError
 )
 from app.shared.rules.password_rules import (
     MIN_PASSWORD_LENGTH,
@@ -731,6 +733,52 @@ def register_exception_handler(app: FastAPI):
         return JSONResponse(
             content={
                 "error": "Admin can't self delete"
+            },
+            status_code=403
+        )
+
+    # -----------------------
+    # --- Role Exceptions ---
+    # -----------------------
+
+    @app.exception_handler(AdminCantSelfRevokeError)
+    async def admin_cant_self_revoke(
+        request: Request,
+        exc: AdminCantSelfRevokeError
+    ) -> JSONResponse:
+        logger.info(
+            "admin can't self revoke",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={
+                "error": "Admin can't self revoke"
+            },
+            status_code=403
+        )
+
+    @app.exception_handler(BaseRoleCannotBeRevokedError)
+    async def base_role_cannot_be_revoked(
+        request: Request,
+        exc: BaseRoleCannotBeRevokedError
+    ) -> JSONResponse:
+        logger.info(
+            "base role cannot be revoked",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={
+                "error": "Base role cannot be revoked"
             },
             status_code=403
         )

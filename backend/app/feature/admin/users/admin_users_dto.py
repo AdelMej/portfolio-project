@@ -26,3 +26,7 @@ class PaginatedUsersDTO(BaseModel):
     limit: int
     offset: int
     has_more: bool
+
+
+class RoleDTO(BaseModel):
+    role: Role

@@ -124,3 +124,11 @@ class PasswordReuseError(AuthDomainError):
 
 class AdminCantSelfDeleteError(AuthDomainError):
     pass
+
+
+class AdminCantSelfRevokeError(AuthDomainError):
+    pass
+
+
+class BaseRoleCannotBeRevokedError(AuthDomainError):
+    pass

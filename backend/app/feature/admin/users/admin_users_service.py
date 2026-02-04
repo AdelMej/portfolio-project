@@ -1,8 +1,17 @@
 from uuid import UUID
 from app.domain.auth.actor_entity import Actor
+from app.domain.auth.auth_exceptions import (
+    AdminCantSelfRevokeError,
+    BaseRoleCannotBeRevokedError
+)
 from app.domain.auth.permission import Permission
 from app.domain.auth.permission_rules import ensure_has_permission
-from app.feature.admin.users.admin_users_dto import PaginatedUsersDTO, UserDTO
+from app.domain.auth.role import Role
+from app.feature.admin.users.admin_users_dto import (
+    PaginatedUsersDTO,
+    RoleDTO,
+    UserDTO
+)
 from app.feature.admin.users.uow.admin_user_uow_port import AdminUserUoWPort
 from app.shared.exceptions.commons import NotFoundError
 
@@ -60,3 +69,37 @@ class AdminUserService:
                 disabled_at=user.disabled_at,
                 created_at=user.created_at
             )
+
+    async def grant_role(
+        self,
+        user_id: UUID,
+        role: RoleDTO,
+        uow: AdminUserUoWPort,
+        actor: Actor,
+    ) -> None:
+        ensure_has_permission(actor, Permission.GRANT_ROLE)
+
+        await uow.admin_user_creation_repository.grant_role(
+            user_id=user_id,
+            role=role.role
+        )
+
+    async def revoke_role(
+        self,
+        user_id: UUID,
+        role: RoleDTO,
+        uow: AdminUserUoWPort,
+        actor: Actor,
+    ) -> None:
+        ensure_has_permission(actor, Permission.REVOKE_ROLE)
+
+        if role.role == Role.USER:
+            raise BaseRoleCannotBeRevokedError()
+
+        if user_id == actor.id and role.role == Role.ADMIN:
+            raise AdminCantSelfRevokeError()
+
+        await uow.admin_user_deletion_repository.revoke_role(
+            user_id=user_id,
+            role=role.role
+        )

@@ -9,7 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
 
-class SqlalchemyAdminUserRead(AdminUserReadRepositoryPort):
+class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

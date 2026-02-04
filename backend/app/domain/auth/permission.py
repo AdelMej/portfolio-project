@@ -10,6 +10,8 @@ class Permission(str, Enum):
     DELETE_SELF = "delete:self"
     NO_SELF_DELETE = "delete:notSelf"
     READ_USERS = "read:users"
+    GRANT_ROLE = "role:grant"
+    REVOKE_ROLE = "role:revoke"
     BAN_USER = "ban:user"
 
 
@@ -27,6 +29,8 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.NO_SELF_DELETE,
         Permission.READ_USERS,
         Permission.BAN_USER,
+        Permission.GRANT_ROLE,
+        Permission.REVOKE_ROLE
     },
     Role.COACH: {
         Permission.READ_SELF,
