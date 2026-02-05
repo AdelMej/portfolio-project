@@ -80,21 +80,36 @@ class SqlAlchemySessionRepository:
 
         return session
 
-    async def list_sessions(self):
-        res = await self.session.execute(
+    async def list_sessions(self, coach_id: UUID | None = None):
+        if coach_id:
+            res = await self.session.execute(
             text("""SELECT
-                    id,
-                    coach_id,
-                    title,
-                    starts_at,
-                    ends_at,
-                    status::text
-                 FROM app.sessions
-                """
-            )
+                        id,
+                        coach_id,
+                        title,
+                        starts_at,
+                        ends_at,
+                        status::text
+                   FROM app.sessions
+                   WHERE coach_id = :coach_id
+                """),
+            {"coach_id": coach_id}
         )
+        else:
+            res = await self.session.execute(
+                text("""SELECT
+                        id,
+                        coach_id,
+                        title,
+                        starts_at,
+                        ends_at,
+                        status::text
+                   FROM app.sessions
+                """)
+        )
+
         rows = res.mappings().all()
-        session_list = [
+        return [
             SessionEntity(
                 id=row["id"],
                 coach_id=row["coach_id"],
@@ -102,9 +117,9 @@ class SqlAlchemySessionRepository:
                 starts_at=row["starts_at"],
                 ends_at=row["ends_at"],
                 status=row["status"]
-            ) for row in rows
-            ]
-        return session_list
+            )
+            for row in rows
+        ]
 
 
     async def cancel_session(self, session_id: UUID) -> bool:
@@ -188,3 +203,17 @@ class SqlAlchemySessionRepository:
         )
 
         return session
+    
+    async def remove_attendance(self, session_id: UUID, user_id: UUID) -> bool:
+        result = await self.session.execute(
+            text("""
+                DELETE FROM app.session_attendance
+                WHERE session_id = :session_id
+                  AND user_id = :user_id
+            """),
+            {
+                "session_id": session_id,
+                "user_id": user_id
+            }
+        )
+        return result.rowcount > 0
