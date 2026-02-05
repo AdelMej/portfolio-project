@@ -145,3 +145,57 @@ class SessionService:
         )
 
         await UoW.session_repo.update_session(updated_session)
+
+    async def cancel_registration(self, UoW, actor: Actor, session_id: UUID):
+        ensure_has_permission(actor, Permission.READ_SELF)
+
+        session = await UoW.session_repo.get_session_by_id(session_id)
+        if not session:
+            raise NotFoundError()
+
+        if session.status == SessionStatus.CANCELLED:
+            raise HTTPException(status_code=400, detail="Session cancelled")
+
+        already_registered = await UoW.session_repo.is_user_registered(
+            session_id=session_id,
+            user_id=actor.id
+        )
+
+        if not already_registered:
+            raise HTTPException(status_code=409, detail="Not registered")
+
+        removed = await UoW.session_repo.remove_attendance(
+            session_id=session_id,
+            user_id=actor.id
+        )
+
+        if not removed:
+            raise HTTPException(status_code=500, detail="Failed to cancel registration")
+        
+#admin permissions
+    async def admin_list_sessions_by_coach(self, UoW: SessionUoWPort, actor: Actor, coach_id: UUID,):
+        ensure_has_permission(actor, Permission.READ_USERS)
+
+        sessions = await UoW.session_repo.list_sessions(coach_id=coach_id)
+
+        return [
+            GetOutputDto(
+                id=s.id,
+                coach_id=s.coach_id,
+                title=s.title,
+                starts_at=s.starts_at,
+                ends_at=s.ends_at,
+                status=s.status.value if hasattr(s.status, "value") else s.status,
+            )
+            for s in sessions
+        ]    
+
+    async def admin_cancel_session(self, UoW: SessionUoWPort, actor: Actor, session_id: UUID):
+        # Ensure admin permission
+        ensure_has_permission(actor, Permission.READ_USERS)
+
+        session = await UoW.session_repo.get_session_by_id(session_id)
+        if not session:
+            raise NotFoundError()
+
+        await UoW.session_repo.cancel_session(session_id)
