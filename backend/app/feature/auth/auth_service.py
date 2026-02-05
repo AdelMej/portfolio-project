@@ -127,7 +127,9 @@ class AuthService:
         token = None
         if existing_refresh:
             refresh_hash = token_hasher.hash(existing_refresh)
-            token = await uow.auth_read_repository.get_refresh_token(refresh_hash)
+            token = await uow.auth_read_repository.get_refresh_token(
+                refresh_hash
+            )
 
         refresh_plain = token_generator.generate()
         refresh_hash = token_hasher.hash(refresh_plain)
@@ -188,7 +190,9 @@ class AuthService:
         if current_refresh.is_revoked():
             raise RevokedRefreshTokenError()
 
-        user = await uow.auth_read_repository.get_user_by_id(current_refresh.user_id)
+        user = await uow.auth_read_repository.get_user_by_id(
+            current_refresh.user_id
+        )
 
         if user is None:
             raise InvariantViolationError(
@@ -251,7 +255,7 @@ class AuthService:
         ensure_first_name_is_valid(first_name)
         ensure_last_name_is_valid(last_name)
 
-        if await uow.auth_read.exist_email(email):
+        if await uow.auth_read_repository.exist_email(email):
             raise EmailAlreadyExistError()
 
         new_user = NewUserEntity(

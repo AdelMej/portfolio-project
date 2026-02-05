@@ -38,7 +38,9 @@ from app.domain.auth.auth_exceptions import (
     RefreshTokenNotFoundError,
     UserDisabledError,
     AdminCantSelfRevokeError,
-    BaseRoleCannotBeRevokedError
+    BaseRoleCannotBeRevokedError,
+    AdminCantSelfDisableError,
+    AdminCantSelfRennableError
 )
 from app.shared.rules.password_rules import (
     MIN_PASSWORD_LENGTH,
@@ -779,6 +781,51 @@ def register_exception_handler(app: FastAPI):
         return JSONResponse(
             content={
                 "error": "Base role cannot be revoked"
+            },
+            status_code=403
+        )
+
+    # ---------------------------
+    # --- Disabling Exception ---
+    # ---------------------------
+    @app.exception_handler(AdminCantSelfDisableError)
+    async def admin_self_disable(
+        request: Request,
+        exc: BaseRoleCannotBeRevokedError
+    ) -> JSONResponse:
+        logger.info(
+            "admin can't disable themselves",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={
+                "error": "Admin can't disable themselves"
+            },
+            status_code=403
+        )
+
+    @app.exception_handler(AdminCantSelfRennableError)
+    async def admin_self_reenable(
+        request: Request,
+        exc: AdminCantSelfRennableError
+    ) -> JSONResponse:
+        logger.info(
+            "admin can't reenable themselves",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={
+                "error": "Admin can't rennable themselves"
             },
             status_code=403
         )

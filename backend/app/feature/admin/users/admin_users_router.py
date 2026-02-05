@@ -101,3 +101,39 @@ async def admin_revoke_role(
         uow=uow,
         actor=actor
     )
+
+
+@router.post(
+    path="/{user_id}/disable",
+    status_code=204
+)
+async def admin_disable_user(
+    user_id: UUID,
+    uow: AdminUserUoWPort = Depends(get_admin_user_uow),
+    actor: Actor = Depends(get_current_actor),
+    service: AdminUserService = Depends(get_admin_user_service)
+) -> None:
+
+    await service.disable_user(
+        user_id=user_id,
+        uow=uow,
+        actor=actor
+    )
+
+
+@router.post(
+    path="/{user_id}/reenable",
+    status_code=204
+)
+async def admin_reenable_user(
+    user_id: UUID,
+    uow: AdminUserUoWPort = Depends(get_admin_user_uow),
+    actor: Actor = Depends(get_current_actor),
+    service: AdminUserService = Depends(get_admin_user_service)
+) -> None:
+
+    await service.reenable_user(
+        user_id=user_id,
+        uow=uow,
+        actor=actor
+    )

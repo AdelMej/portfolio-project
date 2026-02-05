@@ -132,3 +132,11 @@ class AdminCantSelfRevokeError(AuthDomainError):
 
 class BaseRoleCannotBeRevokedError(AuthDomainError):
     pass
+
+
+class AdminCantSelfDisableError(AuthDomainError):
+    pass
+
+
+class AdminCantSelfRennableError(AuthDomainError):
+    pass

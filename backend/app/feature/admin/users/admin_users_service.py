@@ -1,6 +1,8 @@
 from uuid import UUID
 from app.domain.auth.actor_entity import Actor
 from app.domain.auth.auth_exceptions import (
+    AdminCantSelfDisableError,
+    AdminCantSelfRennableError,
     AdminCantSelfRevokeError,
     BaseRoleCannotBeRevokedError
 )
@@ -38,6 +40,7 @@ class AdminUserService:
                 email=user.email,
                 roles=user.roles,
                 disabled_at=user.disabled_at,
+                disabled_reason=user.disabled_reason,
                 created_at=user.created_at
             ) for user in users
         ]
@@ -67,6 +70,7 @@ class AdminUserService:
                 email=user.email,
                 roles=user.roles,
                 disabled_at=user.disabled_at,
+                disabled_reason=user.disabled_reason,
                 created_at=user.created_at
             )
 
@@ -103,3 +107,29 @@ class AdminUserService:
             user_id=user_id,
             role=role.role
         )
+
+    async def disable_user(
+        self,
+        user_id: UUID,
+        uow: AdminUserUoWPort,
+        actor: Actor,
+    ) -> None:
+        ensure_has_permission(actor, Permission.DISABLE_USER)
+
+        if actor.id == user_id:
+            raise AdminCantSelfDisableError()
+
+        await uow.admin_user_update_repository.disable_user(user_id)
+
+    async def reenable_user(
+        self,
+        user_id: UUID,
+        uow: AdminUserUoWPort,
+        actor: Actor,
+    ) -> None:
+        ensure_has_permission(actor, Permission.DISABLE_USER)
+
+        if actor.id == user_id:
+            raise AdminCantSelfRennableError()
+
+        await uow.admin_user_update_repository.reenable_user(user_id)

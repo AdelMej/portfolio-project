@@ -18,6 +18,7 @@ class UserDTO(BaseModel):
     )
     roles: set[Role]
     disabled_at: datetime | None
+    disabled_reason: str | None
     created_at: datetime
 
 

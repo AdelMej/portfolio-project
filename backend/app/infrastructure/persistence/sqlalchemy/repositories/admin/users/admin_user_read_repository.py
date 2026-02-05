@@ -25,6 +25,7 @@ class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
                     u.id,
                     u.email,
                     u.disabled_at,
+                    u.disabled_reason,
                     u.created_at,
                     COALESCE(
                         array_agg(DISTINCT r.role_name ORDER by r.role_name),
@@ -37,6 +38,7 @@ class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
                     u.id,
                     u.email,
                     u.disabled_at,
+                    u.disabled_reason,
                     u.created_at
                 ORDER BY u.created_at DESC
                 OFFSET :offset
@@ -58,6 +60,7 @@ class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
                 email=row["email"],
                 roles={Role(role) for role in row["roles"]},
                 disabled_at=row["disabled_at"],
+                disabled_reason=row["disabled_reason"],
                 created_at=row["created_at"],
             ) for row in rows
         ], has_more
@@ -72,6 +75,7 @@ class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
                     u.id,
                     u.email,
                     u.disabled_at,
+                    u.disabled_reason,
                     u.created_at,
                     COALESCE(
                         array_agg(DISTINCT r.role_name ORDER by r.role_name),
@@ -87,6 +91,7 @@ class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
                     u.id,
                     u.email,
                     u.disabled_at,
+                    u.disabled_reason,
                     u.created_at
             """),
             {
@@ -102,6 +107,7 @@ class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
             id=row["id"],
             email=row["email"],
             disabled_at=row["disabled_at"],
+            disabled_reason=row["disabled_reason"],
             created_at=row["created_at"],
             roles={Role(role) for role in row["roles"]},
         )

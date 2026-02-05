@@ -27,5 +27,6 @@ class AdminUserRead:
     id: UUID
     email: str
     disabled_at: datetime | None
+    disabled_reason: str | None
     created_at: datetime
     roles: set[Role]
