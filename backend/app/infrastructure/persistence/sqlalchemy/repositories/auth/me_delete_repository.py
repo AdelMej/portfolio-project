@@ -16,7 +16,7 @@ class SqlAlchemyMeDeleteRepository(MeDeleteRepositoryPort):
             user_id: UUID,
             new_password_hash: str
     ) -> None:
-        email = 'deleted'+str(user_id)+'@deleted.local'
+        email = 'deleted+'+str(user_id)+'@deleted.actual.com'
 
         await self._session.execute(
             text("""

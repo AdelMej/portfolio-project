@@ -54,13 +54,23 @@ admin_role AS (
     WHERE role_name = 'admin'
 ),
 
+user_role AS (
+    SELECT id
+    FROM app.roles
+    WHERE role_name = 'user'
+),
+all_roles AS (
+    SELECT id FROM admin_role
+    UNION ALL
+    SELECT id FROM user_role
+),
 -- ------------------------------------------------------------------
 -- User ↔ Role mapping
 --
 -- Purpose:
 -- - Grants admin privileges to bootstrap user
 -- ------------------------------------------------------------------
-insert_user_role AS (
+insert_user_roles AS (
     INSERT INTO app.user_roles (
         user_id,
         role_id
@@ -69,7 +79,8 @@ insert_user_role AS (
         au.id,
         ar.id
     FROM admin_user au
-    CROSS JOIN admin_role ar
+    CROSS JOIN all_roles ar
+    ON CONFLICT DO NOTHING
     RETURNING user_id
 )
 
@@ -94,3 +105,4 @@ FROM insert_user_role iur;
 -- ==================================================================
 -- End of admin seed
 -- ==================================================================
+

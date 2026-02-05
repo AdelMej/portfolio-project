@@ -16,25 +16,21 @@ from app.feature.auth.auth_dto import (
 )
 from app.domain.auth.auth_exceptions import (
     AuthDomainError,
+    EmailAlreadyExistError,
     InvalidEmailError,
     InvalidPasswordError,
     PermissionDeniedError,
 )
 from app.feature.auth.auth_exception import (
     InvalidCredentialsError,
-    InvalidTokenError
+    InvalidTokenError,
+    RegistrationFailed
 )
-from app.feature.auth.uow.login_uow_port import LoginUoWPort
-from app.feature.auth.uow.logout_uow_port import LogoutUoWPort
+from app.feature.auth.uow.auth_uow_port import AuthUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
-from app.feature.auth.uow.refresh_uow_port import RefreshTokenUoWPort
-from app.feature.auth.uow.registration_uow_port import RegistrationUoWPort
 from app.infrastructure.persistence.sqlalchemy.provider import (
-    get_login_uow,
-    get_logout_uow,
-    get_me_uow,
-    get_refresh_uow,
-    get_registration_uow
+    get_auth_uow,
+    get_me_uow
 )
 from app.infrastructure.security.provider import (
     get_current_actor,
@@ -72,7 +68,7 @@ async def login(
     input: LoginInputDTO,
     request: Request,
     response: Response,
-    login_uow: LoginUoWPort = Depends(get_login_uow),
+    login_uow: AuthUoWPort = Depends(get_auth_uow),
     service: AuthService = Depends(get_auth_service),
     password_hasher: PasswordHasherPort = Depends(get_password_hasher),
     jwt: JwtPort = Depends(get_jwt),
@@ -123,7 +119,7 @@ async def token(
     request: Request,
     response: Response,
     form: OAuth2PasswordRequestForm = Depends(),
-    uow: LoginUoWPort = Depends(get_login_uow),
+    uow: AuthUoWPort = Depends(get_auth_uow),
     service: AuthService = Depends(get_auth_service),
     password_hasher: PasswordHasherPort = Depends(get_password_hasher),
     jwt: JwtPort = Depends(get_jwt),
@@ -186,7 +182,7 @@ async def token(
 async def refresh(
     request: Request,
     response: Response,
-    uow: RefreshTokenUoWPort = Depends(get_refresh_uow),
+    uow: AuthUoWPort = Depends(get_auth_uow),
     jwt: JwtPort = Depends(get_jwt),
     service: AuthService = Depends(get_auth_service),
     token_hasher: TokenHasherPort = Depends(get_token_hasher),
@@ -235,15 +231,18 @@ async def refresh(
 )
 async def register(
     input: RegistrationInputDTO,
-    uow: RegistrationUoWPort = Depends(get_registration_uow),
+    uow: AuthUoWPort = Depends(get_auth_uow),
     password_hasher: PasswordHasherPort = Depends(get_password_hasher),
     service: AuthService = Depends(get_auth_service)
 ):
-    await service.register(
-        input=input,
-        uow=uow,
-        password_hasher=password_hasher,
-    )
+    try:
+        await service.register(
+            input=input,
+            uow=uow,
+            password_hasher=password_hasher,
+        )
+    except EmailAlreadyExistError:
+        raise RegistrationFailed()
 
 
 @router.post(
@@ -253,7 +252,7 @@ async def register(
 async def logout(
     request: Request,
     response: Response,
-    uow: LogoutUoWPort = Depends(get_logout_uow),
+    uow: AuthUoWPort = Depends(get_auth_uow),
     service: AuthService = Depends(get_auth_service),
     token_hasher: TokenHasherPort = Depends(get_token_hasher)
 ) -> None:
@@ -376,7 +375,7 @@ async def delete_me(
     response: Response,
     actor: Actor = Depends(get_current_actor),
     uow: MeUoWPort = Depends(get_me_uow),
-    refresh_uow: RefreshTokenUoWPort = Depends(get_refresh_uow),
+    refresh_uow: AuthUoWPort = Depends(get_auth_uow),
     service: AuthService = Depends(get_auth_service),
     password_hasher: PasswordHasherPort = Depends(get_password_hasher)
 ) -> None:
