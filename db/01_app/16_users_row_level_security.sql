@@ -142,6 +142,36 @@ COMMENT ON POLICY users_admin_update_others ON app.users IS
 'Allows admins to disable other users; admin actions must explicitly mark admin responsibility.';
 
 -- ------------------------------------------------------------------
+-- Policy: users_admin_reenable
+--
+-- Purpose:
+-- - Allows admins to re-enable users previously disabled by an admin
+-- - Prevents admins from re-enabling themselves
+-- - Only applies to users disabled with reason = 'admin'
+-- ------------------------------------------------------------------
+CREATE POLICY users_admin_reenable
+ON app.users
+FOR UPDATE
+USING (
+    EXISTS (
+        SELECT 1
+        FROM app.user_roles ur
+        JOIN app.roles r ON r.id = ur.role_id
+        WHERE ur.user_id = current_setting('app.current_user_id')::uuid
+          AND r.role_name = 'admin'
+    )
+    AND id <> current_setting('app.current_user_id')::uuid
+    AND disabled_reason = 'admin'
+)
+WITH CHECK (
+    disabled_at IS NULL
+    AND disabled_reason IS NULL
+);
+
+COMMENT ON POLICY users_admin_reenable ON app.users IS
+'Allows admins to re-enable users disabled by an admin; self re-enable is forbidden and state must be fully cleared.';
+
+-- ------------------------------------------------------------------
 -- Policy: users_select_system
 --
 -- Purpose:
