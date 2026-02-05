@@ -39,6 +39,17 @@ async def list_sessions(
 ):
     return await service.list_sessions(UoW)
 
+@router.put("/{session_id}", status_code=204)
+async def update_session(
+    session_id: UUID,
+    payload: SessionCreateRequest,
+    actor: Actor = Depends(get_current_actor),
+    UoW: SessionUoWPort = Depends(get_session_uow),
+    service: SessionService = Depends(get_session_service)
+):
+    await service.update_session(UoW, actor, session_id, payload)
+
+
 @router.put("/{session_id}/cancel", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_session(
     session_id: UUID,

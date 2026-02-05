@@ -161,3 +161,30 @@ class SqlAlchemySessionRepository:
                 "user_id": user_id,
             }
         )
+
+    async def update_session(self, session: SessionEntity) -> SessionEntity:
+        """
+        Update a session in the database using the SessionEntity.
+        """
+        await self.session.execute(
+            text(
+                """
+                UPDATE app.sessions
+                SET
+                    title = :title,
+                    starts_at = :starts_at,
+                    ends_at = :ends_at,
+                    status = :status
+                WHERE id = :id
+                """
+            ),
+            {
+                "id": str(session.id),
+                "title": session.title,
+                "starts_at": session.starts_at,
+                "ends_at": session.ends_at,
+                "status": session.status.value if hasattr(session.status, "value") else session.status
+            }
+        )
+
+        return session

@@ -1,5 +1,6 @@
 from uuid import UUID, uuid4
 from fastapi import HTTPException
+from datetime import datetime, timezone
 
 from app.domain.session.session_status import SessionStatus
 from app.feature.session.session_dto import GetOutputDto, SessionCreateRequest
@@ -9,7 +10,7 @@ from app.domain.auth.permission import Permission
 from app.feature.session.session_uow_port import SessionUoWPort
 from app.domain.session.session_entity import SessionEntity
 from app.shared.exceptions.commons import NotFoundError
-
+from app.feature.session.session_dto import SessionUpdateRequest
 
 class SessionService:
 
@@ -123,3 +124,24 @@ class SessionService:
             session_id=session_id,
             user_id=actor.id
         )
+
+    async def update_session(self, UoW: SessionUoWPort, actor: Actor, session_id: UUID, payload: SessionUpdateRequest,):
+        ensure_has_permission(actor, Permission.CREATE_SESSION)
+
+        session = await UoW.session_repo.get_session_by_id(session_id)
+        if not session:
+            raise NotFoundError()
+
+        if session.coach_id != actor.id:
+            raise HTTPException(status_code=403, detail="Not your session")
+
+        now = datetime.now(timezone.utc)
+
+        updated_session = session.update(
+            title=payload.title,
+            starts_at=payload.starts_at,
+            ends_at=payload.ends_at,
+            now=now,
+        )
+
+        await UoW.session_repo.update_session(updated_session)

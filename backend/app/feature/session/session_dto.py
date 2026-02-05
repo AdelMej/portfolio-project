@@ -19,3 +19,8 @@ class SessionCreateRequest(BaseModel):
 
 class AttendanceOutputDto(BaseModel):
     user_id: UUID
+
+class SessionUpdateRequest(BaseModel):
+    title: str
+    starts_at: datetime
+    ends_at: datetime
