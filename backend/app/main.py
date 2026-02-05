@@ -18,10 +18,13 @@ from app.feature.admin.users.admin_users_router import (
 from app.shared.handlers import register_exception_handlers
 import logging
 
+from app.feature.session.session_router import router as session_router
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s:     %(name)s - %(message)s",
 )
+
 
 
 @asynccontextmanager
@@ -71,6 +74,8 @@ app = FastAPI(lifespan=lifespan)
 register_exception_handlers(app)
 
 app.include_router(auth_router)
+#Coach sessions
+app.include_router(session_router, prefix="/sessions", tags=["sessions"])
 app.include_router(admin_users_router)
 
 

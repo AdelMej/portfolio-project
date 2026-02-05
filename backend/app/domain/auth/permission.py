@@ -10,6 +10,9 @@ class Permission(str, Enum):
     DELETE_SELF = "delete:self"
     NO_SELF_DELETE = "delete:notSelf"
     READ_USERS = "read:users"
+    BAN_USER = "ban:user"
+    CREATE_SESSION = "session:create"
+    CANCEL_SESSION = "session:cancel"
     GRANT_ROLE = "role:grant"
     REVOKE_ROLE = "role:revoke"
     DISABLE_USER = "disable:user"
@@ -29,6 +32,8 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.UPDATE_SELF,
         Permission.NO_SELF_DELETE,
         Permission.READ_USERS,
+        Permission.CREATE_SESSION,
+        Permission.CANCEL_SESSION,
         Permission.GRANT_ROLE,
         Permission.REVOKE_ROLE,
         Permission.DISABLE_USER,
@@ -38,6 +43,8 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.READ_SELF,
         Permission.WRITE_SELF,
         Permission.UPDATE_SELF,
-        Permission.DELETE_SELF
+        Permission.DELETE_SELF,
+        Permission.CREATE_SESSION,
+        Permission.CANCEL_SESSION,
     }
 }

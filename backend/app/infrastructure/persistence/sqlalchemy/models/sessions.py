@@ -83,14 +83,15 @@ class Session(Base):
     )
 
     status: Mapped[SessionStatus] = mapped_column(
-        Enum(
-            SessionStatus,
-            name="session_status",
-            schema="app",
-            native_enum=True,
-            create_constraint=False,  # DB already owns it
-        ),
-        nullable=False,
+    Enum(
+        SessionStatus,
+        name="session_status",
+        schema="app",
+        native_enum=True,
+        create_constraint=False,
+        values_callable=lambda enum: [e.value for e in enum],  # ✅ IMPORTANT
+    ),
+    nullable=False,
     )
 
     cancelled_at: Mapped[datetime] = mapped_column(
