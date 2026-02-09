@@ -1,38 +1,53 @@
 -- ------------------------------------------------------------------
--- Privileges: app.user_roles
+-- Permissions: app.user_roles
+--
+-- Overview:
+-- - Controls user ↔ role assignments
+-- - GRANTs define *capabilities* (what actions a role may attempt)
+-- - RLS policies enforce *scope* and authority
+-- ------------------------------------------------------------------
+
+-- ---------------------------------------------------------------
+-- Role: app_user
 --
 -- Purpose:
--- - Allow users to read role assignments (RLS-scoped)
--- - Allow controlled role management via RLS
--- - Support system-level automation
+-- - Regular authenticated users
 --
--- Guarantees:
--- - app_user visibility is fully restricted by RLS
--- - Admin actions (insert/delete) are enforced at the policy level
--- - app_system bypasses user intent but still respects schema rules
--- ------------------------------------------------------------------
+-- Capabilities (GRANTs):
+-- - SELECT: read own role assignments (RLS-scoped)
+-- - INSERT / DELETE: allowed but actual authority is enforced by RLS policies
+--
+-- Scope (RLS):
+-- - Fully restricted by RLS policies such as:
+--   - user_roles_visible
+--   - user_roles_admin_or_system_delete
+-- ---------------------------------------------------------------
+
+GRANT SELECT ON TABLE app.user_roles TO app_user;
+
+-- ---------------------------------------------------------------
+-- Role: app_system
+--
+-- Purpose:
+-- - Backend automation, provisioning, and sync jobs
+--
+-- Capabilities (GRANTs):
+-- - SELECT: read access to all role assignments
+-- - All inserts/deletes performed via SECURITY DEFINER functions if needed
+--
+-- Scope (RLS):
+-- - Table access subject to RLS for direct queries
+-- - Privileged operations handled through functions
+-- ---------------------------------------------------------------
+
+GRANT SELECT ON TABLE app.user_roles TO app_system;
 
 -- ------------------------------------------------------------------
--- Read access
---
--- Used by:
--- - permission checks
--- - role-aware queries
--- - RLS joins
+-- Documentation
 -- ------------------------------------------------------------------
 
-GRANT SELECT, INSERT, DELETE ON app.user_roles TO app_user;
-
--- ------------------------------------------------------------------
--- Role management (RLS-gated)
---
--- app_user:
--- - insert/delete allowed
--- - actual authority enforced by RLS policies
---
--- app_system:
--- - used for automation, provisioning, sync jobs
--- ------------------------------------------------------------------
-
-GRANT INSERT, DELETE ON app.user_roles TO app_user;
-GRANT SELECT, INSERT, DELETE ON app.user_roles TO app_system;
+COMMENT ON TABLE app.user_roles IS
+'Table mapping users to roles. 
+app_user may read their own assignments and perform RLS-gated inserts/deletes.
+Admin actions are enforced at the policy level.
+app_system may perform automation and system-level operations via SECURITY DEFINER functions.';

@@ -121,6 +121,46 @@ ON ALL SEQUENCES IN SCHEMA app
 TO app_user;
 
 -- ------------------------------------------------------------------
+-- Function execution: application behavior (app_fcn)
+--
+-- Purpose:
+-- - Centralize execution of application behavior
+-- - Enforce strict separation between declarative access (RLS)
+--   and imperative system operations (functions)
+--
+-- Execution model:
+-- - app_user:
+--     - Never executes functions directly
+--     - Interacts with functions only indirectly via RLS predicates
+--
+-- - app_system:
+--     - Executes application behavior explicitly
+--     - Uses functions as transactional units of work
+--     - No direct table access; all mutations go through functions
+--
+-- - app_admin:
+--     - Owns and manages functions
+--     - Used for migrations and maintenance only
+--
+-- Security rules:
+-- - app_fcn schema is owned by app_admin
+-- - SECURITY DEFINER functions explicitly control privilege escalation
+-- - Non-SECURITY DEFINER functions execute with caller privileges
+-- ------------------------------------------------------------------
+
+-- Allow system role to resolve and execute application functions
+GRANT USAGE ON SCHEMA app_fcn TO app_system;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA app_fcn TO app_system;
+
+-- Prevent app_user from calling functions directly
+REVOKE USAGE ON SCHEMA app_fcn FROM app_user;
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA app_fcn FROM app_user;
+
+-- Admin retains full control
+GRANT USAGE ON SCHEMA app_fcn TO app_admin;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA app_fcn TO app_admin;
+
+-- ------------------------------------------------------------------
 -- Default privileges (future-proofing)
 --
 -- Purpose:
@@ -161,6 +201,16 @@ REVOKE INSERT, UPDATE, DELETE ON TABLES FROM app_admin;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA audit
 REVOKE ALL ON TABLES FROM PUBLIC;
+
+-- app_fcn defaults
+ALTER DEFAULT PRIVILEGES FOR ROLE app_admin IN SCHEMA app_fcn
+GRANT EXECUTE ON FUNCTIONS TO app_system;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE app_admin IN SCHEMA app_fcn
+REVOKE ALL ON FUNCTIONS FROM app_user;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE app_admin IN SCHEMA app_fcn
+GRANT EXECUTE ON FUNCTIONS TO app_admin;
 
 -- ------------------------------------------------------------------
 -- Role documentation

@@ -2,30 +2,28 @@
 -- Privileges: app.session_attendance
 --
 -- Purpose:
--- - Grant access according to role responsibilities
+-- - Store authoritative attendance records for sessions
+-- - Allow administrative visibility into attendance data
+-- - Delegate all authority and scope enforcement to RLS
 -- ------------------------------------------------------------------
 
 -- ------------------------------------------------------------------
--- app_user: coach can insert attendance
+-- app_user: read access (RLS-scoped)
+--
+-- Notes:
+-- - app_user has SELECT privilege
+-- - Actual visibility is restricted to admins by RLS
+-- - Non-admin users will see zero rows
 -- ------------------------------------------------------------------
-GRANT SELECT, INSERT ON TABLE app.session_attendance TO app_user;
-
-COMMENT ON TABLE app.session_attendance IS
-'Coaches (app_user) can insert attendance records for their sessions only.';
-
--- ------------------------------------------------------------------
--- app_system: read-only for metrics, exports, and audits
--- ------------------------------------------------------------------
-GRANT SELECT ON TABLE app.session_attendance TO app_system;
-
-COMMENT ON TABLE app.session_attendance IS
-'System role (app_system) can read attendance records for reporting, metrics, and background jobs.';
+GRANT SELECT
+ON TABLE app.session_attendance
+TO app_user;
 
 -- ------------------------------------------------------------------
--- Remove default access
+-- Documentation
 -- ------------------------------------------------------------------
-REVOKE ALL ON TABLE app.session_attendance FROM app_user;
-REVOKE ALL ON TABLE app.session_attendance FROM app_system;
 
 COMMENT ON TABLE app.session_attendance IS
-'All other privileges are revoked; access is controlled via explicit grants above.';
+'Session attendance records. SELECT is granted to app_user, but visibility is fully restricted by RLS to administrative roles only. 
+Regular users and coaches cannot observe or mutate attendance data. 
+All inserts and updates are performed by system-owned backend logic.';

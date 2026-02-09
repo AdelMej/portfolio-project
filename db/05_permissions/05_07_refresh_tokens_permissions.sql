@@ -1,42 +1,34 @@
 -- ------------------------------------------------------------------
--- Privileges: app.refresh_tokens
+-- Permissions: app.refresh_tokens
+--
+-- Overview:
+-- - Stores refresh tokens for authentication
+-- - Table is intentionally locked down at the GRANT level
+-- - All access is mediated through RLS and SECURITY DEFINER functions
 -- ------------------------------------------------------------------
 
--- ------------------------------------------------------------------
--- app_user
+-- ---------------------------------------------------------------
+-- Role: app_user
 --
--- - No direct access
--- - All operations blocked via RLS
--- ------------------------------------------------------------------
+-- Purpose:
+-- - Regular authenticated application users
+--
+-- Capabilities (GRANTs):
+-- - None
+--
+-- Scope (RLS):
+-- - No direct table access
+-- - Any interaction is performed indirectly via functions
+-- ---------------------------------------------------------------
+
 REVOKE ALL ON TABLE app.refresh_tokens FROM app_user;
-
--- ------------------------------------------------------------------
--- app_admin
---
--- - Read-only access to all tokens
--- - Used for auditing / inspections
--- ------------------------------------------------------------------
-GRANT SELECT ON TABLE app.refresh_tokens TO app_admin;
-
--- ------------------------------------------------------------------
--- app_system
---
--- - Full lifecycle control (except DELETE, RLS prevents deletion)
--- - Used for issuing, revoking, and updating refresh tokens
--- ------------------------------------------------------------------
-GRANT SELECT, INSERT, UPDATE ON TABLE app.refresh_tokens TO app_system;
 
 -- ------------------------------------------------------------------
 -- Documentation
 -- ------------------------------------------------------------------
 
 COMMENT ON TABLE app.refresh_tokens IS
-'Refresh token management table.
-RLS policies enforce:
-- Users see only their own tokens
-- Admins see all tokens
-- System role may insert and update tokens
-Privileges:
-- app_user: no access
-- app_admin: read-only
-- app_system: full lifecycle control (except deletion)';
+'Refresh token storage table.
+No application role has direct table privileges.
+All access is enforced via RLS and SECURITY DEFINER functions.
+Used for secure token issuance, rotation, and validation.';

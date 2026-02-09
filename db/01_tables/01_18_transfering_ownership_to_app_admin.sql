@@ -35,6 +35,6 @@ ALTER TABLE app.invite_tokens OWNER TO app_admin;
 ALTER TABLE app.session_participation OWNER TO app_admin;
 ALTER TABLE app.session_attendance OWNER TO app_admin;
 ALTER TABLE app.credit_ledger OWNER TO app_admin;
-ALTER TABLE app.payment OWNER TO app_admin;*
+ALTER TABLE app.payment OWNER TO app_admin;
 ALTER TABLE app.coach_stripe_accounts OWNER TO app_admin;
-ALTER TABLE audit.event OWNER TO app_admin;
+ALTER TABLE audit.events OWNER TO app_admin;

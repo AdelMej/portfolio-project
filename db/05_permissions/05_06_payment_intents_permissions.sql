@@ -1,30 +1,34 @@
 -- ------------------------------------------------------------------
--- Privileges: app.payment_intents
+-- Permissions: app.payment_intents
+--
+-- Overview:
+-- - Stores payment intent records
+-- - GRANTs define *capabilities* (what a role may attempt)
+-- - RLS policies enforce *scope* and authority
 -- ------------------------------------------------------------------
 
 -- ---------------------------------------------------------------
--- app_user: read-only
+-- Role: app_user
 --
--- Access is limited by RLS, so users only see their own payment intents.
--- Used for:
--- - User dashboards
--- - Viewing their own payment history
+-- Purpose:
+-- - Regular authenticated application users
+--
+-- Capabilities (GRANTs):
+-- - SELECT: read-only access to payment intents
+--
+-- Scope (RLS):
+-- - Fully constrained by RLS policies such as:
+--   - payment_intents_read
+-- - Users only see their own payment intents
 -- ---------------------------------------------------------------
-GRANT SELECT ON app.payment_intents TO app_user;
 
--- ---------------------------------------------------------------
--- app_system: full write access
---
--- Can read, insert, and update all payment intents.
--- Used for:
--- - System operations (e.g., creating intents for new sessions)
--- - Syncing payments with external providers
--- - Administrative maintenance
--- ---------------------------------------------------------------
-GRANT SELECT, INSERT, UPDATE ON app.payment_intents TO app_system;
+GRANT SELECT ON TABLE app.payment_intents TO app_user;
 
 -- ------------------------------------------------------------------
 -- Documentation
 -- ------------------------------------------------------------------
+
 COMMENT ON TABLE app.payment_intents IS
-'Payment intents table. app_user has read-only access filtered by RLS. app_system can read, insert, and update all rows for system operations.';
+'Payment intents table. 
+app_user has read-only access filtered by RLS policies. 
+System operations are executed via SECURITY DEFINER functions; no direct table privileges are granted.';

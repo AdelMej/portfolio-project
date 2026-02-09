@@ -1,26 +1,35 @@
 -- ------------------------------------------------------------------
--- Privileges: app.user_profiles
+-- Permissions: app.user_profiles
 --
--- Access model:
--- - app_user   : read profiles (RLS-scoped) and update own profile
--- - app_system : create profiles (signup, sync, admin tooling)
---
--- Notes:
--- - DELETE is intentionally forbidden (soft-delete model)
--- - Row visibility and write scope are enforced via RLS policies
+-- Overview:
+-- - Row Level Security (RLS) enforces *scope* of access.
+-- - GRANTs define *capabilities* (what a role may attempt).
+-- - RLS + functions determine the actual allowed operations.
 -- ------------------------------------------------------------------
 
--- app_user: read profiles and update own profile (RLS enforced)
-GRANT SELECT, UPDATE ON TABLE app.user_profiles TO app_user;
+-- ---------------------------------------------------------------
+-- Role: app_user
+--
+-- Purpose:
+-- - Regular authenticated application users
+--
+-- Capabilities (GRANTs):
+-- - SELECT: read profiles (RLS-scoped)
+-- - UPDATE: update own profile fields
+--
+-- Scope (RLS):
+-- - Fully restricted by RLS policies such as:
+--   - user_profiles_visible
+--   - user_profiles_self_update
+-- ---------------------------------------------------------------
 
--- app_system: responsible for profile creation
-GRANT SELECT, INSERT ON TABLE app.user_profiles TO app_system;
+GRANT SELECT, UPDATE ON TABLE app.user_profiles TO app_user;
 
 -- ------------------------------------------------------------------
 -- Documentation
 -- ------------------------------------------------------------------
 
 COMMENT ON TABLE app.user_profiles IS
-'User profile table. Access is governed by RLS; DELETE is intentionally forbidden. 
-Users may read visible profiles and update their own. 
-System role is responsible for profile creation.';
+'User profile table. Access controlled via RLS; DELETE is intentionally forbidden (soft-delete model). 
+app_user may read visible profiles and update their own. 
+app_system handles profile creation via SECURITY DEFINER functions.';

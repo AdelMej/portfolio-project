@@ -2,45 +2,28 @@
 -- Privileges: app.session_participation
 --
 -- Purpose:
--- - Grant access according to role responsibilities
+-- - Expose session participation data to end users
+-- - Enforce read-only access for application users
+-- - Delegate all mutations to system-owned logic
 -- ------------------------------------------------------------------
 
 -- ------------------------------------------------------------------
--- app_user: business logic owner
+-- app_user: read-only access
 --
 -- Notes:
--- - RLS controls which rows are visible and which updates are allowed.
--- - Can register themselves and cancel their own participation.
--- ------------------------------------------------------------------
-GRANT SELECT, INSERT, UPDATE
-ON TABLE app.session_participation
-TO app_user;
-
-COMMENT ON TABLE app.session_participation IS
-'App users (app_user) may view, register, or cancel their own session participation. RLS governs row visibility and permissible updates.';
-
--- ------------------------------------------------------------------
--- app_system: read-only
---
--- Notes:
--- - Used for background jobs, metrics, exports.
+-- - app_user has SELECT access only
+-- - Row visibility is strictly enforced by RLS
+-- - Users cannot create, update, or cancel participation directly
+-- - All lifecycle changes are performed by backend logic (app_system)
 -- ------------------------------------------------------------------
 GRANT SELECT
 ON TABLE app.session_participation
-TO app_system;
-
-COMMENT ON TABLE app.session_participation IS
-'System automation (app_system) may read session participation for reporting and background processing.';
+TO app_user;
 
 -- ------------------------------------------------------------------
--- app_admin: full control
---
--- Notes:
--- - Database administrators may manage all session participation records.
+-- Documentation
 -- ------------------------------------------------------------------
-GRANT ALL
-ON TABLE app.session_participation
-TO app_admin;
 
 COMMENT ON TABLE app.session_participation IS
-'Admins (app_admin) may fully manage session participation records.';
+'Session participation records. Application users (app_user) have read-only access scoped by RLS. 
+All participation lifecycle operations (register, cancel, status changes) are performed exclusively by system-owned backend logic.';

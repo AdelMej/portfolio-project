@@ -156,7 +156,7 @@ COMMENT ON TRIGGER trg_30_users_admin_update_others_lifecycle_only ON app.users 
 -- - Automatically refreshes updated_at on any UPDATE
 -- - Runs last to reflect final row state
 -- ------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION app.tg_set_updated_at()
+CREATE OR REPLACE FUNCTION app.tg_users_set_updated_at()
 RETURNS trigger
 LANGUAGE plpgsql
 AS $$

@@ -1,6 +1,4 @@
 -- ==================================================================
--- File: 04_02_admin_seed.sql
---
 -- Purpose:
 -- - Seeds the initial administrator account
 -- - Assigns admin role

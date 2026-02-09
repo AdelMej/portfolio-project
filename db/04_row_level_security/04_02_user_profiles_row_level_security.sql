@@ -37,20 +37,14 @@ USING (
     ------------------------------------------------------------------
     -- 1. App-level admin: full visibility
     ------------------------------------------------------------------
-    EXISTS (
-        SELECT 1
-        FROM app.user_roles ur
-        JOIN app.roles r ON r.id = ur.role_id
-        WHERE ur.user_id = current_setting('app.current_user_id')::uuid
-          AND r.role_name = 'admin'
-    )
+    app_fcn.is_admin()
 
     OR
 
     ------------------------------------------------------------------
     -- 2. Self
     ------------------------------------------------------------------
-    user_id = current_setting('app.current_user_id')::uuid
+    app_fcn.is_self(user_id)
 
     OR
 
@@ -119,32 +113,12 @@ ON app.user_profiles
 FOR UPDATE
 TO app_user
 USING (
-    user_id = current_setting('app.current_user_id')::uuid
-    AND EXISTS (
-        SELECT 1
-        FROM app.users u
-        WHERE u.id = user_profiles.user_id
-          AND u.disabled_at IS NULL
-    )
+    app_fcn.is_self(user_id)
+    AND app_fcn.is_user_active(user_id)
 )
 WITH CHECK (
-    user_id = current_setting('app.current_user_id')::uuid
+    app_fcn.is_self(user_id)
 );
 
 COMMENT ON POLICY user_profiles_self_update ON app.user_profiles IS
 'Allows users to update only their own profile.';
-
--- ------------------------------------------------------------------
--- Policy: user_profiles_system_insert
---
--- Only system role may create profiles
--- (signup, sync, migrations, etc.)
--- ------------------------------------------------------------------
-CREATE POLICY user_profiles_system_insert
-ON app.user_profiles
-FOR INSERT
-TO app_system
-WITH CHECK (TRUE);
-
-COMMENT ON POLICY user_profiles_system_insert ON app.user_profiles IS
-'Restricts profile creation to system-level processes.';

@@ -26,17 +26,8 @@ CREATE POLICY users_select_self_or_admin
 ON app.users
 FOR SELECT
 USING (
-    -- User can read their own record
-    id = current_setting('app.current_user_id')::uuid
-
-    -- Admins can read all users
-    OR EXISTS (
-        SELECT 1
-        FROM app.user_roles ur
-        JOIN app.roles r ON r.id = ur.role_id
-        WHERE ur.user_id = current_setting('app.current_user_id')::uuid
-          AND r.role_name = 'admin'
-    )
+	app_fcn.is_self(id)
+    OR app_fcn.is_admin()
 );
 
 COMMENT ON POLICY users_select_self_or_admin ON app.users IS
@@ -53,60 +44,20 @@ COMMENT ON POLICY users_select_self_or_admin ON app.users IS
 -- - Does not allow changing disabled state
 -- ------------------------------------------------------------------
 
-CREATE POLICY users_self_update_profile
+CREATE POLICY users_self_update
 ON app.users
 FOR UPDATE
 USING (
-    id = current_setting('app.current_user_id')::uuid
+    app_fcn.is_self(id)
     AND disabled_at IS NULL
 )
 WITH CHECK (
-    id = current_setting('app.current_user_id')::uuid
+    app_fcn.is_self(id)
     AND disabled_at IS NULL
 );
 
-COMMENT ON POLICY users_self_update_profile ON app.users IS
+COMMENT ON POLICY users_self_update ON app.users IS
 'Allows users to update their own profile while the account is active.';
-
--- ------------------------------------------------------------------
--- Policy: users_self_delete
---
--- Semantic note:
--- - This is a soft-delete via disabling the account
---
--- Allows:
--- - Users to self-disable their account
---
--- Restrictions:
--- - User must not be an admin
--- - Account must be active before disabling
--- - Disabled reason must be "self"
--- ------------------------------------------------------------------
-
-CREATE POLICY users_self_delete
-ON app.users
-FOR UPDATE
-USING (
-    id = current_setting('app.current_user_id')::uuid
-    AND disabled_at IS NULL
-
-    -- Admins are not allowed to self-disable via this path
-    AND NOT EXISTS (
-        SELECT 1
-        FROM app.user_roles ur
-        JOIN app.roles r ON r.id = ur.role_id
-        WHERE ur.user_id = current_setting('app.current_user_id')::uuid
-          AND r.role_name = 'admin'
-    )
-)
-WITH CHECK (
-    id = current_setting('app.current_user_id')::uuid
-    AND disabled_at IS NOT NULL
-    AND disabled_reason = 'self'
-);
-
-COMMENT ON POLICY users_self_delete ON app.users IS
-'Allows non-admin users to self-disable their account (soft delete).';
 
 -- ------------------------------------------------------------------
 -- Policy: users_admin_update_others
@@ -124,18 +75,13 @@ CREATE POLICY users_admin_update_others
 ON app.users
 FOR UPDATE
 USING (
-    EXISTS (
-        SELECT 1
-        FROM app.user_roles ur
-        JOIN app.roles r ON r.id = ur.role_id
-        WHERE ur.user_id = current_setting('app.current_user_id')::uuid
-          AND r.role_name = 'admin'
-    )
-    AND id <> current_setting('app.current_user_id')::uuid
+    app_fcn.is_admin()
+    AND NOT app_fcn.is_self(id)
 )
 WITH CHECK (
     disabled_at IS NOT NULL
     AND disabled_reason = 'admin'
+    AND app_fcn.is_admin()
 );
 
 COMMENT ON POLICY users_admin_update_others ON app.users IS
@@ -153,14 +99,8 @@ CREATE POLICY users_admin_reenable
 ON app.users
 FOR UPDATE
 USING (
-    EXISTS (
-        SELECT 1
-        FROM app.user_roles ur
-        JOIN app.roles r ON r.id = ur.role_id
-        WHERE ur.user_id = current_setting('app.current_user_id')::uuid
-          AND r.role_name = 'admin'
-    )
-    AND id <> current_setting('app.current_user_id')::uuid
+	app_fcn.is_admin()
+    AND NOT app_fcn.is_self(id)
     AND disabled_reason = 'admin'
 )
 WITH CHECK (
@@ -170,41 +110,3 @@ WITH CHECK (
 
 COMMENT ON POLICY users_admin_reenable ON app.users IS
 'Allows admins to re-enable users disabled by an admin; self re-enable is forbidden and state must be fully cleared.';
-
--- ------------------------------------------------------------------
--- Policy: users_select_system
---
--- Purpose:
--- - Allow system-level operations (authentication)
--- - Used during login before user context exists
--- ------------------------------------------------------------------
-
-CREATE POLICY users_select_system
-ON app.users
-FOR SELECT
-TO app_system
-USING (true);
-
-COMMENT ON POLICY users_select_system ON app.users IS
-'Allows system role to read user records for authentication and system operations.';
-
--- ------------------------------------------------------------------
--- Policy: users_insert_system
---
--- Purpose:
--- - Allow system-level user creation during registration
--- - Used before a user context exists (no current_user_id)
---
--- Notes:
--- - Restricted to app_system role only
--- - Required for initial account creation
--- ------------------------------------------------------------------
-
-CREATE POLICY users_insert_system
-ON app.users
-FOR INSERT
-TO app_system
-WITH CHECK (true);
-
-COMMENT ON POLICY users_insert_system ON app.users IS
-'Allows system role to insert new users during registration before a user context exists.';

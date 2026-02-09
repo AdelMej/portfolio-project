@@ -2,40 +2,55 @@
 -- Privileges: app.credit_ledger
 --
 -- Purpose:
--- - Grant access according to role responsibilities
+-- - Store immutable credit ledger entries
+-- - Allow users to view their own credit history
+-- - Allow admins to audit all ledger activity
+--
+-- Design notes:
+-- - Ledger is append-only (enforced elsewhere)
+-- - All mutations are performed by system-owned logic
+-- - Row visibility is enforced exclusively via RLS
 -- ------------------------------------------------------------------
 
 -- ------------------------------------------------------------------
--- Revoke all existing privileges
+-- Privilege cleanup
+--
+-- Notes:
+-- - Explicitly revoke all privileges before re-granting
+-- - Ensures a known, auditable baseline
 -- ------------------------------------------------------------------
 REVOKE ALL ON TABLE app.credit_ledger FROM app_user;
 REVOKE ALL ON TABLE app.credit_ledger FROM app_admin;
 REVOKE ALL ON TABLE app.credit_ledger FROM app_system;
 
-COMMENT ON TABLE app.credit_ledger IS
-'Initial cleanup of all privileges on credit_ledger before applying role-specific grants.';
-
 -- ------------------------------------------------------------------
--- app_user: read-only
+-- app_user: read-only (RLS-scoped)
+--
+-- Notes:
+-- - Users may read their own ledger entries only
+-- - RLS enforces row-level ownership
 -- ------------------------------------------------------------------
-GRANT SELECT ON TABLE app.credit_ledger TO app_user;
-
-COMMENT ON TABLE app.credit_ledger IS
-'Regular users (app_user) may read their own ledger entries; RLS enforces row-level visibility.';
+GRANT SELECT
+ON TABLE app.credit_ledger
+TO app_user;
 
 -- ------------------------------------------------------------------
 -- app_admin: read-only
+--
+-- Notes:
+-- - Admins may read all ledger entries
+-- - Used for auditing, reconciliation, and support
 -- ------------------------------------------------------------------
-GRANT SELECT ON TABLE app.credit_ledger TO app_admin;
+GRANT SELECT
+ON TABLE app.credit_ledger
+TO app_admin;
+
+-- ------------------------------------------------------------------
+-- Documentation
+-- ------------------------------------------------------------------
 
 COMMENT ON TABLE app.credit_ledger IS
-'Admin users (app_admin) may read all ledger entries for auditing and support purposes; RLS applies.';
-
--- ------------------------------------------------------------------
--- app_system: full write access
--- ------------------------------------------------------------------
-GRANT SELECT, INSERT ON TABLE app.credit_ledger TO app_system;
-
-COMMENT ON TABLE app.credit_ledger IS
-'System role (app_system) may insert and read ledger entries; all updates are forbidden by RLS.';
-
+'Immutable credit ledger table.
+SELECT is granted to app_user and app_admin, while all row-level visibility is enforced by RLS.
+Users may view their own entries; admins may audit all entries.
+All inserts are performed by system-owned backend logic.';

@@ -1,6 +1,4 @@
 -- ==================================================================
--- File: 04_02_admin_seed.sql
---
 -- Purpose:
 -- - Seeds the initial administrator account
 -- - Assigns admin role
@@ -39,6 +37,8 @@ WITH admin_user AS (
         'admin@example.com',
         '$argon2id$v=19$m=65536,t=3,p=4$UGRYqUO3NS5J8/cKjD09mg$KblEZs8ghdYADYaEwh6EsghQy88rVDpdzEFAWXFswps'
     )
+    ON CONFLICT (id) DO UPDATE
+        SET email = EXCLUDED.email
     RETURNING id
 ),
 
@@ -49,15 +49,10 @@ WITH admin_user AS (
 -- - Resolves admin role dynamically
 -- ------------------------------------------------------------------
 admin_role AS (
-    SELECT id
-    FROM app.roles
-    WHERE role_name = 'admin'
+    SELECT id FROM app.roles WHERE role_name = 'admin'
 ),
-
 user_role AS (
-    SELECT id
-    FROM app.roles
-    WHERE role_name = 'user'
+    SELECT id FROM app.roles WHERE role_name = 'user'
 ),
 all_roles AS (
     SELECT id FROM admin_role
@@ -71,17 +66,11 @@ all_roles AS (
 -- - Grants admin privileges to bootstrap user
 -- ------------------------------------------------------------------
 insert_user_roles AS (
-    INSERT INTO app.user_roles (
-        user_id,
-        role_id
-    )
-    SELECT
-        au.id,
-        ar.id
+    INSERT INTO app.user_roles (user_id, role_id)
+    SELECT au.id, ar.id
     FROM admin_user au
     CROSS JOIN all_roles ar
     ON CONFLICT DO NOTHING
-    RETURNING user_id
 )
 
 -- ------------------------------------------------------------------
@@ -96,11 +85,11 @@ INSERT INTO app.user_profiles (
     last_name
 )
 SELECT
-    iur.user_id,
+    au.id,
     'System',
     'Administrator'
-FROM insert_user_role iur;
-
+FROM admin_user au
+ON CONFLICT (user_id) DO NOTHING;
 
 -- ==================================================================
 -- End of admin seed

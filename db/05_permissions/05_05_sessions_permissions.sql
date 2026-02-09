@@ -1,24 +1,28 @@
--- ------------------------------------------------------------------
--- Privileges: app.sessions
+-- ---------------------------------------------------------------
+-- Permissions: app_user
 --
 -- Purpose:
--- - Allow application users to interact with sessions
--- - Delegate all authority and scope enforcement to RLS
+-- - Regular authenticated application users
 --
--- Guarantees:
--- - app_user privileges are intentionally broad
--- - All access (read/write) is constrained by RLS policies
--- - No direct privilege-based bypass is possible
--- ------------------------------------------------------------------
+-- Capabilities (GRANTs):
+-- - SELECT: read access to sessions
+-- - INSERT / UPDATE: authority enforced via RLS policies
+--
+-- Scope (RLS):
+-- - Constrained by policies like:
+--   - sessions_select_all
+--   - sessions_coach_insert
+--   - sessions_coach_or_admin_update
+-- ---------------------------------------------------------------
+
+GRANT SELECT ON TABLE app.sessions TO app_user;
 
 -- ------------------------------------------------------------------
--- Application user access
---
--- Used by:
--- - session browsing
--- - session creation (coach-owned)
--- - session updates (coach or admin)
+-- Documentation
 -- ------------------------------------------------------------------
 
-GRANT SELECT, INSERT, UPDATE ON app.sessions TO app_user;
-GRANT SELECT ON app.sessions TO app_system;
+COMMENT ON TABLE app.sessions IS
+'Table representing application sessions.
+app_user may read sessions and perform RLS-gated creation/updates.
+System operations (app_system) are executed via SECURITY DEFINER functions; no direct table privileges are granted.
+All access is fully constrained by RLS policies; no direct privilege bypass is possible.';

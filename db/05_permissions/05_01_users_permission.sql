@@ -1,52 +1,53 @@
 -- ------------------------------------------------------------------
 -- Permissions: app.users
 --
--- Note:
--- - Row Level Security (RLS) is enforced
--- - GRANTs define *capability*
--- - RLS defines *scope*
+-- Overview:
+-- - Row Level Security (RLS) is enforced to control *scope* of access.
+-- - GRANTs define *capabilities* (what a role may attempt).
+-- - RLS + functions determine the actual allowed operations.
 -- ------------------------------------------------------------------
 
 -- ---------------------------------------------------------------
 -- Role: app_user
 --
 -- Purpose:
--- - Regular authenticated application users
+-- - Regular authenticated application users.
 --
--- Allowed:
+-- Capabilities (GRANTs):
 -- - SELECT: read own user record
 -- - UPDATE: update own profile fields
 --
--- Scope:
--- - Fully restricted by RLS
+-- Scope (RLS):
+-- - Fully restricted by RLS policies such as:
+--   - users_select_self_or_admin
+--   - users_self_update
 -- ---------------------------------------------------------------
 
 GRANT SELECT, UPDATE ON TABLE app.users TO app_user;
 
 COMMENT ON TABLE app.users IS
-'User accounts table. Access controlled via RLS. app_user may read/update own record only.';
-
-COMMENT ON ROLE app_user IS
-'Runtime application role. Reads and updates own user record via RLS-controlled access.';
+'User accounts table. Access controlled via RLS. app_user may read/update their own record only.';
 
 -- ---------------------------------------------------------------
 -- Role: app_system
 --
 -- Purpose:
--- - Backend system operations
--- - Signup flows
--- - Webhooks / identity sync
+-- - Backend system operations: signup flows, webhooks, identity sync, admin workflows.
 --
--- Allowed:
--- - SELECT: read users
--- - INSERT: create users
--- - UPDATE: system-managed updates
+-- Capabilities (GRANTs):
+-- - SELECT only on table
+-- - All inserts/updates/deletes are performed via SECURITY DEFINER functions
 --
--- Scope:
--- - Still constrained by RLS
+-- Scope (RLS):
+-- - app_system still subject to RLS for direct table access
+-- - Privileged operations are done via functions (functions bypass table GRANT restrictions)
 -- ---------------------------------------------------------------
 
-GRANT SELECT, INSERT, UPDATE ON TABLE app.users TO app_system;
+GRANT SELECT ON TABLE app.users TO app_system;
+
+-- ------------------------------------------------------------------
+-- Documentation
+-- ------------------------------------------------------------------
 
 COMMENT ON ROLE app_system IS
-'System-level application role used for backend processes such as signup, sync, and admin workflows. Subject to RLS.';
+'System-level role for backend processes such as signup, sync, and admin workflows. Direct table access is read-only; all other operations performed via SECURITY DEFINER functions.';
