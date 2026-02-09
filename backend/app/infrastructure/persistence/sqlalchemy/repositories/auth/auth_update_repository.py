@@ -37,17 +37,12 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
         res = await self._session.execute(
             text(
                 """
-                INSERT INTO app.refresh_tokens (
-                    user_id,
-                    token_hash,
-                    expires_at
-                )
-                VALUES (
-                    :user_id,
-                    :token_hash,
-                    :expires_at
-                )
-                RETURNING id
+                    SELECT
+                        app_fcn.create_refresh_token(
+                            :user_id,
+                            :token_hash,
+                            :expires_at
+                        )
                 """
             ),
             {
@@ -63,12 +58,12 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
             await self._session.execute(
                 text(
                     """
-                    UPDATE app.refresh_tokens
-                    SET
-                        replaced_by_token_id = :new_id,
-                        revoked_at = now()
-                    WHERE token_hash = :old_hash
-                        AND user_id = :user_id
+                        SELECT
+                            app_fcn.rotate_refresh_token(
+                                :new_id,
+                                :old_hash,
+                                :user_id
+                            )
                     """
                 ),
                 {

@@ -14,38 +14,26 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
         self._session = session
 
     async def exist_email(self, email: str) -> bool:
-        stmt = text("""
-            SELECT 1
-            FROM app.users
-            WHERE email = :email
-            LIMIT 1
-        """)
-
-        res = await self._session.execute(stmt, {"email": email})
+        res = await self._session.execute(
+            text("""
+                SELECT app_fcn.auth_exists_by_email(:email)
+            """),
+            {
+                "email": email
+            }
+        )
         return res.scalar() is not None
 
     async def get_user_by_email(self, email: str) -> UserEntity | None:
-        stmt = text("""
-            SELECT
-                u.id,
-                u.email,
-                u.password_hash,
-                u.disabled_at,
-                u.disabled_reason,
-                array_agg(r.role_name) as roles
-            FROM app.users u
-            JOIN app.user_roles ur ON ur.user_id = u.id
-            JOIN app.roles r ON r.id = ur.role_id
-            where u.email = :email
-            GROUP BY
-                u.id,
-                u.email,
-                u.password_hash,
-                u.disabled_at,
-                u.disabled_reason
-            """)
-
-        res = await self._session.execute(stmt, {"email": email})
+        res = await self._session.execute(
+            text("""
+                SELECT *
+                FROM app_fcn.auth_user_by_email(:email)
+            """),
+            {
+                "email": email
+            }
+        )
         row = res.mappings().one_or_none()
 
         if row is None:
@@ -54,7 +42,7 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
         roles = {Role(r) for r in row["roles"]}
 
         return UserEntity(
-            id=row["id"],
+            id=row["user_id"],
             email=row["email"],
             password_hash=row["password_hash"],
             roles=roles,
@@ -74,24 +62,27 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
                     created_at,
                     expires_at,
                     revoked_at
-                FROM app.refresh_tokens
-                WHERE token_hash = :token_hash
-                  AND revoked_at IS NULL
+                FROM app_fcn.get_active_refresh_token(:token_hash)
             """),
-            {"token_hash": token_hash}
+            {
+                "token_hash": token_hash
+            }
         )
 
         row = res.mappings().one_or_none()
         if not row:
             return None
 
+        print(row)
         return RefreshTokenEntity(**row)
 
     async def get_user_by_id(
             self,
             user_id: UUID
     ) -> UserEntity | None:
-        stmt = text("""
+
+        res = await self._session.execute(
+            text("""
             SELECT
                 u.id,
                 u.email,
@@ -109,9 +100,11 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
                 u.password_hash,
                 u.disabled_at,
                 u.disabled_reason
-            """)
-
-        res = await self._session.execute(stmt, {"user_id": user_id})
+            """),
+            {
+                "user_id": user_id
+            }
+        )
         row = res.mappings().one_or_none()
 
         if row is None:
