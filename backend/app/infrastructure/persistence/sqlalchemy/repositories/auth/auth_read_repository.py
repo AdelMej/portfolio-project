@@ -22,7 +22,8 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
                 "email": email
             }
         )
-        return res.scalar() is not None
+        exists = res.scalar_one()
+        return exists
 
     async def get_user_by_email(self, email: str) -> UserEntity | None:
         res = await self._session.execute(
@@ -73,7 +74,6 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
         if not row:
             return None
 
-        print(row)
         return RefreshTokenEntity(**row)
 
     async def get_user_by_id(
@@ -83,23 +83,8 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
 
         res = await self._session.execute(
             text("""
-            SELECT
-                u.id,
-                u.email,
-                u.password_hash,
-                u.disabled_at,
-                u.disabled_reason,
-                array_agg(r.role_name) as roles
-            FROM app.users u
-            JOIN app.user_roles ur ON ur.user_id = u.id
-            JOIN app.roles r ON r.id = ur.role_id
-            where u.id = :user_id
-            GROUP BY
-                u.id,
-                u.email,
-                u.password_hash,
-                u.disabled_at,
-                u.disabled_reason
+            SELECT *
+                FROM app_fcn.auth_user_by_id(:user_id)
             """),
             {
                 "user_id": user_id

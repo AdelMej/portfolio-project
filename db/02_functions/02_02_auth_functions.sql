@@ -123,3 +123,123 @@ $$;
 
 COMMENT ON FUNCTION app_fcn.get_active_refresh_token IS
 'Returns an active (non-revoked) refresh token by hash. Returns no rows if the token is invalid or revoked. Does not raise.';
+
+
+create or replace function app_fcn.register_user(
+	p_user_id uuid,
+	p_email citext,
+	p_password_hash text,
+	p_first_name text,
+	p_last_name text,
+	p_role_name text
+)
+returns void
+language plpgsql
+security definer
+set search_path = app, app_fcn, pg_temp
+as $$
+DECLARE
+	v_role_id bigint;
+BEGIN
+	-- create user
+	INSERT INTO app.users(id, email, password_hash)
+	VALUES(p_user_id, p_email, p_password_hash);
+
+	-- create profile
+	INSERT INTO app.user_profiles(user_id, first_name, last_name)
+	VALUES (p_user_id, p_first_name, p_last_name);
+
+	-- resolve role
+	SELECT r.id
+	into v_role_id
+	from app.roles r
+	where r.role_name = p_role_name;
+
+	if v_role_id IS NULL then
+		RAISE EXCEPTION 'unknown_role'
+			USING ERRCODE = 'AP002'; 
+	end if;
+
+	-- assign role
+	INSERT INTO app.user_roles(user_id, role_id)
+	VALUES (p_user_id, v_role_id);
+
+EXCEPTION 
+	WHEN unique_violation THEN
+		RAISE EXCEPTION 'user_already_exists'
+			USING ERRCODE = 'AP001';
+
+END;
+$$;
+
+COMMENT ON FUNCTION app_fcn.register_user IS
+'Atomic user registration. Inserts user, profile, and role. Raises AP001 (user_already_exists) or AP002 (unknown_role).';
+
+
+create or replace function app_fcn.auth_user_by_id(p_user_id uuid)
+returns table(
+	id uuid,
+	email text,
+	password_hash text,
+	disabled_at timestamptz,
+	disabled_reason text,
+	roles text[]
+)
+language sql
+security definer
+stable
+as $$
+	SELECT
+		u.id,
+		u.email,
+		u.password_hash,
+		u.disabled_at,
+		u.disabled_reason,
+		array_agg(r.role_name) AS roles
+	FROM app.users u
+	JOIN app.user_roles ur ON u.id = ur.user_id
+	JOIN app.roles r ON r.id = ur.role_id
+	WHERE u.id = p_user_id
+	GROUP BY
+		u.id,
+		u.email,
+		u.password_hash,
+		u.disabled_at,
+		u.disabled_reason;
+$$;
+
+COMMENT ON FUNCTION app_fcn.auth_user_by_id(uuid) IS
+'Returns authentication-critical user data by user ID (including roles). Used internally by the system for auth and token workflows. Bypasses RLS. Does not raise.';
+
+create or replace function app_fcn.revoke_all_refresh_token(
+	p_user_id uuid
+)
+returns void
+language sql
+security definer
+as $$
+	UPDATE app.refresh_tokens
+	SET revoked_at = now()
+	where user_id = p_user_id
+		AND revoked_at IS NULL
+$$;
+
+COMMENT ON FUNCTION app_fcn.revoke_all_refresh_token(uuid) IS
+'Revokes all active refresh tokens for a user by setting revoked_at. Used internally for logout-all and security events. Does not raise.';
+
+
+create or replace function app_fcn.revoke_refresh_token(
+	p_token_hash text
+)
+returns void
+language sql
+security definer
+as $$
+	UPDATE app.refresh_tokens
+	SET revoked_at = now()
+	where token_hash = p_token_hash
+		AND revoked_at IS NULL;
+$$;
+
+COMMENT ON FUNCTION app_fcn.revoke_refresh_token(text) IS
+'Revokes a single refresh token by hash. Used internally for token rotation or explicit logout. Does not raise.';
