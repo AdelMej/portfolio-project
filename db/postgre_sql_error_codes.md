@@ -1,31 +1,31 @@
-# PostgreSQL Domain Errors
+# Auth Database Functions
 
-This document lists database functions that intentionally raise domain errors and the SQLSTATE they use.
+This document describes the authentication-related PostgreSQL functions exposed under the `app_fcn` schema. All functions are **SECURITY DEFINER** and are intended to be executed by system-level roles (e.g. `app_system`) to bypass RLS where required.
 
----
+## Overview
 
-## Domain SQLSTATE
+| Function                   | Purpose                                          | Returns             | Raises                          |
+| -------------------------- | ------------------------------------------------ | ------------------- | ------------------------------- |
+| `auth_exists_by_email`     | Check if a user exists for a given email         | `boolean`           | —                               |
+| `auth_user_by_email`       | Fetch auth-critical user data by email           | `table`             | —                               |
+| `auth_user_by_id`          | Fetch auth-critical user data by user ID         | `table`             | —                               |
+| `create_refresh_token`     | Create a refresh token                           | `bigint` (token id) | —                               |
+| `rotate_refresh_token`     | Revoke old refresh token and link to new         | `void`              | implicit (no-op if not matched) |
+| `get_active_refresh_token` | Fetch a non-revoked refresh token by hash        | `table`             | —                               |
+| `register_user`            | Atomic user registration (user + profile + role) | `void`              | `AP001`, `AP002`                |
+| `revoke_refresh_token`     | Revoke a single refresh token by hash            | `void`              | —                               |
+| `revoke_all_refresh_token` | Revoke all active refresh tokens for a user      | `void`              | —                               |
 
-| SQLSTATE | Meaning |
-|--------|---------|
-| P0001 | Domain-level rejection raised intentionally by database logic |
+## Error Codes
 
----
-
-## Functions
-
-| Function | Raises | Error meaning |
-|---------|--------|---------------|
-| `app_fcn.user_exists_by_email` | — | Pure lookup, never raises |
-| `app_fcn.auth_user_by_email` | — | Authentication data lookup, never raises |
-| `app_fcn.issue_refresh_token` | — | Issues a new refresh token, never raises |
-| `app_fcn.rotate_refresh_token` | P0001 | Refresh token not found, revoked, or invalid |
-
----
+| Code    | Meaning             |
+| ------- | ------------------- |
+| `AP001` | User already exists |
+| `AP002` | Unknown role        |
 
 ## Notes
 
-- SQLSTATE is the contract
-- Messages are informational only
-- All new domain errors must use `P0001`
-
+* All functions bypass RLS by design.
+* Functions that return `void` are intended to be **idempotent**.
+* Auth flows are expected to handle empty results ("not found") at the application layer.
+* Refresh token state is authoritative in the database; timestamps are DB-owned.

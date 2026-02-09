@@ -4,6 +4,22 @@ LANGUAGE SQL
 SECURITY DEFINER
 STABLE
 AS $$
+	/*
+	Function:
+	- auth_exists_by_email
+	
+	Purpose:
+	- Check whether a user exists for a given email
+	
+	Behavior:
+	- Returns true if at least one user exists
+	- Returns false otherwise
+	- Never raises
+	
+	Security:
+	- SECURITY DEFINER
+	- Bypasses RLS for authentication and system checks
+	*/
 	SELECT EXISTS(
 		SELECT 1
 		FROM app.users u
@@ -28,6 +44,23 @@ language sql
 security definer
 stable
 as $$
+	/*
+	Function:
+	- auth_user_by_email
+	
+	Purpose:
+	- Load authentication-critical user data by email
+	
+	Behavior:
+	- Returns one row if user exists
+	- Returns zero rows if not found
+	- Aggregates user roles
+	- Does not raise
+	
+	Security:
+	- SECURITY DEFINER
+	- Bypasses RLS during login and identity verification
+	*/
 	SELECT
 		u.id,
 		u.email,
@@ -60,6 +93,23 @@ returns BIGINT
 language sql
 security definer
 as $$
+	/*
+	Function:
+	- create_refresh_token
+	
+	Purpose:
+	- Persist a new refresh token for a user
+	
+	Behavior:
+	- Inserts a refresh token row
+	- Returns the generated token ID
+	- Relies on DB constraints for integrity
+	
+	Security:
+	- SECURITY DEFINER
+	- Bypasses RLS and table privileges
+	- Intended for authentication flows only
+	*/
 	insert into app.refresh_tokens (
 		user_id,
 		token_hash,
@@ -86,6 +136,22 @@ returns void
 language sql
 security definer
 as $$
+	/*
+	Function:
+	- rotate_refresh_token
+	
+	Purpose:
+	- Revoke an existing refresh token and link it to a new one
+	
+	Behavior:
+	- Marks the old token as revoked
+	- Sets replaced_by_token_id
+	- No-op if token is missing, revoked, or not owned by user
+	
+	Security:
+	- SECURITY DEFINER
+	- Used internally during token rotation
+	*/
 	UPDATE app.refresh_tokens
 	SET replaced_by_token_id = p_new_id,
 		revoked_at = now()
@@ -110,6 +176,22 @@ language sql
 security definer
 stable
 as $$
+	/*
+	Function:
+	- get_active_refresh_token
+	
+	Purpose:
+	- Fetch an active (non-revoked) refresh token by hash
+	
+	Behavior:
+	- Returns one row if token is valid
+	- Returns zero rows if revoked or missing
+	- Does not raise
+	
+	Security:
+	- SECURITY DEFINER
+	- Bypasses RLS for token validation
+	*/
 	SELECT
 		rt.user_id,
 		rt.token_hash,
@@ -138,38 +220,54 @@ language plpgsql
 security definer
 set search_path = app, app_fcn, pg_temp
 as $$
-DECLARE
-	v_role_id bigint;
-BEGIN
-	-- create user
-	INSERT INTO app.users(id, email, password_hash)
-	VALUES(p_user_id, p_email, p_password_hash);
-
-	-- create profile
-	INSERT INTO app.user_profiles(user_id, first_name, last_name)
-	VALUES (p_user_id, p_first_name, p_last_name);
-
-	-- resolve role
-	SELECT r.id
-	into v_role_id
-	from app.roles r
-	where r.role_name = p_role_name;
-
-	if v_role_id IS NULL then
-		RAISE EXCEPTION 'unknown_role'
-			USING ERRCODE = 'AP002'; 
-	end if;
-
-	-- assign role
-	INSERT INTO app.user_roles(user_id, role_id)
-	VALUES (p_user_id, v_role_id);
-
-EXCEPTION 
-	WHEN unique_violation THEN
-		RAISE EXCEPTION 'user_already_exists'
-			USING ERRCODE = 'AP001';
-
-END;
+	/*
+	Function:
+	- register_user
+	
+	Purpose:
+	- Atomically register a new user account
+	
+	Behavior:
+	- Inserts user, profile, and role mapping
+	- Raises AP001 if user already exists
+	- Raises AP002 if role is unknown
+	
+	Security:
+	- SECURITY DEFINER
+	- Explicit search_path to avoid hijacking
+	*/
+	DECLARE
+		v_role_id bigint;
+	BEGIN
+		-- create user
+		INSERT INTO app.users(id, email, password_hash)
+		VALUES(p_user_id, p_email, p_password_hash);
+	
+		-- create profile
+		INSERT INTO app.user_profiles(user_id, first_name, last_name)
+		VALUES (p_user_id, p_first_name, p_last_name);
+	
+		-- resolve role
+		SELECT r.id
+		into v_role_id
+		from app.roles r
+		where r.role_name = p_role_name;
+	
+		if v_role_id IS NULL then
+			RAISE EXCEPTION 'unknown_role'
+				USING ERRCODE = 'AP002'; 
+		end if;
+	
+		-- assign role
+		INSERT INTO app.user_roles(user_id, role_id)
+		VALUES (p_user_id, v_role_id);
+	
+	EXCEPTION 
+		WHEN unique_violation THEN
+			RAISE EXCEPTION 'user_already_exists'
+				USING ERRCODE = 'AP001';
+	
+	END;
 $$;
 
 COMMENT ON FUNCTION app_fcn.register_user IS
@@ -189,6 +287,23 @@ language sql
 security definer
 stable
 as $$
+	/*
+	Function:
+	- auth_user_by_id
+	
+	Purpose:
+	- Load authentication-critical user data by user ID
+	
+	Behavior:
+	- Returns one row if user exists
+	- Returns zero rows otherwise
+	- Aggregates roles
+	- Does not raise
+	
+	Security:
+	- SECURITY DEFINER
+	- Used internally for auth and token workflows
+	*/
 	SELECT
 		u.id,
 		u.email,
@@ -218,6 +333,22 @@ returns void
 language sql
 security definer
 as $$
+	/*
+	Function:
+	- revoke_all_refresh_token
+	
+	Purpose:
+	- Revoke all active refresh tokens for a user
+	
+	Behavior:
+	- Sets revoked_at on all non-revoked tokens
+	- Idempotent
+	- Does not raise
+	
+	Security:
+	- SECURITY DEFINER
+	- Used for logout-all and security events
+	*/
 	UPDATE app.refresh_tokens
 	SET revoked_at = now()
 	where user_id = p_user_id
@@ -235,6 +366,22 @@ returns void
 language sql
 security definer
 as $$
+	/*
+	Function:
+	- revoke_refresh_token
+	
+	Purpose:
+	- Revoke a single refresh token by hash
+	
+	Behavior:
+	- Marks token as revoked if active
+	- No-op if already revoked or missing
+	- Does not raise
+	
+	Security:
+	- SECURITY DEFINER
+	- Used for logout and token rotation
+	*/
 	UPDATE app.refresh_tokens
 	SET revoked_at = now()
 	where token_hash = p_token_hash
