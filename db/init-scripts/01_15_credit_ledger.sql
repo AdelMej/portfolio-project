@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS app.credit_ledger (
     -- Owner of the credit balance
     user_id UUID NOT NULL,
 
-    -- Optional reference to a payment intent
+    -- reference to a payment
     -- Required for payment / refund causes
     payment_id UUID NULL,
 
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS app.credit_ledger (
 
     CONSTRAINT fk_credit_ledger_payment_id
         FOREIGN KEY (payment_id)
-        REFERENCES app.payment(id),
+        REFERENCES app.payments(id),
 
     -- ------------------------------------------------------------------
     -- Invariants
@@ -103,8 +103,8 @@ COMMENT ON COLUMN app.credit_ledger.id IS
 COMMENT ON COLUMN app.credit_ledger.user_id IS
 'User whose credit balance is affected by this entry.';
 
-COMMENT ON COLUMN app.credit_ledger.payment_intent_id IS
-'Optional payment intent reference. Required for payment and refund causes.';
+COMMENT ON COLUMN app.credit_ledger.payment_id IS
+'payment reference. Required for payment and refund causes.';
 
 COMMENT ON COLUMN app.credit_ledger.amount_cents IS
 'Signed credit delta in cents. Positive adds credit, negative consumes credit.';

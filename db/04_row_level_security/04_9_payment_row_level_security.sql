@@ -8,8 +8,8 @@
 -- ------------------------------------------------------------------
 
 -- Enable and enforce RLS
-ALTER TABLE app.payment ENABLE ROW LEVEL SECURITY;
-ALTER TABLE app.payment FORCE ROW LEVEL SECURITY;
+ALTER TABLE app.payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app.payments FORCE ROW LEVEL SECURITY;
 
 -- ------------------------------------------------------------------
 -- Policy: payment_select
@@ -17,7 +17,7 @@ ALTER TABLE app.payment FORCE ROW LEVEL SECURITY;
 -- Controls who can SELECT payment records
 -- ------------------------------------------------------------------
 CREATE POLICY payment_select
-ON app.payment
+ON app.payments
 FOR SELECT
 USING (
     app_fcn.is_self(user_id)
@@ -25,5 +25,5 @@ USING (
     OR app_fcn.is_admin()
 );
 
-COMMENT ON POLICY payment_select ON app.payment IS
+COMMENT ON POLICY payment_select ON app.payments IS
 'Allows users to see their own payments and admins to see all payments.';

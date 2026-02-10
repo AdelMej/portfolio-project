@@ -49,13 +49,13 @@ AS $$
 	)
 $$;
 
-CREATE OR REPLACE FUNCTION app_fcn.is_self(target_user_id uuid)
+CREATE OR REPLACE FUNCTION app_fcn.is_self(p_user_id uuid)
 RETURNS boolean
 LANGUAGE SQL
 STABLE
 AS $$
 	SELECT
-		target_user_id = current_setting('app.current_user_id')::uuid
+		p_user_id = current_setting('app.current_user_id')::uuid
 $$;
 
 

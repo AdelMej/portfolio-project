@@ -37,11 +37,11 @@ COMMENT ON INDEX app.idx_credit_ledger_user_created_at IS
 --
 -- Partial index to avoid NULLs
 -- ---------------------------------------------------------------
-CREATE INDEX idx_credit_ledger_payment_intent_id
-ON app.credit_ledger (payment_intent_id)
-WHERE payment_intent_id IS NOT NULL;
+CREATE INDEX idx_credit_ledger_payment_id
+ON app.credit_ledger (payment_id)
+WHERE payment_id IS NOT NULL;
 
-COMMENT ON INDEX app.idx_credit_ledger_payment_intent_id IS
+COMMENT ON INDEX app.idx_credit_ledger_payment_id IS
 'Optimizes queries finding ledger entries tied to a specific payment intent for reconciliation or auditing.';
 
 -- ---------------------------------------------------------------
