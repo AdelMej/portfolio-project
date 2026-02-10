@@ -4,7 +4,5 @@ from app.infrastructure.persistence.sqlalchemy.repositories.sqlalchemy_session_r
 )
 
 class SqlAlchemySessionUoW:
-  
     def __init__(self, session: AsyncSession):
         self.session_repo = SqlAlchemySessionRepository(session)
-        

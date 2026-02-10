@@ -24,7 +24,11 @@ class SqlAlchemyCreditReadRepository(CreditReadRepositoryPort):
             text(
                 """
                 SELECT
+                    id,
+                    user_id,
+                    payment_id,
                     amount_cents,
+                    currency,
                     balance_after_cents,
                     cause,
                     created_at
@@ -60,7 +64,11 @@ class SqlAlchemyCreditReadRepository(CreditReadRepositoryPort):
 
         return [
             CreditEntity(
+                id=row["id"],
+                user_id=row['user_id'],
+                payment_id=row['payment_id'],
                 amount_cents=row["amount_cents"],
+                currency=row["currency"],
                 balance_after_cents=row["balance_after_cents"],
                 cause=row["cause"],
                 created_at=row["created_at"]
