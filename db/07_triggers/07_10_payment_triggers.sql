@@ -21,22 +21,22 @@ COMMENT ON FUNCTION app.tg_payment_immutable() IS
 -- Trigger: prevent updates
 -- ------------------------------------------------------------------
 CREATE TRIGGER trg_payment_no_update
-BEFORE UPDATE ON app.payment
+BEFORE UPDATE ON app.payments
 FOR EACH ROW
 EXECUTE FUNCTION app.tg_payment_immutable();
 
-COMMENT ON TRIGGER trg_payment_no_update ON app.payment IS
+COMMENT ON TRIGGER trg_payment_no_update ON app.payments IS
 'Prevents modification of any payment row; all payments are immutable.';
 
 -- ------------------------------------------------------------------
 -- Trigger: prevent deletes
 -- ------------------------------------------------------------------
 CREATE TRIGGER trg_payment_no_delete
-BEFORE DELETE ON app.payment
+BEFORE DELETE ON app.payments
 FOR EACH ROW
 EXECUTE FUNCTION app.tg_payment_immutable();
 
-COMMENT ON TRIGGER trg_payment_no_delete ON app.payment IS
+COMMENT ON TRIGGER trg_payment_no_delete ON app.payments IS
 'Prevents deletion of any payment row; all payments are append-only.';
 
 -- ------------------------------------------------------------------
@@ -49,7 +49,7 @@ AS $$
 BEGIN
     IF EXISTS (
         SELECT 1
-        FROM app.payment p
+        FROM app.payments p
         WHERE p.provider = NEW.provider
           AND p.provider_payment_id = NEW.provider_payment_id
     ) THEN
@@ -68,9 +68,9 @@ COMMENT ON FUNCTION app.tg_payment_idempotency_guard() IS
 -- Trigger: enforce idempotency
 -- ------------------------------------------------------------------
 CREATE TRIGGER trg_payment_idempotency_guard
-BEFORE INSERT ON app.payment
+BEFORE INSERT ON app.payments
 FOR EACH ROW
 EXECUTE FUNCTION app.tg_payment_idempotency_guard();
 
-COMMENT ON TRIGGER trg_payment_idempotency_guard ON app.payment IS
+COMMENT ON TRIGGER trg_payment_idempotency_guard ON app.payments IS
 'Ensures each payment inserted is unique by provider and provider_payment_id to enforce idempotency.';

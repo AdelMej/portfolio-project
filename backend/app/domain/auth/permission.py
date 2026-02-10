@@ -17,6 +17,8 @@ class Permission(str, Enum):
     REVOKE_ROLE = "role:revoke"
     DISABLE_USER = "disable:user"
     REENEABLE_USER = "reenable:user"
+    READ_CREDIT = "read:credit"
+    READ_PAYMENT = "read:payment"
 
 
 ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
@@ -24,7 +26,9 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.READ_SELF,
         Permission.WRITE_SELF,
         Permission.UPDATE_SELF,
-        Permission.DELETE_SELF
+        Permission.DELETE_SELF,
+        Permission.READ_CREDIT,
+        Permission.READ_PAYMENT
     },
     Role.ADMIN: {
         Permission.READ_SELF,
@@ -37,7 +41,9 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.GRANT_ROLE,
         Permission.REVOKE_ROLE,
         Permission.DISABLE_USER,
-        Permission.REENEABLE_USER
+        Permission.REENEABLE_USER,
+        Permission.READ_CREDIT,
+        Permission.READ_PAYMENT
     },
     Role.COACH: {
         Permission.READ_SELF,

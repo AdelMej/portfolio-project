@@ -1,5 +1,5 @@
 -- ------------------------------------------------------------------
--- Privileges: app.payment
+-- Permissions: app.payment
 --
 -- Purpose:
 -- - Store immutable payment records
@@ -16,9 +16,9 @@
 -- ------------------------------------------------------------------
 -- Privilege cleanup
 -- ------------------------------------------------------------------
-REVOKE ALL ON TABLE app.payment FROM app_user;
-REVOKE ALL ON TABLE app.payment FROM app_admin;
-REVOKE ALL ON TABLE app.payment FROM app_system;
+REVOKE ALL ON TABLE app.payments FROM app_user;
+REVOKE ALL ON TABLE app.payments FROM app_admin;
+REVOKE ALL ON TABLE app.payments FROM app_system;
 
 -- ------------------------------------------------------------------
 -- app_user: read-only (RLS-scoped)
@@ -27,7 +27,7 @@ REVOKE ALL ON TABLE app.payment FROM app_system;
 -- - Users may read their own payment records only
 -- ------------------------------------------------------------------
 GRANT SELECT
-ON TABLE app.payment
+ON TABLE app.payments
 TO app_user;
 
 -- ------------------------------------------------------------------
@@ -37,25 +37,14 @@ TO app_user;
 -- - Admins may audit all payment records
 -- ------------------------------------------------------------------
 GRANT SELECT
-ON TABLE app.payment
+ON TABLE app.payments
 TO app_admin;
-
--- ------------------------------------------------------------------
--- app_system: insert-only
---
--- Notes:
--- - Used by webhooks and backend automation
--- - No update or delete allowed
--- ------------------------------------------------------------------
-GRANT INSERT
-ON TABLE app.payment
-TO app_system;
 
 -- ------------------------------------------------------------------
 -- Documentation
 -- ------------------------------------------------------------------
 
-COMMENT ON TABLE app.payment IS
+COMMENT ON TABLE app.payments IS
 'Immutable payment records table.
 SELECT is granted to app_user and app_admin; INSERT is granted to app_system.
 All row-level visibility is enforced by RLS.

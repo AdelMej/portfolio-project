@@ -18,7 +18,7 @@
 -- - Immutable after insertion
 -- ------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS app.payment (
+CREATE TABLE IF NOT EXISTS app.payments (
     -- Unique internal payment identifier
     id UUID PRIMARY KEY,
     
@@ -80,29 +80,29 @@ CREATE TABLE IF NOT EXISTS app.payment (
 -- Comments
 -- ------------------------------------------------------------------
 
-COMMENT ON TABLE app.payment IS
+COMMENT ON TABLE app.payments IS
 'Records finalized, provider-confirmed payments made by users.';
 
-COMMENT ON COLUMN app.payment.id IS
+COMMENT ON COLUMN app.payments.id IS
 'Primary identifier for the payment record.';
 
-COMMENT ON COLUMN app.payment.session_id IS
+COMMENT ON COLUMN app.payments.session_id IS
 'Session for which the payment was made.';
 
-COMMENT ON COLUMN app.payment.user_id IS
+COMMENT ON COLUMN app.payments.user_id IS
 'User who initiated and owns the payment.';
 
-COMMENT ON COLUMN app.payment.provider IS
+COMMENT ON COLUMN app.payments.provider IS
 'External payment provider handling the transaction.';
 
-COMMENT ON COLUMN app.payment.provider_payment_id IS
+COMMENT ON COLUMN app.payments.provider_payment_id IS
 'Unique payment identifier provided by the payment provider.';
 
-COMMENT ON COLUMN app.payment.amount_cents IS
+COMMENT ON COLUMN app.payments.amount_cents IS
 'Payment amount expressed in cents.';
 
-COMMENT ON COLUMN app.payment.currency IS
+COMMENT ON COLUMN app.payments.currency IS
 'ISO 4217 three-letter currency code.';
 
-COMMENT ON COLUMN app.payment.created_at IS
+COMMENT ON COLUMN app.payments.created_at IS
 'Timestamp when the payment record was created (UTC).';
