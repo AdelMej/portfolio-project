@@ -25,14 +25,14 @@ class SessionRepository(Protocol):
         self,
         session: SessionEntity
     ) -> SessionEntity: ...
-    
+
     async def cancel_session(
-            self, 
+            self,
             session_id: UUID
     ) -> bool:
-        """Returns True if updated, False if not found"""
+        ...
 
     async def get_attendance(
-            self, 
+            self,
             session_id: UUID
     ) -> list[AttendanceOutputDto]: ...
