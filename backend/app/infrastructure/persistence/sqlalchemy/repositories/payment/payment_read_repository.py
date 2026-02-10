@@ -1,59 +1,57 @@
 from datetime import datetime
 from uuid import UUID
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from app.domain.credit.credit_entity import CreditEntity
-from app.feature.credit.respositories.credit_read_repository_port import (
-    CreditReadRepositoryPort
+from sqlalchemy.sql import text
+from app.domain.payment.payment_entity import PaymentEnity
+from app.feature.payment.repostories.payment_read_repository import (
+    PaymentReadRepositoryPort
 )
 
 
-class SqlAlchemyCreditReadRepository(CreditReadRepositoryPort):
+class SqlAlchemyPaymentReadRepository(PaymentReadRepositoryPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_credit_by_user_id(
+    async def get_payment_by_user_id(
         self,
-        limit: int,
         offset: int,
+        limit: int,
         _from: datetime | None,
         to: datetime | None,
         user_id: UUID
-    ) -> tuple[list[CreditEntity], bool]:
+    ) -> tuple[list[PaymentEnity], bool]:
         res = await self._session.execute(
-            text(
-                """
+            text("""
                 SELECT
                     id,
+                    session_id,
                     user_id,
-                    payment_id,
+                    provider,
+                    provider_payment_id,
                     amount_cents,
                     currency,
-                    balance_after_cents,
-                    cause,
                     created_at
-                FROM app.credit_ledger
+                FROM app.payments
                 WHERE
                     user_id = :user_id
                     AND (
-                        CAST(:from_ts as timestamptz) IS NULL
+                        CAST(:from_ts AS timestamptz) IS NULL
                         OR created_at >= CAST(:from_ts AS timestamptz)
                     )
                     AND (
-                        CAST(:to_ts as timestamptz) IS NULL
+                        CAST(:to_ts AS timestamptz) IS NULL
                         OR created_at <= CAST(:to_ts AS timestamptz)
                     )
                 ORDER BY created_at DESC
                 LIMIT :limit
                 OFFSET :offset
-                """
-            ),
+            """),
             {
                 "user_id": user_id,
                 "from_ts": _from,
                 "to_ts": to,
-                "offset": offset,
-                "limit": limit + 1
+                "limit": limit + 1,
+                "offset": offset
             }
         )
 
@@ -63,14 +61,14 @@ class SqlAlchemyCreditReadRepository(CreditReadRepositoryPort):
         rows = rows[:limit]
 
         return [
-            CreditEntity(
+            PaymentEnity(
                 id=row["id"],
-                user_id=row['user_id'],
-                payment_id=row['payment_id'],
+                session_id=row["session_id"],
+                user_id=row["user_id"],
+                provider=row["provider"],
+                provider_payment_id=row["provider_payment_id"],
                 amount_cents=row["amount_cents"],
                 currency=row["currency"],
-                balance_after_cents=row["balance_after_cents"],
-                cause=row["cause"],
                 created_at=row["created_at"]
             ) for row in rows
         ], has_more

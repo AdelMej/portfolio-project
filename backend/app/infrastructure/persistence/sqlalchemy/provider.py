@@ -6,6 +6,7 @@ from app.feature.admin.users.uow.admin_user_uow_port import AdminUserUoWPort
 from app.feature.auth.uow.auth_uow_port import AuthUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.feature.credit.uow.credit_uow_port import CreditUoWPort
+from app.feature.payment.uow.payment_uow_port import PaymentUoWPort
 from app.infrastructure.persistence.sqlalchemy.UoW.admin import (
     SqlAlchemyAdminUserUoW
 )
@@ -17,6 +18,9 @@ from app.infrastructure.persistence.sqlalchemy.UoW.auth.auth_uow import (
 )
 from app.infrastructure.persistence.sqlalchemy.UoW.credit.credit_uow import (
     SqlAlchemyCreditUoW
+)
+from app.infrastructure.persistence.sqlalchemy.UoW.payment.payment_uow import (
+    SqlAlchemyPaymenUoW
 )
 from app.infrastructure.security.provider import get_current_actor
 from app.infrastructure.settings.provider import (
@@ -87,3 +91,18 @@ async def get_credit_uow(
         }
     )
     return SqlAlchemyCreditUoW(session)
+
+
+async def get_payment_uow(
+        session: AsyncSession = Depends(get_app_user_session),
+        actor: Actor = Depends(get_current_actor)
+) -> PaymentUoWPort:
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true)"
+        ),
+        {
+            "user_id": str(actor.id)
+        }
+    )
+    return SqlAlchemyPaymenUoW(session)
