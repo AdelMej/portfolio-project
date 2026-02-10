@@ -22,43 +22,22 @@ class SqlAlchemyAuthCreationRepository(AuthCreationRepositoryPort):
 
         await self._session.execute(
             text("""
-                INSERT INTO app.users(id, email, password_hash)
-                VALUES(:id, :email, :password_hash)
+                SELECT
+                    app_fcn.register_user(
+                        :id,
+                        :email,
+                        :password_hash,
+                        :first_name,
+                        :last_name,
+                        :role_name
+                    )
             """),
             {
                 "id": id,
                 "email": user.email,
-                "password_hash": user.password_hash
-             }
-        )
-
-        await self._session.execute(
-            text("""
-                INSERT INTO app.user_profiles(user_id, first_name, last_name)
-                VALUES(:id, :first_name, :last_name)
-            """),
-            {
-                "id": id,
+                "password_hash": user.password_hash,
                 "first_name": user_profile.first_name,
-                "last_name": user_profile.last_name
-            }
-        )
-
-        res = await self._session.execute(
-            text("""
-                SELECT roles.id
-                FROM app.roles
-                where roles.role_name = :role_name
-            """),
-            {"role_name": user.role.value}
-        )
-
-        role_id = res.scalar_one()
-
-        await self._session.execute(
-            text("""
-                INSERT INTO app.user_roles(user_id, role_id)
-                VALUES(:user_id, :role_id)
-            """),
-            {"user_id": id, "role_id": role_id}
+                "last_name": user_profile.last_name,
+                "role_name": user.role.value
+             }
         )

@@ -1,5 +1,3 @@
-\c app
-
 -- ------------------------------------------------------------------
 -- Enum: app.credit_ledger_cause
 --
@@ -117,4 +115,3 @@ COMMENT ON COLUMN app.credit_ledger.cause IS
 
 COMMENT ON COLUMN app.credit_ledger.created_at IS
 'Timestamp when the ledger entry was created (UTC).';
-

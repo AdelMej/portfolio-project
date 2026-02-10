@@ -48,8 +48,8 @@ CREATE TABLE IF NOT EXISTS app.refresh_tokens (
     CONSTRAINT fk_refresh_tokens_replaced_by
         FOREIGN KEY (replaced_by_token_id)
         REFERENCES app.refresh_tokens(id)
-		ON DELETE SET NULL,
-  
+        ON DELETE SET NULL,
+
     -- ------------------------------------------------------------------
     -- Invariants
     -- ------------------------------------------------------------------
