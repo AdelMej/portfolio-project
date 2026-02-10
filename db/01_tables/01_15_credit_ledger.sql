@@ -49,6 +49,9 @@ CREATE TABLE IF NOT EXISTS app.credit_ledger (
     -- Negative = credit consumed
     amount_cents INTEGER NOT NULL,
 
+    -- ISO 4217 currency code (e.g. EUR, USD)
+    currency CHAR(3) NOT NULL,
+    
     -- Resulting balance after applying this entry
     -- Always >= 0
     balance_after_cents INTEGER NOT NULL,
@@ -81,7 +84,11 @@ CREATE TABLE IF NOT EXISTS app.credit_ledger (
 
     -- Credit balance may never become negative
     CONSTRAINT chk_credit_ledger_balance_not_negative
-        CHECK (balance_after_cents >= 0)
+        CHECK (balance_after_cents >= 0),
+        
+    -- Enforce uppercase 3-letter currency code
+    CONSTRAINT chk_credit_ledger_currency_format
+        CHECK (currency ~ '^[A-Z]{3}$')
 );
 
 -- ------------------------------------------------------------------
@@ -102,6 +109,9 @@ COMMENT ON COLUMN app.credit_ledger.payment_id IS
 
 COMMENT ON COLUMN app.credit_ledger.amount_cents IS
 'Signed credit delta in cents. Positive adds credit, negative consumes credit.';
+
+COMMENT ON COLUMN app.credit_ledger.currency IS
+'ISO 4217 three-letter currency code.';
 
 COMMENT ON COLUMN app.credit_ledger.balance_after_cents IS
 'User credit balance after applying this ledger entry.';
