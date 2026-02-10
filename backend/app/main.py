@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
 from sqlalchemy import text
+from fastapi.responses import JSONResponse
 
 from app.infrastructure.settings.app_settings import AppSettings
 from app.infrastructure.persistence.sqlalchemy.engines import (
@@ -19,6 +20,7 @@ from app.shared.handlers import register_exception_handlers
 import logging
 
 from app.feature.session.session_router import router as session_router
+from app.domain.auth.auth_exceptions import PermissionDeniedError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -95,3 +97,16 @@ async def health() -> dict[str, str]:
     This endpoint MUST remain fast, side-effect free, and always available.
     """
     return {"status": "ok"}
+
+#coach denied permission.
+
+# Include your routers
+app.include_router(session_router, prefix="/sessions", tags=["sessions"])
+
+# Global handler for permission denied
+@app.exception_handler(PermissionDeniedError)
+async def permission_denied_handler(request: Request, exc: PermissionDeniedError):
+    return JSONResponse(
+        status_code=status.HTTP_403_FORBIDDEN,
+        content={"detail": "You do not have permission to perform this action."},
+    )
