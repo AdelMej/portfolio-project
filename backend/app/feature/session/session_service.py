@@ -3,18 +3,25 @@ from fastapi import HTTPException
 from datetime import datetime, timezone
 
 from app.domain.session.session_status import SessionStatus
-from app.feature.session.session_dto import GetOutputDto, SessionCreateRequest
+from app.feature.session.session_dto import (
+    GetOutputDto,
+    SessionCreateRequest
+)
 from app.domain.auth.actor_entity import Actor
 from app.domain.auth.permission_rules import ensure_has_permission
 from app.domain.auth.permission import Permission
-from app.feature.session.session_uow_port import SessionUoWPort
+from app.feature.session.uow.session_uow_port import SessionUoWPort
 from app.domain.session.session_entity import SessionEntity
 from app.shared.exceptions.commons import NotFoundError
 from app.feature.session.session_dto import SessionUpdateRequest
 
-class SessionService:
 
-    async def get_session(self, UoW: SessionUoWPort, session_id: UUID) -> GetOutputDto:
+class SessionService:
+    async def get_session(
+            self,
+            UoW: SessionUoWPort,
+            session_id: UUID
+    ) -> GetOutputDto:
         session = await UoW.session_repo.get_session_by_id(session_id)
 
         if not session:
@@ -29,11 +36,20 @@ class SessionService:
             status=session.status.value if hasattr(session.status, "value") else session.status
         )
 
-    async def create_session(self, UoW: SessionUoWPort , actor: Actor, request: SessionCreateRequest) -> GetOutputDto:
+    async def create_session(
+            self,
+            UoW: SessionUoWPort,
+            actor: Actor,
+            request: SessionCreateRequest
+    ) -> None:
         ensure_has_permission(actor, Permission.CREATE_SESSION)
+
         if request.starts_at >= request.ends_at:
-            raise HTTPException(status_code=400, detail="Start time must be before end time")
-        
+            raise HTTPException(
+                status_code=400,
+                detail="Start time must be before end time"
+            )
+
         new_session = SessionEntity(
             id=uuid4(),
             coach_id=actor.id,
@@ -44,7 +60,6 @@ class SessionService:
         )
 
         await UoW.session_repo.create_session(new_session)
-
 
     async def list_sessions(self, UoW: SessionUoWPort):
         sessions = await UoW.session_repo.list_sessions()
@@ -61,7 +76,12 @@ class SessionService:
             for s in sessions
         ]
 
-    async def cancel_session(self, UoW, actor, session_id):
+    async def cancel_session(
+            self,
+            UoW,
+            actor,
+            session_id
+    ):
         ensure_has_permission(actor, Permission.CANCEL_SESSION)
 
         session = await UoW.session_repo.get_session_by_id(session_id)
@@ -73,8 +93,12 @@ class SessionService:
 
         await UoW.session_repo.cancel_session(session_id)
 
-
-    async def get_attendance(self,UoW: SessionUoWPort,actor: Actor,session_id: UUID):
+    async def get_attendance(
+            self,
+            UoW: SessionUoWPort,
+            actor: Actor,
+            session_id: UUID
+    ):
         ensure_has_permission(actor, Permission.READ_SELF)
 
         session = await UoW.session_repo.get_session_by_id(session_id)
@@ -85,9 +109,13 @@ class SessionService:
             raise HTTPException(status_code=400, detail="Session cancelled")
 
         return await UoW.session_repo.get_attendance(session_id)
-    
 
-    async def put_attendance(self, UoW, actor, session_id: UUID):
+    async def put_attendance(
+            self,
+            UoW,
+            actor,
+            session_id: UUID
+    ):
         ensure_has_permission(actor, Permission.READ_SELF)
 
         # 1. Get the session
@@ -125,7 +153,13 @@ class SessionService:
             user_id=actor.id
         )
 
-    async def update_session(self, UoW: SessionUoWPort, actor: Actor, session_id: UUID, payload: SessionUpdateRequest,):
+    async def update_session(
+            self,
+            UoW: SessionUoWPort,
+            actor: Actor,
+            session_id: UUID,
+            payload: SessionUpdateRequest
+    ):
         ensure_has_permission(actor, Permission.CREATE_SESSION)
 
         session = await UoW.session_repo.get_session_by_id(session_id)
@@ -146,7 +180,12 @@ class SessionService:
 
         await UoW.session_repo.update_session(updated_session)
 
-    async def cancel_registration(self, UoW, actor: Actor, session_id: UUID):
+    async def cancel_registration(
+            self,
+            UoW,
+            actor: Actor,
+            session_id: UUID
+    ):
         ensure_has_permission(actor, Permission.READ_SELF)
 
         session = await UoW.session_repo.get_session_by_id(session_id)
@@ -170,10 +209,17 @@ class SessionService:
         )
 
         if not removed:
-            raise HTTPException(status_code=500, detail="Failed to cancel registration")
-        
-#admin permissions
-    async def admin_list_sessions_by_coach(self, UoW: SessionUoWPort, actor: Actor, coach_id: UUID,):
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to cancel registration"
+            )
+
+    async def admin_list_sessions_by_coach(
+            self,
+            UoW: SessionUoWPort,
+            actor: Actor,
+            coach_id: UUID
+    ):
         ensure_has_permission(actor, Permission.READ_USERS)
 
         sessions = await UoW.session_repo.list_sessions(coach_id=coach_id)
@@ -185,12 +231,17 @@ class SessionService:
                 title=s.title,
                 starts_at=s.starts_at,
                 ends_at=s.ends_at,
-                status=s.status.value if hasattr(s.status, "value") else s.status,
+                status=s.status.value if hasattr(s.status, "value") else s.status
             )
             for s in sessions
-        ]    
+        ]
 
-    async def admin_cancel_session(self, UoW: SessionUoWPort, actor: Actor, session_id: UUID):
+    async def admin_cancel_session(
+            self,
+            UoW: SessionUoWPort,
+            actor: Actor,
+            session_id: UUID
+    ):
         # Ensure admin permission
         ensure_has_permission(actor, Permission.READ_USERS)
 
