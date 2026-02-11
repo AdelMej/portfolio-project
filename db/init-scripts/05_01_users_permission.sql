@@ -22,10 +22,9 @@
 -- Scope (RLS):
 -- - Fully restricted by RLS policies such as:
 --   - users_select_self_or_admin
---   - users_self_update
 -- ---------------------------------------------------------------
 
-GRANT SELECT, UPDATE ON TABLE app.users TO app_user;
+GRANT SELECT ON TABLE app.users TO app_user;
 
 COMMENT ON TABLE app.users IS
 'User accounts table. Access controlled via RLS. app_user may read/update their own record only.';

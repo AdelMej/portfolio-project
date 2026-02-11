@@ -249,4 +249,3 @@ IS
 Uses pg_advisory_xact_lock(user_id) to serialize user mutations.
 Idempotent: enabling an already enabled user is a no-op.
 Only re-enables users disabled by admin (disabled_reason = ''admin'').';
-
