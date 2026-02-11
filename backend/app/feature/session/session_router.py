@@ -1,12 +1,22 @@
-from fastapi import APIRouter, Depends, status
+from datetime import datetime
+from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
-from app.feature.session.session_dto import AttendanceOutputDto
-from app.feature.session.session_dto import SessionCreateRequest, GetOutputDto
+from app.feature.session.session_dto import (
+    AttendanceOutputDto,
+    SessionCreationInputDTO,
+    GetOutputDto
+)
 from app.feature.session.session_service import SessionService
 from app.feature.session.session_dependencies import get_session_service
 from app.domain.auth.actor_entity import Actor
+from app.feature.session.uow.session_public_uow_port import (
+    SessionPulbicUoWPort
+)
 from app.infrastructure.security.provider import get_current_actor
-from app.infrastructure.persistence.sqlalchemy.provider import get_session_uow
+from app.infrastructure.persistence.sqlalchemy.provider import (
+    get_session_public_uow,
+    get_session_uow
+)
 from app.feature.session.uow.session_uow_port import SessionUoWPort
 
 router = APIRouter()
@@ -14,31 +24,38 @@ router = APIRouter()
 
 @router.get(
     "/{session_id}",
-    response_model=GetOutputDto
+    status_code=200
 )
 async def get_session(
     session_id: UUID,
-    UoW: SessionUoWPort = Depends(get_session_uow),
+    uow: SessionPulbicUoWPort = Depends(get_session_public_uow),
     service: SessionService = Depends(get_session_service)
-):
-    return await service.get_session(UoW, session_id)
+) -> GetOutputDto:
+    return await service.get_session(
+        uow=uow,
+        session_id=session_id
+    )
 
 
 @router.post(
     "/",
-    status_code=204
+    status_code=201
 )
 async def create_session(
-    payload: SessionCreateRequest,
+    payload: SessionCreationInputDTO,
     actor: Actor = Depends(get_current_actor),
     UoW: SessionUoWPort = Depends(get_session_uow),
     service: SessionService = Depends(get_session_service)
-):
+) -> None:
     await service.create_session(UoW, actor, payload)
 
 
 @router.get("/", response_model=list[GetOutputDto])
 async def list_sessions(
+    limit: int = Query(20, ge=0, le=100),
+    offset: int = Query(0, ge=0),
+    _from: datetime | None = Query(None),
+    to: datetime | None = Query(None),
     UoW: SessionUoWPort = Depends(get_session_uow),
     service: SessionService = Depends(get_session_service)
 ):
@@ -51,7 +68,7 @@ async def list_sessions(
 )
 async def update_session(
     session_id: UUID,
-    payload: SessionCreateRequest,
+    payload: SessionCreationInputDTO,
     actor: Actor = Depends(get_current_actor),
     UoW: SessionUoWPort = Depends(get_session_uow),
     service: SessionService = Depends(get_session_service)

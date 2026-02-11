@@ -1,28 +1,42 @@
-from uuid import UUID, uuid4
+from uuid import UUID
 from fastapi import HTTPException
 from datetime import datetime, timezone
 
+from app.domain.session.session_creation_rules import (
+    ensure_price_is_not_negative,
+    ensure_times_valid,
+    ensure_title_is_valid
+)
 from app.domain.session.session_status import SessionStatus
 from app.feature.session.session_dto import (
     GetOutputDto,
-    SessionCreateRequest
+    SessionUpdateInputDTO,
+    AttendanceOutputDto,
+    SessionCreationInputDTO
 )
 from app.domain.auth.actor_entity import Actor
 from app.domain.auth.permission_rules import ensure_has_permission
 from app.domain.auth.permission import Permission
+from app.feature.session.uow.session_public_uow_port import (
+    SessionPulbicUoWPort
+)
 from app.feature.session.uow.session_uow_port import SessionUoWPort
-from app.domain.session.session_entity import SessionEntity
+from app.domain.session.session_entity import NewSessionEntity
 from app.shared.exceptions.commons import NotFoundError
-from app.feature.session.session_dto import SessionUpdateRequest
+from app.domain.currency.currency_rules import (
+    ensure_currency_is_valid
+)
 
 
 class SessionService:
     async def get_session(
             self,
-            UoW: SessionUoWPort,
+            uow: SessionPulbicUoWPort,
             session_id: UUID
     ) -> GetOutputDto:
-        session = await UoW.session_repo.get_session_by_id(session_id)
+        session = (
+            await uow.session_read_repository.get_session_by_id(session_id)
+        )
 
         if not session:
             raise NotFoundError()
@@ -33,36 +47,42 @@ class SessionService:
             title=session.title,
             starts_at=session.starts_at,
             ends_at=session.ends_at,
-            status=session.status.value if hasattr(session.status, "value") else session.status
+            status=session.status
         )
 
     async def create_session(
             self,
-            UoW: SessionUoWPort,
+            uow: SessionUoWPort,
             actor: Actor,
-            request: SessionCreateRequest
+            input: SessionCreationInputDTO
     ) -> None:
         ensure_has_permission(actor, Permission.CREATE_SESSION)
 
-        if request.starts_at >= request.ends_at:
-            raise HTTPException(
-                status_code=400,
-                detail="Start time must be before end time"
-            )
+        # normalization
+        title = input.title.strip()
+        currency = input.currency.strip().upper()
 
-        new_session = SessionEntity(
-            id=uuid4(),
+        ensure_times_valid(input.starts_at, input.ends_at)
+        ensure_price_is_not_negative(input.price_cents)
+        ensure_title_is_valid(title)
+        ensure_currency_is_valid(currency)
+
+        new_session = NewSessionEntity(
             coach_id=actor.id,
-            title=request.title,
-            starts_at=request.starts_at,
-            ends_at=request.ends_at,
-            status=SessionStatus.SCHEDULED
+            title=title,
+            starts_at=input.starts_at,
+            ends_at=input.ends_at,
+            price_cents=input.price_cents,
+            currency=currency
         )
 
-        await UoW.session_repo.create_session(new_session)
+        await uow.session_creation_repository.create_session(new_session)
 
-    async def list_sessions(self, UoW: SessionUoWPort):
-        sessions = await UoW.session_repo.list_sessions()
+    async def list_sessions(
+            self,
+            uow: SessionUoWPort
+    ) -> list[GetOutputDto]:
+        sessions = await uow.session_repo.list_sessions()
 
         return [
             GetOutputDto(
@@ -71,51 +91,51 @@ class SessionService:
                 title=s.title,
                 starts_at=s.starts_at,
                 ends_at=s.ends_at,
-                status=s.status.value if hasattr(s.status, "value") else s.status
+                status=s.status
             )
             for s in sessions
         ]
 
     async def cancel_session(
-            self,
-            UoW,
-            actor,
-            session_id
+        self,
+        uow,
+        actor: Actor,
+        session_id: UUID
     ):
         ensure_has_permission(actor, Permission.CANCEL_SESSION)
 
-        session = await UoW.session_repo.get_session_by_id(session_id)
+        session = await uow.session_repo.get_session_by_id(session_id)
         if not session:
             raise NotFoundError()
 
         if session.coach_id != actor.id:
             raise HTTPException(status_code=403, detail="Not your session")
 
-        await UoW.session_repo.cancel_session(session_id)
+        await uow.session_repo.cancel_session(session_id)
 
     async def get_attendance(
             self,
-            UoW: SessionUoWPort,
+            uow: SessionUoWPort,
             actor: Actor,
             session_id: UUID
-    ):
+    ) -> AttendanceOutputDto:
         ensure_has_permission(actor, Permission.READ_SELF)
 
-        session = await UoW.session_repo.get_session_by_id(session_id)
+        session = await uow.session_repo.get_session_by_id(session_id)
         if not session:
             raise NotFoundError()
 
         if session.status == SessionStatus.CANCELLED:
             raise HTTPException(status_code=400, detail="Session cancelled")
 
-        return await UoW.session_repo.get_attendance(session_id)
+        return await uow.session_repo.get_attendance(session_id)
 
     async def put_attendance(
             self,
             UoW,
             actor,
             session_id: UUID
-    ):
+    ) -> None:
         ensure_has_permission(actor, Permission.READ_SELF)
 
         # 1. Get the session
@@ -158,7 +178,7 @@ class SessionService:
             UoW: SessionUoWPort,
             actor: Actor,
             session_id: UUID,
-            payload: SessionUpdateRequest
+            payload: SessionUpdateInputDTO
     ):
         ensure_has_permission(actor, Permission.CREATE_SESSION)
 
@@ -181,21 +201,21 @@ class SessionService:
         await UoW.session_repo.update_session(updated_session)
 
     async def cancel_registration(
-            self,
-            UoW,
-            actor: Actor,
-            session_id: UUID
+        self,
+        uow,
+        actor: Actor,
+        session_id: UUID
     ):
         ensure_has_permission(actor, Permission.READ_SELF)
 
-        session = await UoW.session_repo.get_session_by_id(session_id)
+        session = await uow.session_repo.get_session_by_id(session_id)
         if not session:
             raise NotFoundError()
 
         if session.status == SessionStatus.CANCELLED:
             raise HTTPException(status_code=400, detail="Session cancelled")
 
-        already_registered = await UoW.session_repo.is_user_registered(
+        already_registered = await uow.session_repo.is_user_registered(
             session_id=session_id,
             user_id=actor.id
         )
@@ -203,7 +223,7 @@ class SessionService:
         if not already_registered:
             raise HTTPException(status_code=409, detail="Not registered")
 
-        removed = await UoW.session_repo.remove_attendance(
+        removed = await uow.session_repo.remove_attendance(
             session_id=session_id,
             user_id=actor.id
         )
@@ -216,13 +236,13 @@ class SessionService:
 
     async def admin_list_sessions_by_coach(
             self,
-            UoW: SessionUoWPort,
+            uow: SessionUoWPort,
             actor: Actor,
             coach_id: UUID
     ):
         ensure_has_permission(actor, Permission.READ_USERS)
 
-        sessions = await UoW.session_repo.list_sessions(coach_id=coach_id)
+        sessions = await uow.session_repo.list_sessions(coach_id=coach_id)
 
         return [
             GetOutputDto(
@@ -231,22 +251,22 @@ class SessionService:
                 title=s.title,
                 starts_at=s.starts_at,
                 ends_at=s.ends_at,
-                status=s.status.value if hasattr(s.status, "value") else s.status
+                status=s.status
             )
             for s in sessions
         ]
 
     async def admin_cancel_session(
             self,
-            UoW: SessionUoWPort,
+            uow: SessionUoWPort,
             actor: Actor,
             session_id: UUID
     ):
         # Ensure admin permission
         ensure_has_permission(actor, Permission.READ_USERS)
 
-        session = await UoW.session_repo.get_session_by_id(session_id)
+        session = await uow.session_repo.get_session_by_id(session_id)
         if not session:
             raise NotFoundError()
 
-        await UoW.session_repo.cancel_session(session_id)
+        await uow.session_repo.cancel_session(session_id)
