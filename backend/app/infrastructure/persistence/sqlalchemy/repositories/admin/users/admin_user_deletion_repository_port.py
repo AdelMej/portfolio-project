@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.domain.auth.role import Role
 
 
-class SqlAlchemytAdminUserDeletionRepository(AdminUserDeletionRepositoryPort):
+class SqlAlchemyAdminUserDeletionRepository(AdminUserDeletionRepositoryPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

@@ -31,7 +31,7 @@ class SqlAlchemyAdminUserUpdateRepository(AdminUserUpdateRepositoryPort):
         await self._session.execute(
             text("""
                 SELECT
-                 app_fcn.admin_user_enable_user(:user_id)
+                    app_fcn.admin_user_enable_user(:user_id)
             """),
             {
                 "user_id": str(user_id)

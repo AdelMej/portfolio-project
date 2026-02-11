@@ -1,5 +1,4 @@
 from datetime import timedelta
-import secrets
 from app.domain.auth.actor_entity import Actor, TokenActor
 from app.domain.auth.permission import Permission
 from app.domain.auth.permission_rules import ensure_has_permission
@@ -36,6 +35,7 @@ from app.domain.auth.auth_exceptions import (
     UserDisabledError
 )
 from app.feature.auth.uow.auth_uow_port import AuthUoWPort
+from app.feature.auth.uow.me_system_uow_port import MeSystemUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.shared.exceptions.runtime import InvariantViolationError
 from app.shared.security.jwt_port import JwtPort
@@ -283,7 +283,7 @@ class AuthService:
     async def email_change_me(
         self,
         actor: Actor,
-        uow: MeUoWPort,
+        uow: MeSystemUoWPort,
         input: MeEmailChangeInputDTO,
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
@@ -304,7 +304,7 @@ class AuthService:
         input: MePasswordChangeInputDTO,
         password_hasher: PasswordHasherPort,
         actor: Actor,
-        uow: MeUoWPort
+        uow: MeSystemUoWPort
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
 
@@ -371,20 +371,15 @@ class AuthService:
         self,
         actor: Actor,
         refresh_uow: AuthUoWPort,
-        uow: MeUoWPort,
-        password_hasher: PasswordHasherPort
+        uow: MeSystemUoWPort,
     ) -> None:
         if Permission.NO_SELF_DELETE in actor.permissions:
             raise AdminCantSelfDeleteError()
 
         ensure_has_permission(actor, Permission.DELETE_SELF)
 
-        random_password = secrets.token_urlsafe(128)
-        hashed_password = password_hasher.hash(random_password)
-
         await uow.me_delete_repository.soft_delete_user(
             user_id=actor.id,
-            new_password_hash=hashed_password
         )
 
         await refresh_uow.auth_update_repository.revoke_all_refresh_token(

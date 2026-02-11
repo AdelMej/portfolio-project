@@ -95,7 +95,7 @@ class MePasswordChangeInputDTO(BaseModel):
 
         if len(password) > MAX_PASSWORD_LENGTH:
             raise ValueError(
-                "password must be less than {} characters"
+                "password must be less than {} characters long"
                 .format(MAX_PASSWORD_LENGTH)
             )
 
@@ -152,7 +152,7 @@ class RegistrationInputDTO(BaseModel):
 
         if len(password) > MAX_PASSWORD_LENGTH:
             raise ValueError(
-                "password must be less than {} characters"
+                "password must be less than {} characters long"
                 .format(MAX_PASSWORD_LENGTH)
             )
 
@@ -180,7 +180,7 @@ class RegistrationInputDTO(BaseModel):
 
         if len(first_name) < MIN_FIRST_NAME_LENGTH:
             raise ValueError(
-                "first name must be at least {} character long"
+                "first name must be at least {} characters long"
                 .format(MIN_FIRST_NAME_LENGTH)
             )
 
@@ -202,13 +202,13 @@ class RegistrationInputDTO(BaseModel):
 
         if len(last_name) < MIN_LAST_NAME_LENGTH:
             raise ValueError(
-                "last name must be at least {} character long"
+                "last name must be at least {} characters long"
                 .format(MIN_LAST_NAME_LENGTH)
             )
 
         if len(last_name) > MAX_LAST_NAME_LENGTH:
             raise ValueError(
-                "last name must be less than {} characters"
+                "last name must be less than {} characters long"
                 .format(MAX_LAST_NAME_LENGTH)
             )
 
@@ -237,13 +237,13 @@ class UpdateMeProfileInputDTO(BaseModel):
 
         if len(first_name) < MIN_FIRST_NAME_LENGTH:
             raise ValueError(
-                "first name must be at least {} character long"
+                "first name must be at least {} characters long"
                 .format(MIN_FIRST_NAME_LENGTH)
             )
 
         if len(first_name) > MAX_FIRST_NAME_LENGTH:
             raise ValueError(
-                "first name must be less than {} characters"
+                "first name must be less than {} characters long"
                 .format(MAX_FIRST_NAME_LENGTH)
             )
 
@@ -259,13 +259,13 @@ class UpdateMeProfileInputDTO(BaseModel):
 
         if len(last_name) < MIN_LAST_NAME_LENGTH:
             raise ValueError(
-                "last name must be at least {} character long"
+                "last name must be at least {} characters long"
                 .format(MIN_LAST_NAME_LENGTH)
             )
 
         if len(last_name) > MAX_LAST_NAME_LENGTH:
             raise ValueError(
-                "last name must be less than {} characters"
+                "last name must be less than {} characters long"
                 .format(MAX_LAST_NAME_LENGTH)
             )
 

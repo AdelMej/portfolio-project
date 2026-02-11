@@ -1,5 +1,5 @@
-from app.feature.admin.users.uow.admin_user_uow_port import (
-    AdminUserUoWPort
+from app.feature.admin.users.uow.admin_user_system_uow_port import (
+    AdminUserSystemUoWPort
 )
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
@@ -7,11 +7,11 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.infrastructure.persistence.sqlalchemy.repositories.admin import (
     SqlAlchemyAdminUserUpdateRepository,
     SqlAlchemyAdminUserCreationRepository,
-    SqlAlchemytAdminUserDeletionRepository
+    SqlAlchemyAdminUserDeletionRepository
 )
 
 
-class SqlAlchemyAdminUserSystemUoW(AdminUserUoWPort):
+class SqlAlchemyAdminUserSystemUoW(AdminUserSystemUoWPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -22,5 +22,5 @@ class SqlAlchemyAdminUserSystemUoW(AdminUserUoWPort):
             SqlAlchemyAdminUserCreationRepository(session)
         )
         self.admin_user_deletion_repository = (
-            SqlAlchemytAdminUserDeletionRepository(session)
+            SqlAlchemyAdminUserDeletionRepository(session)
         )
