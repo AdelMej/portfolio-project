@@ -23,3 +23,7 @@ def contains_digit(value: str) -> bool:
 
 def contains_special(value: str) -> bool:
     return any(c in SPECIAL_CHARS for c in value)
+
+
+def is_alpha_ascii(value: str) -> bool:
+    return value.isascii() and value.isalpha()
