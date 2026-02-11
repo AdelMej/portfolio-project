@@ -14,6 +14,9 @@ from app.feature.admin.users.admin_users_dto import (
     RoleDTO,
     UserDTO
 )
+from app.feature.admin.users.uow.admin_user_system_uow_port import (
+    AdminUserSystemUoWPort
+)
 from app.feature.admin.users.uow.admin_user_uow_port import AdminUserUoWPort
 from app.shared.exceptions.commons import NotFoundError
 
@@ -78,7 +81,7 @@ class AdminUserService:
         self,
         user_id: UUID,
         role: RoleDTO,
-        uow: AdminUserUoWPort,
+        uow: AdminUserSystemUoWPort,
         actor: Actor,
     ) -> None:
         ensure_has_permission(actor, Permission.GRANT_ROLE)
@@ -92,7 +95,7 @@ class AdminUserService:
         self,
         user_id: UUID,
         role: RoleDTO,
-        uow: AdminUserUoWPort,
+        uow: AdminUserSystemUoWPort,
         actor: Actor,
     ) -> None:
         ensure_has_permission(actor, Permission.REVOKE_ROLE)
@@ -111,7 +114,7 @@ class AdminUserService:
     async def disable_user(
         self,
         user_id: UUID,
-        uow: AdminUserUoWPort,
+        uow: AdminUserSystemUoWPort,
         actor: Actor,
     ) -> None:
         ensure_has_permission(actor, Permission.DISABLE_USER)
@@ -124,7 +127,7 @@ class AdminUserService:
     async def reenable_user(
         self,
         user_id: UUID,
-        uow: AdminUserUoWPort,
+        uow: AdminUserSystemUoWPort,
         actor: Actor,
     ) -> None:
         ensure_has_permission(actor, Permission.DISABLE_USER)

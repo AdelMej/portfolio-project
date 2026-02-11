@@ -19,13 +19,8 @@ class SqlAlchemytAdminUserDeletionRepository(AdminUserDeletionRepositoryPort):
     ) -> None:
         await self._session.execute(
             text("""
-                DELETE FROM app.user_roles
-                WHERE user_id = :user_id
-                    AND role_id = (
-                        SELECT id
-                        FROM app.roles
-                        WHERE role_name = :role_name
-                    )
+                SELECT
+                    app_fcn.admin_user_revoke_role(:role_name, :user_id)
             """),
             {
                 "user_id": str(user_id),
