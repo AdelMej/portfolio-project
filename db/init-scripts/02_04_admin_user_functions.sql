@@ -1,3 +1,5 @@
+\c app
+
 CREATE OR REPLACE function app_fcn.admin_user_revoke_role(
 	p_role_name text,
 	p_target_id uuid
@@ -179,7 +181,7 @@ as $$
 	END;
 $$;
 
-COMMENT ON FUNCTION app_fcn.admin_user_disable(uuid)
+COMMENT ON FUNCTION app_fcn.admin_user_disable_user(uuid)
 IS
 'Admin-only function to disable a user account.
 Uses pg_advisory_xact_lock(user_id) to serialize user mutations.
@@ -241,9 +243,10 @@ as $$
 	END;
 $$;
 
-COMMENT ON FUNCTION app_fcn.enable_user(uuid)
+COMMENT ON FUNCTION app_fcn.admin_user_enable_user(uuid)
 IS
 'Admin-only function to re-enable a user account.
 Uses pg_advisory_xact_lock(user_id) to serialize user mutations.
 Idempotent: enabling an already enabled user is a no-op.
 Only re-enables users disabled by admin (disabled_reason = ''admin'').';
+

@@ -179,7 +179,7 @@ as $$
 	END;
 $$;
 
-COMMENT ON FUNCTION app_fcn.admin_user_disable(uuid)
+COMMENT ON FUNCTION app_fcn.admin_user_disable_user(uuid)
 IS
 'Admin-only function to disable a user account.
 Uses pg_advisory_xact_lock(user_id) to serialize user mutations.
@@ -241,7 +241,7 @@ as $$
 	END;
 $$;
 
-COMMENT ON FUNCTION app_fcn.enable_user(uuid)
+COMMENT ON FUNCTION app_fcn.admin_user_enable_user(uuid)
 IS
 'Admin-only function to re-enable a user account.
 Uses pg_advisory_xact_lock(user_id) to serialize user mutations.
