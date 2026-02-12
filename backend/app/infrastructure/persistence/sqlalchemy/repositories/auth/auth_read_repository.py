@@ -105,3 +105,25 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
             disabled_at=row["disabled_at"],
             disabled_reason=row["disabled_reason"]
         )
+
+    async def is_user_disabled(
+        self,
+        user_id: UUID
+    ) -> bool:
+        res = await self._session.execute(
+            text("""
+                SELECT EXISTS(
+                    SELECT 1
+                    FROM app.users
+                    WHERE id = :user_id
+                        AND disabled_at IS NOT NULL
+                )
+            """),
+            {
+                "user_id": str(user_id)
+            }
+        )
+
+        current = res.scalar_one()
+        print(current)
+        return current

@@ -17,5 +17,11 @@ class AuthReadRepositoryPort(Protocol):
     ) -> RefreshTokenEntity | None:
         ...
 
-    async def get_user_by_id(self, user_id: UUID) -> UserEntity | None:
+    async def get_user_by_id(self, user_id: UUID) -> UserEntity:
+        ...
+
+    async def is_user_disabled(
+        self,
+        user_id
+    ) -> bool:
         ...

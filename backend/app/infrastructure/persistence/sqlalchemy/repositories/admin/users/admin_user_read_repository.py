@@ -68,7 +68,7 @@ class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
     async def get_user_by_id(
         self,
         user_id: UUID
-    ) -> AdminUserRead | None:
+    ) -> AdminUserRead:
         res = await self._session.execute(
             text("""
                 SELECT
@@ -99,9 +99,7 @@ class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
             }
         )
 
-        row = res.mappings().one_or_none()
-        if not row:
-            return None
+        row = res.mappings().one()
 
         return AdminUserRead(
             id=row["id"],

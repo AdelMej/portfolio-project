@@ -9,6 +9,9 @@ from app.infrastructure.persistence.sqlalchemy.repositories.admin import (
     SqlAlchemyAdminUserCreationRepository,
     SqlAlchemyAdminUserDeletionRepository
 )
+from app.infrastructure.persistence.sqlalchemy.repositories.auth import (
+    SqlAlchemyAuthReadRepository
+)
 
 
 class SqlAlchemyAdminUserSystemUoW(AdminUserSystemUoWPort):
@@ -23,4 +26,7 @@ class SqlAlchemyAdminUserSystemUoW(AdminUserSystemUoWPort):
         )
         self.admin_user_deletion_repository = (
             SqlAlchemyAdminUserDeletionRepository(session)
+        )
+        self.auth_read_repository = (
+            SqlAlchemyAuthReadRepository(session)
         )

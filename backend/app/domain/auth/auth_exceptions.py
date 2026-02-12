@@ -140,3 +140,7 @@ class AdminCantSelfDisableError(AuthDomainError):
 
 class AdminCantSelfRennableError(AuthDomainError):
     pass
+
+
+class AuthUserIsDisabledError(AuthDomainError):
+    pass

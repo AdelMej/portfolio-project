@@ -24,6 +24,7 @@ from app.feature.auth.auth_dto import (
 )
 from app.domain.auth.auth_exceptions import (
     AdminCantSelfDeleteError,
+    AuthUserIsDisabledError,
     EmailAlreadyExistError,
     ExpiredRefreshTokenError,
     InvalidEmailError,
@@ -194,15 +195,6 @@ class AuthService:
             current_refresh.user_id
         )
 
-        if user is None:
-            raise InvariantViolationError(
-                "Refresh token references missing user",
-                context={
-                    "refresh_token_hash": current_refresh.token_hash,
-                    "user_id": current_refresh.user_id,
-                }
-            )
-
         new_token_plain = token_generator.generate()
         new_token_hash = token_hasher.hash(new_token_plain)
 
@@ -278,6 +270,10 @@ class AuthService:
     ) -> UserEntity:
 
         ensure_has_permission(actor, Permission.READ_SELF)
+
+        if uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
+
         return await uow.me_read_repository.get(actor.id)
 
     async def email_change_me(
@@ -287,6 +283,9 @@ class AuthService:
         input: MeEmailChangeInputDTO,
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         # normalization
         email = input.email.strip().lower()
@@ -307,6 +306,9 @@ class AuthService:
         uow: MeSystemUoWPort
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         # normalization
         old_password = input.old_password.strip()
@@ -340,6 +342,9 @@ class AuthService:
     ) -> UserProfileEntity:
         ensure_has_permission(actor, Permission.READ_SELF)
 
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
+
         return await uow.me_read_repository.get_profile_by_id(actor.id)
 
     async def update_me_profile(
@@ -349,6 +354,9 @@ class AuthService:
         uow: MeUoWPort
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         # normalization
         first_name = input.first_name.strip()
@@ -377,6 +385,9 @@ class AuthService:
             raise AdminCantSelfDeleteError()
 
         ensure_has_permission(actor, Permission.DELETE_SELF)
+
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         await uow.me_delete_repository.soft_delete_user(
             user_id=actor.id,
