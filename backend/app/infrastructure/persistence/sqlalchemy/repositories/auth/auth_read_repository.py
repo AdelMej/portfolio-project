@@ -124,6 +124,4 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
             }
         )
 
-        current = res.scalar_one()
-        print(current)
-        return current
+        return res.scalar_one()
