@@ -31,7 +31,7 @@ from app.infrastructure.settings.provider import (
 from app.infrastructure.persistence.sqlalchemy.UoW.session.session_uow import (
     SqlAlchemySessionUoW
 )
-from app.feature.session.session_uow_port import SessionUoWPort
+from app.feature.session.uow.session_uow_port import SessionUoWPort
 
 
 async def get_auth_uow(

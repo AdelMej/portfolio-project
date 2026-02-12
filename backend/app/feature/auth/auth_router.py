@@ -102,7 +102,7 @@ async def login(
         key="refresh_token",
         value=refresh,
         httponly=True,
-        secure=True,
+        secure=False, # Set to False for local development; ensure it's True in production
         samesite="lax",
         path="/refresh",
         max_age=refresh_ttl
@@ -162,7 +162,7 @@ async def token(
         key="refresh_token",
         value=refresh,
         httponly=True,
-        secure=True,
+        secure=False, # Set to True in production with HTTPS
         samesite="lax",
         path="/auth",
         max_age=refresh_ttl
@@ -213,7 +213,7 @@ async def refresh(
         key="refresh_token",
         value=refresh,
         httponly=True,
-        secure=True,
+        secure=False, # Set to False for local development; ensure it's True in production
         samesite="lax",
         path="/auth",
         max_age=refresh_ttl

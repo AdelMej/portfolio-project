@@ -7,7 +7,7 @@ from app.feature.session.session_dto import GetOutputDto, SessionCreateRequest
 from app.domain.auth.actor_entity import Actor
 from app.domain.auth.permission_rules import ensure_has_permission
 from app.domain.auth.permission import Permission
-from app.feature.session.session_uow_port import SessionUoWPort
+from app.feature.session.uow.session_uow_port import SessionUoWPort
 from app.domain.session.session_entity import SessionEntity
 from app.shared.exceptions.commons import NotFoundError
 from app.feature.session.session_dto import SessionUpdateRequest
