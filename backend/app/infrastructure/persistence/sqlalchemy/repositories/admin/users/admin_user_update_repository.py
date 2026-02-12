@@ -16,12 +16,8 @@ class SqlAlchemyAdminUserUpdateRepository(AdminUserUpdateRepositoryPort):
     ) -> None:
         await self._session.execute(
             text("""
-                UPDATE app.users
-                SET
-                    disabled_at = now(),
-                    disabled_reason = 'admin'
-                WHERE id = :user_id
-                    AND disabled_at IS NULL
+                SELECT
+                    app_fcn.admin_user_disable_user(:user_id)
             """),
             {
                 "user_id": str(user_id)
@@ -34,13 +30,8 @@ class SqlAlchemyAdminUserUpdateRepository(AdminUserUpdateRepositoryPort):
     ) -> None:
         await self._session.execute(
             text("""
-                UPDATE app.users
-                SET
-                    disabled_at = NULL,
-                    disabled_reason = NULL
-                WHERE id = :user_id
-                    AND disabled_at IS NOT NULL
-                    AND disabled_reason = 'admin'
+                SELECT
+                    app_fcn.admin_user_enable_user(:user_id)
             """),
             {
                 "user_id": str(user_id)

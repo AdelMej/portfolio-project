@@ -1,5 +1,4 @@
 from datetime import timedelta
-import secrets
 from app.domain.auth.actor_entity import Actor, TokenActor
 from app.domain.auth.permission import Permission
 from app.domain.auth.permission_rules import ensure_has_permission
@@ -25,6 +24,7 @@ from app.feature.auth.auth_dto import (
 )
 from app.domain.auth.auth_exceptions import (
     AdminCantSelfDeleteError,
+    AuthUserIsDisabledError,
     EmailAlreadyExistError,
     ExpiredRefreshTokenError,
     InvalidEmailError,
@@ -36,6 +36,7 @@ from app.domain.auth.auth_exceptions import (
     UserDisabledError
 )
 from app.feature.auth.uow.auth_uow_port import AuthUoWPort
+from app.feature.auth.uow.me_system_uow_port import MeSystemUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.shared.exceptions.runtime import InvariantViolationError
 from app.shared.security.jwt_port import JwtPort
@@ -194,15 +195,6 @@ class AuthService:
             current_refresh.user_id
         )
 
-        if user is None:
-            raise InvariantViolationError(
-                "Refresh token references missing user",
-                context={
-                    "refresh_token_hash": current_refresh.token_hash,
-                    "user_id": current_refresh.user_id,
-                }
-            )
-
         new_token_plain = token_generator.generate()
         new_token_hash = token_hasher.hash(new_token_plain)
 
@@ -278,15 +270,22 @@ class AuthService:
     ) -> UserEntity:
 
         ensure_has_permission(actor, Permission.READ_SELF)
+
+        if uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
+
         return await uow.me_read_repository.get(actor.id)
 
     async def email_change_me(
         self,
         actor: Actor,
-        uow: MeUoWPort,
+        uow: MeSystemUoWPort,
         input: MeEmailChangeInputDTO,
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         # normalization
         email = input.email.strip().lower()
@@ -304,9 +303,12 @@ class AuthService:
         input: MePasswordChangeInputDTO,
         password_hasher: PasswordHasherPort,
         actor: Actor,
-        uow: MeUoWPort
+        uow: MeSystemUoWPort
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         # normalization
         old_password = input.old_password.strip()
@@ -340,6 +342,9 @@ class AuthService:
     ) -> UserProfileEntity:
         ensure_has_permission(actor, Permission.READ_SELF)
 
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
+
         return await uow.me_read_repository.get_profile_by_id(actor.id)
 
     async def update_me_profile(
@@ -349,6 +354,9 @@ class AuthService:
         uow: MeUoWPort
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
+
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         # normalization
         first_name = input.first_name.strip()
@@ -371,20 +379,18 @@ class AuthService:
         self,
         actor: Actor,
         refresh_uow: AuthUoWPort,
-        uow: MeUoWPort,
-        password_hasher: PasswordHasherPort
+        uow: MeSystemUoWPort,
     ) -> None:
         if Permission.NO_SELF_DELETE in actor.permissions:
             raise AdminCantSelfDeleteError()
 
         ensure_has_permission(actor, Permission.DELETE_SELF)
 
-        random_password = secrets.token_urlsafe(128)
-        hashed_password = password_hasher.hash(random_password)
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         await uow.me_delete_repository.soft_delete_user(
             user_id=actor.id,
-            new_password_hash=hashed_password
         )
 
         await refresh_uow.auth_update_repository.revoke_all_refresh_token(

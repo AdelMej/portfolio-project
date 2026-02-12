@@ -1,0 +1,56 @@
+from datetime import datetime
+from typing import Protocol
+from uuid import UUID
+
+from app.domain.session.session_entity import SessionEntity
+
+
+class SessionReadRepositoryPort(Protocol):
+    async def get_session_by_id(
+        self,
+        session_id: UUID
+    ) -> SessionEntity | None:
+        ...
+
+    async def get_all_sessions(
+        self,
+        offset: int,
+        limit: int,
+        _from: datetime | None,
+        to: datetime | None
+    ) -> tuple[list[SessionEntity], bool]:
+        ...
+
+    async def is_session_overlapping(
+        self,
+        starts_at: datetime,
+        ends_at: datetime
+    ) -> bool:
+        ...
+
+    async def is_session_overlapping_except(
+        self,
+        starts_at: datetime,
+        ends_at: datetime,
+        except_session_id: UUID
+    ) -> bool:
+        ...
+
+    async def get_attendance(
+        self,
+        session_id: UUID
+    ) -> list[SessionEntity]:
+        ...
+
+    async def exist_session(
+        self,
+        session_id: UUID
+    ) -> bool:
+        ...
+
+    async def is_session_owner(
+        self,
+        session_id: UUID,
+        user_id: UUID
+    ) -> bool:
+        ...

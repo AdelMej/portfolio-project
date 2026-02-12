@@ -19,6 +19,7 @@ class Permission(str, Enum):
     REENEABLE_USER = "reenable:user"
     READ_CREDIT = "read:credit"
     READ_PAYMENT = "read:payment"
+    UPDATE_SESSION = "update:session"
 
 
 ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
@@ -52,5 +53,6 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.DELETE_SELF,
         Permission.CREATE_SESSION,
         Permission.CANCEL_SESSION,
+        Permission.UPDATE_SESSION
     }
 }

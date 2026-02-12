@@ -19,13 +19,8 @@ class SqlAlchemyAdminUserCreationRepository(AdminUserCreationRepositoryPort):
 
         await self._session.execute(
             text("""
-                INSERT INTO app.user_roles(user_id, role_id)
                 SELECT
-                    :user_id,
-                    r.id
-                FROM app.roles r
-                WHERE role_name = :role_name
-                ON CONFLICT DO NOTHING;
+                 app_fcn.admin_user_grant_role(:role_name, :user_id)
             """),
             {
                 "user_id": str(user_id),

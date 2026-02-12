@@ -35,8 +35,6 @@ async def lifespan(api: FastAPI):
     Initializes database engines and session factories and validates
     database connectivity at startup.
     """
-    import app.infrastructure.persistence.sqlalchemy.models  # noqa: F401
-
     settings = AppSettings()  # pyright: ignore[reportCallIssue]
 
     app_user_engine = create_app_engine(settings.app_user_dsn())

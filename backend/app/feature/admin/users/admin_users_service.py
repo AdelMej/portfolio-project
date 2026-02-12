@@ -4,6 +4,7 @@ from app.domain.auth.auth_exceptions import (
     AdminCantSelfDisableError,
     AdminCantSelfRennableError,
     AdminCantSelfRevokeError,
+    AuthUserIsDisabledError,
     BaseRoleCannotBeRevokedError
 )
 from app.domain.auth.permission import Permission
@@ -13,6 +14,9 @@ from app.feature.admin.users.admin_users_dto import (
     PaginatedUsersDTO,
     RoleDTO,
     UserDTO
+)
+from app.feature.admin.users.uow.admin_user_system_uow_port import (
+    AdminUserSystemUoWPort
 )
 from app.feature.admin.users.uow.admin_user_uow_port import AdminUserUoWPort
 from app.shared.exceptions.commons import NotFoundError
@@ -78,10 +82,13 @@ class AdminUserService:
         self,
         user_id: UUID,
         role: RoleDTO,
-        uow: AdminUserUoWPort,
+        uow: AdminUserSystemUoWPort,
         actor: Actor,
     ) -> None:
         ensure_has_permission(actor, Permission.GRANT_ROLE)
+
+        if await uow.auth_read_repository.is_user_disabled(user_id):
+            raise AuthUserIsDisabledError()
 
         await uow.admin_user_creation_repository.grant_role(
             user_id=user_id,
@@ -92,10 +99,13 @@ class AdminUserService:
         self,
         user_id: UUID,
         role: RoleDTO,
-        uow: AdminUserUoWPort,
+        uow: AdminUserSystemUoWPort,
         actor: Actor,
     ) -> None:
         ensure_has_permission(actor, Permission.REVOKE_ROLE)
+
+        if await uow.auth_read_repository.is_user_disabled(user_id):
+            raise AuthUserIsDisabledError()
 
         if role.role == Role.USER:
             raise BaseRoleCannotBeRevokedError()
@@ -111,10 +121,13 @@ class AdminUserService:
     async def disable_user(
         self,
         user_id: UUID,
-        uow: AdminUserUoWPort,
+        uow: AdminUserSystemUoWPort,
         actor: Actor,
     ) -> None:
         ensure_has_permission(actor, Permission.DISABLE_USER)
+
+        if await uow.auth_read_repository.is_user_disabled(user_id):
+            raise AuthUserIsDisabledError()
 
         if actor.id == user_id:
             raise AdminCantSelfDisableError()
@@ -124,7 +137,7 @@ class AdminUserService:
     async def reenable_user(
         self,
         user_id: UUID,
-        uow: AdminUserUoWPort,
+        uow: AdminUserSystemUoWPort,
         actor: Actor,
     ) -> None:
         ensure_has_permission(actor, Permission.DISABLE_USER)
