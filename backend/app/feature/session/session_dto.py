@@ -96,6 +96,32 @@ class AttendanceOutputDto(BaseModel):
 
 
 class SessionUpdateInputDTO(BaseModel):
-    title: str
+    title: str = Field(
+        ...,
+        min_length=MIN_TITLE_LENGTH,
+        max_length=MAX_TITLE_LENGTH
+    )
     starts_at: datetime
     ends_at: datetime
+
+    @field_validator("title")
+    @staticmethod
+    def validate_title(title: str) -> str:
+        title = title.strip()
+
+        if is_blank(title):
+            raise ValueError("title must not be blank")
+
+        if len(title) < MIN_TITLE_LENGTH:
+            raise ValueError(
+                "title must be at least {} characters long"
+                .format(MIN_TITLE_LENGTH)
+            )
+
+        if len(title) > MAX_TITLE_LENGTH:
+            raise ValueError(
+                "title must be less than {} characters long"
+                .format(MAX_TITLE_LENGTH)
+            )
+
+        return title

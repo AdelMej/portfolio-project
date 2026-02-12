@@ -5,7 +5,8 @@ from app.feature.session.session_dto import (
     AttendanceOutputDto,
     PaginatedSessionsOutputDTO,
     SessionCreationInputDTO,
-    GetOutputDto
+    GetOutputDto,
+    SessionUpdateInputDTO
 )
 from app.feature.session.session_service import SessionService
 from app.feature.session.session_dependencies import get_session_service
@@ -43,12 +44,18 @@ async def get_session(
     status_code=201
 )
 async def create_session(
-    payload: SessionCreationInputDTO,
+    input: SessionCreationInputDTO,
     actor: Actor = Depends(get_current_actor),
-    UoW: SessionUoWPort = Depends(get_session_uow),
+    uow: SessionUoWPort = Depends(get_session_uow),
     service: SessionService = Depends(get_session_service)
-) -> None:
-    await service.create_session(UoW, actor, payload)
+):
+    await service.create_session(
+        uow,
+        actor,
+        input
+    )
+
+    return {"message": "session created successfully"}
 
 
 @router.get(
@@ -79,48 +86,23 @@ async def get_all_sessions(
     )
 
 
-@router.get(
-    "/coach/{coach_id}",
-    response_model=PaginatedSessionsOutputDTO
-)
-async def get_all_sessions_by_coach(
-    coach_id: UUID,
-    limit: int = Query(20, ge=1, le=100),
-    offset: int = Query(0, ge=0),
-    _from: datetime | None = Query(None),
-    to: datetime | None = Query(None),
-    uow: SessionPulbicUoWPort = Depends(get_session_public_uow),
-    service: SessionService = Depends(get_session_service)
-) -> PaginatedSessionsOutputDTO:
-    items, has_more = await service.get_sessions_by_coach(
-        coach_id=coach_id,
-        offset=offset,
-        limit=limit,
-        _from=_from,
-        to=to,
-        uow=uow,
-    )
-
-    return PaginatedSessionsOutputDTO(
-        items=items,
-        limit=limit,
-        offset=offset,
-        has_more=has_more
-    )
-
-
 @router.put(
     "/{session_id}",
     status_code=204
 )
 async def update_session(
     session_id: UUID,
-    payload: SessionCreationInputDTO,
+    input: SessionUpdateInputDTO,
     actor: Actor = Depends(get_current_actor),
-    UoW: SessionUoWPort = Depends(get_session_uow),
+    uow: SessionUoWPort = Depends(get_session_uow),
     service: SessionService = Depends(get_session_service)
 ):
-    await service.update_session(UoW, actor, session_id, payload)
+    await service.update_session(
+        uow,
+        actor,
+        session_id,
+        input
+    )
 
 
 @router.put(

@@ -1,15 +1,18 @@
+from datetime import datetime
 from typing import Protocol
 from uuid import UUID
-
-from app.domain.session.session_entity import SessionEntity
 
 
 class SessionUpdateRepositoryPort(Protocol):
 
     async def update_session(
         self,
-        session: SessionEntity
-    ) -> SessionEntity: ...
+        session_id: UUID,
+        title: str,
+        starts_at: datetime,
+        ends_at: datetime
+    ) -> None:
+        ...
 
     async def cancel_session(
             self,

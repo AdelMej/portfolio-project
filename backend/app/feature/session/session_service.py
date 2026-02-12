@@ -1,11 +1,16 @@
 from uuid import UUID
 from fastapi import HTTPException
-from datetime import datetime, timezone
+from datetime import datetime
 
 from app.domain.session.session_creation_rules import (
     ensure_price_is_not_negative,
     ensure_times_valid,
     ensure_title_is_valid
+)
+from app.domain.session.session_exception import (
+    NotOwnerOfSessionError,
+    SessionNotFoundError,
+    SessionOverlappingError
 )
 from app.domain.session.session_status import SessionStatus
 from app.feature.session.session_dto import (
@@ -25,6 +30,9 @@ from app.domain.session.session_entity import NewSessionEntity
 from app.shared.exceptions.commons import NotFoundError
 from app.domain.currency.currency_rules import (
     ensure_currency_is_valid
+)
+from app.domain.auth.auth_exceptions import (
+    AuthUserIsDisabledError
 )
 
 
@@ -67,6 +75,15 @@ class SessionService:
         ensure_title_is_valid(title)
         ensure_currency_is_valid(currency)
 
+        if await uow.auth_read_repository.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
+
+        if await uow.session_read_repository.is_session_overlapping(
+            starts_at=input.starts_at,
+            ends_at=input.ends_at
+        ):
+            raise SessionOverlappingError()
+
         new_session = NewSessionEntity(
             coach_id=actor.id,
             title=title,
@@ -88,37 +105,6 @@ class SessionService:
     ) -> tuple[list[GetOutputDto], bool]:
         sessions, has_more = (
             await uow.session_read_repository.get_all_sessions(
-                offset=offset,
-                limit=limit,
-                _from=_from,
-                to=to,
-            )
-        )
-
-        return [
-            GetOutputDto(
-                id=session.id,
-                coach_id=session.coach_id,
-                title=session.title,
-                starts_at=session.starts_at,
-                ends_at=session.ends_at,
-                status=session.status
-            )
-            for session in sessions
-        ], has_more
-
-    async def get_sessions_by_coach(
-        self,
-        coach_id: UUID,
-        offset: int,
-        limit: int,
-        _from: datetime | None,
-        to: datetime | None,
-        uow: SessionPulbicUoWPort
-    ) -> tuple[list[GetOutputDto], bool]:
-        sessions, has_more = (
-            await uow.session_read_repository.get_sessions_by_coach_id(
-                coach_id=coach_id,
                 offset=offset,
                 limit=limit,
                 _from=_from,
@@ -217,30 +203,41 @@ class SessionService:
 
     async def update_session(
             self,
-            UoW: SessionUoWPort,
+            uow: SessionUoWPort,
             actor: Actor,
             session_id: UUID,
-            payload: SessionUpdateInputDTO
+            input: SessionUpdateInputDTO
     ):
-        ensure_has_permission(actor, Permission.CREATE_SESSION)
+        ensure_has_permission(actor, Permission.UPDATE_SESSION)
 
-        session = await UoW.session_repo.get_session_by_id(session_id)
-        if not session:
-            raise NotFoundError()
+        # normalization
+        title = input.title.strip()
 
-        if session.coach_id != actor.id:
-            raise HTTPException(status_code=403, detail="Not your session")
+        ensure_title_is_valid(title)
+        ensure_times_valid(input.starts_at, input.ends_at)
 
-        now = datetime.now(timezone.utc)
+        if not await uow.session_read_repository.exist_session(session_id):
+            raise SessionNotFoundError()
 
-        updated_session = session.update(
-            title=payload.title,
-            starts_at=payload.starts_at,
-            ends_at=payload.ends_at,
-            now=now,
+        if not await uow.session_read_repository.is_session_owner(
+            session_id=session_id,
+            user_id=actor.id
+        ):
+            raise NotOwnerOfSessionError()
+
+        if await uow.session_read_repository.is_session_overlapping_except(
+            starts_at=input.starts_at,
+            ends_at=input.ends_at,
+            except_session_id=session_id
+        ):
+            raise SessionOverlappingError()
+
+        await uow.session_update_repository.update_session(
+            session_id=session_id,
+            title=title,
+            starts_at=input.starts_at,
+            ends_at=input.ends_at
         )
-
-        await UoW.session_repo.update_session(updated_session)
 
     async def cancel_registration(
         self,

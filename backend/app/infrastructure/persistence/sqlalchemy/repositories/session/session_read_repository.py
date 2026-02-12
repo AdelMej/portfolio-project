@@ -177,6 +177,84 @@ class SqlAlchemySessionReadRepository(SessionReadRepositoryPort):
             ) for row in rows
         ], has_more
 
+    async def is_session_overlapping(
+        self,
+        starts_at: datetime,
+        ends_at: datetime
+    ) -> bool:
+        res = await self._session.execute(
+            text("""
+                    SELECT
+                        app_fcn.is_session_overlapping(:starts_at, :ends_at)
+            """),
+            {
+                "starts_at": starts_at,
+                "ends_at": ends_at
+            }
+        )
+
+        return res.scalar_one()
+
+    async def is_session_overlapping_except(
+        self,
+        starts_at: datetime,
+        ends_at: datetime,
+        except_session_id: UUID
+    ) -> bool:
+        result = await self._session.execute(
+            text("""
+                SELECT
+                    app_fcn.is_session_overlapping_except(
+                        :starts_at,
+                        :ends_at,
+                        :except_session
+                    )
+            """),
+            {
+                "starts_at": starts_at,
+                "ends_at": ends_at,
+                "except_session": except_session_id
+            }
+        )
+
+        return result.scalar_one()
+
+    async def exist_session(
+        self,
+        session_id: UUID
+    ) -> bool:
+        result = await self._session.execute(
+            text("""
+                SELECT
+                    app_fcn.session_exists(:session_id)
+            """),
+            {
+                "session_id": session_id
+            }
+        )
+        return result.scalar_one()
+
+    async def is_session_owner(
+        self,
+        session_id: UUID,
+        user_id: UUID
+    ) -> bool:
+        result = await self._session.execute(
+            text("""
+                SELECT
+                    app_fcn.is_session_owner(
+                        :user_id,
+                        :session_id
+                    )
+            """),
+            {
+                "user_id": user_id,
+                "session_id": session_id
+            }
+        )
+
+        return result.scalar_one()
+
     async def get_attendance(self, session_id: UUID) -> list[UUID]:
         result = await self._session.execute(
             text(
@@ -186,7 +264,9 @@ class SqlAlchemySessionReadRepository(SessionReadRepositoryPort):
                 WHERE session_id = :session_id
                 """
             ),
-            {"session_id": session_id},
+            {
+                "session_id": session_id
+            },
         )
 
         return [row.user_id for row in result.fetchall()]

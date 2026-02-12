@@ -24,3 +24,14 @@ class SessionTitleTooShortError(SessionDomainError):
 
 class SessionTitleTooLongError(SessionDomainError):
     pass
+
+
+class SessionOverlappingError(SessionDomainError):
+    pass
+
+
+class SessionNotFoundError(SessionDomainError):
+    pass
+
+class NotOwnerOfSessionError(SessionDomainError):
+    pass
