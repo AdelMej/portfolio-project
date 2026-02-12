@@ -10,40 +10,6 @@ class SqlAlchemySessionRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_session_by_id(
-        self,
-        session_id: UUID
-    ) -> Optional [SessionEntity]:
-        result= await self.session.execute(
-            text(
-                """SELECT
-                    id,
-                    coach_id,
-                    title,
-                    starts_at,
-                    ends_at,
-                    status::text
-                FROM app.sessions
-                WHERE id=:id
-                """
-            ),
-            {
-                'id':session_id
-            }
-        )
-
-        row = result.mappings().one_or_none()
-        if not row:
-            return None
-        return SessionEntity(
-            id=row["id"],
-            coach_id=row["coach_id"],
-            title=row["title"],
-            starts_at=row["starts_at"],
-            ends_at=row["ends_at"],
-            status=row["status"]
-        )
-
     async def create_session(
         self,
         session: SessionEntity
@@ -80,46 +46,7 @@ class SqlAlchemySessionRepository:
 
         return session
 
-    async def list_sessions(self, coach_id: UUID | None = None):
-        if coach_id:
-            res = await self.session.execute(
-            text("""SELECT
-                        id,
-                        coach_id,
-                        title,
-                        starts_at,
-                        ends_at,
-                        status::text
-                   FROM app.sessions
-                   WHERE coach_id = :coach_id
-                """),
-            {"coach_id": coach_id}
-        )
-        else:
-            res = await self.session.execute(
-                text("""SELECT
-                        id,
-                        coach_id,
-                        title,
-                        starts_at,
-                        ends_at,
-                        status::text
-                   FROM app.sessions
-                """)
-        )
 
-        rows = res.mappings().all()
-        return [
-            SessionEntity(
-                id=row["id"],
-                coach_id=row["coach_id"],
-                title=row["title"],
-                starts_at=row["starts_at"],
-                ends_at=row["ends_at"],
-                status=row["status"]
-            )
-            for row in rows
-        ]
 
 
     async def cancel_session(self, session_id: UUID) -> bool:
@@ -134,21 +61,7 @@ class SqlAlchemySessionRepository:
             )
         return result.rowcount > 0
 
-    async def get_attendance(self, session_id: UUID) -> list[UUID]:
-        result = await self.session.execute(
-            text(
-                """
-                SELECT user_id
-                FROM app.session_attendance
-                WHERE session_id = :session_id
-                """
-            ),
-            {"session_id": session_id},
-        )
 
-        return [row.user_id for row in result.fetchall()]
-    
-    #List attendances
 
     async def is_user_registered(self, session_id: UUID, user_id: UUID) -> bool:
         result = await self.session.execute(
@@ -198,12 +111,12 @@ class SqlAlchemySessionRepository:
                 "title": session.title,
                 "starts_at": session.starts_at,
                 "ends_at": session.ends_at,
-                "status": session.status.value if hasattr(session.status, "value") else session.status
+                "status": session.status
             }
         )
 
         return session
-    
+
     async def remove_attendance(self, session_id: UUID, user_id: UUID) -> bool:
         result = await self.session.execute(
             text("""

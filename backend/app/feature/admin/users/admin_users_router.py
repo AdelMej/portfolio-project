@@ -10,11 +10,15 @@ from app.feature.admin.users.admin_users_dto import (
     RoleDTO
 )
 from app.feature.admin.users.admin_users_service import AdminUserService
+from app.feature.admin.users.uow.admin_user_system_uow_port import (
+    AdminUserSystemUoWPort
+)
 from app.feature.admin.users.uow.admin_user_uow_port import (
     AdminUserUoWPort
 )
 from app.infrastructure.security.provider import get_current_actor
 from app.infrastructure.persistence.sqlalchemy.provider import (
+    get_admin_system_user_uow,
     get_admin_user_uow
 )
 
@@ -70,7 +74,7 @@ async def admin_get_user_by_id(
 async def admin_grant_role(
     user_id: UUID,
     role: RoleDTO,
-    uow: AdminUserUoWPort = Depends(get_admin_user_uow),
+    uow: AdminUserSystemUoWPort = Depends(get_admin_system_user_uow),
     actor: Actor = Depends(get_current_actor),
     service: AdminUserService = Depends(get_admin_user_service)
 ) -> None:
@@ -90,7 +94,7 @@ async def admin_grant_role(
 async def admin_revoke_role(
     user_id: UUID,
     role: RoleDTO,
-    uow: AdminUserUoWPort = Depends(get_admin_user_uow),
+    uow: AdminUserSystemUoWPort = Depends(get_admin_system_user_uow),
     actor: Actor = Depends(get_current_actor),
     service: AdminUserService = Depends(get_admin_user_service)
 ) -> None:
@@ -109,7 +113,7 @@ async def admin_revoke_role(
 )
 async def admin_disable_user(
     user_id: UUID,
-    uow: AdminUserUoWPort = Depends(get_admin_user_uow),
+    uow: AdminUserSystemUoWPort = Depends(get_admin_system_user_uow),
     actor: Actor = Depends(get_current_actor),
     service: AdminUserService = Depends(get_admin_user_service)
 ) -> None:
@@ -127,7 +131,7 @@ async def admin_disable_user(
 )
 async def admin_reenable_user(
     user_id: UUID,
-    uow: AdminUserUoWPort = Depends(get_admin_user_uow),
+    uow: AdminUserSystemUoWPort = Depends(get_admin_system_user_uow),
     actor: Actor = Depends(get_current_actor),
     service: AdminUserService = Depends(get_admin_user_service)
 ) -> None:

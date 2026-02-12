@@ -40,7 +40,8 @@ from app.domain.auth.auth_exceptions import (
     AdminCantSelfRevokeError,
     BaseRoleCannotBeRevokedError,
     AdminCantSelfDisableError,
-    AdminCantSelfRennableError
+    AdminCantSelfRennableError,
+    AuthUserIsDisabledError
 )
 from app.shared.rules.password_rules import (
     MIN_PASSWORD_LENGTH,
@@ -826,6 +827,27 @@ def register_exception_handler(app: FastAPI):
         return JSONResponse(
             content={
                 "error": "Admin can't rennable themselves"
+            },
+            status_code=403
+        )
+
+    @app.exception_handler(AuthUserIsDisabledError)
+    async def user_is_disabled(
+        request: Request,
+        exc: AuthUserIsDisabledError
+    ) -> JSONResponse:
+        logger.info(
+            "user is disabled",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={
+                "error": "user is disabled"
             },
             status_code=403
         )

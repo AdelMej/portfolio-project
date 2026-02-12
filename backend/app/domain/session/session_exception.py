@@ -1,10 +1,37 @@
-class SessionAlreadyCancelledError(Exception):
+class SessionDomainError(Exception):
     pass
 
-class SessionDomainError(Exception):
-    """Base domain error for session logic."""
-    pass
 
 class SessionCreditNegativeError(SessionDomainError):
-    """Raised when session credit is negative."""
+    pass
+
+
+class SessionTimeIsInvalidError(SessionDomainError):
+    pass
+
+
+class SessionPriceIsNegativeError(SessionDomainError):
+    pass
+
+
+class SessionTitleIsBlankError(SessionDomainError):
+    pass
+
+
+class SessionTitleTooShortError(SessionDomainError):
+    pass
+
+
+class SessionTitleTooLongError(SessionDomainError):
+    pass
+
+
+class SessionOverlappingError(SessionDomainError):
+    pass
+
+
+class SessionNotFoundError(SessionDomainError):
+    pass
+
+class NotOwnerOfSessionError(SessionDomainError):
     pass

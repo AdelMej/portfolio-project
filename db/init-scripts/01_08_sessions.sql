@@ -49,6 +49,12 @@ CREATE TABLE IF NOT EXISTS app.sessions (
     -- Session cancellation time
     cancelled_at TIMESTAMPTZ NULL,
     
+    -- Session price
+    price_cents INTEGER NOT NULL,
+
+    -- Session Price currency
+    currency TEXT NOT NULL DEFAULT 'EUR',
+ 
     -- Audit fields
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -72,7 +78,15 @@ CREATE TABLE IF NOT EXISTS app.sessions (
 
     -- Prevent empty titles
     CONSTRAINT chk_sessions_title_not_empty
-        CHECK (title <> '')
+        CHECK (title <> ''),
+        
+    -- Enforce uppercase 3-letter currency code
+    CONSTRAINT chk_sessions_currency_format
+        CHECK (currency ~ '^[A-Z]{3}$'),
+        
+    -- Price must be positive
+    CONSTRAINT chk_sessions_price_not_negative
+    	CHECK (price_cents >= 0)
 );
 
 -- ------------------------------------------------------------------
@@ -102,6 +116,12 @@ COMMENT ON COLUMN app.sessions.status IS
 
 COMMENT ON COLUMN app.sessions.cancelled_at IS
 'Timestamp when the session was cancelled. NULL if the session was never cancelled.';
+
+COMMENT ON COLUMN app.sessions.price_cents IS
+'Price of the session in the smallest currency unit (e.g. cents). Zero means free session.';
+
+COMMENT ON COLUMN app.sessions.currency IS
+'ISO 4217 currency code for the session price (e.g. EUR, USD).';
 
 COMMENT ON COLUMN app.sessions.created_at IS
 'Timestamp when the session record was created (UTC).';

@@ -6,12 +6,12 @@ from .users.admin_user_creatiton_repository import (
     SqlAlchemyAdminUserCreationRepository
 )
 from .users.admin_user_deletion_repository_port import (
-    SqlAlchemytAdminUserDeletionRepository
+    SqlAlchemyAdminUserDeletionRepository
 )
 
 __all__ = [
     "SqlalchemyAdminUserReadRepository",
     "SqlAlchemyAdminUserUpdateRepository",
     "SqlAlchemyAdminUserCreationRepository",
-    "SqlAlchemytAdminUserDeletionRepository"
+    "SqlAlchemyAdminUserDeletionRepository"
 ]

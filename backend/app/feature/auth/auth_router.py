@@ -27,9 +27,11 @@ from app.feature.auth.auth_exception import (
     RegistrationFailed
 )
 from app.feature.auth.uow.auth_uow_port import AuthUoWPort
+from app.feature.auth.uow.me_system_uow_port import MeSystemUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.infrastructure.persistence.sqlalchemy.provider import (
     get_auth_uow,
+    get_me_system_uow,
     get_me_uow
 )
 from app.infrastructure.security.provider import (
@@ -227,7 +229,7 @@ async def refresh(
 
 @router.put(
     path="/register",
-    status_code=204
+    status_code=201
 )
 async def register(
     input: RegistrationInputDTO,
@@ -243,6 +245,8 @@ async def register(
         )
     except EmailAlreadyExistError:
         raise RegistrationFailed()
+
+    return {"message": "registration successful"}
 
 
 @router.post(
@@ -300,7 +304,7 @@ async def get_me(
 )
 async def email_change_me(
     input: MeEmailChangeInputDTO,
-    uow: MeUoWPort = Depends(get_me_uow),
+    uow: MeSystemUoWPort = Depends(get_me_system_uow),
     actor: Actor = Depends(get_current_actor),
     service: AuthService = Depends(get_auth_service)
 ) -> None:
@@ -314,7 +318,7 @@ async def email_change_me(
 async def password_change_me(
     input: MePasswordChangeInputDTO,
     password_hasher: PasswordHasherPort = Depends(get_password_hasher),
-    uow: MeUoWPort = Depends(get_me_uow),
+    uow: MeSystemUoWPort = Depends(get_me_system_uow),
     actor: Actor = Depends(get_current_actor),
     service: AuthService = Depends(get_auth_service)
 ) -> None:
@@ -374,17 +378,15 @@ async def update_me_profile(
 async def delete_me(
     response: Response,
     actor: Actor = Depends(get_current_actor),
-    uow: MeUoWPort = Depends(get_me_uow),
+    uow: MeSystemUoWPort = Depends(get_me_system_uow),
     refresh_uow: AuthUoWPort = Depends(get_auth_uow),
     service: AuthService = Depends(get_auth_service),
-    password_hasher: PasswordHasherPort = Depends(get_password_hasher)
 ) -> None:
 
     await service.delete_me(
         actor=actor,
         refresh_uow=refresh_uow,
         uow=uow,
-        password_hasher=password_hasher,
     )
 
     response.delete_cookie(

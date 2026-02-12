@@ -51,13 +51,13 @@ AS $$
 	)
 $$;
 
-CREATE OR REPLACE FUNCTION app_fcn.is_self(target_user_id uuid)
+CREATE OR REPLACE FUNCTION app_fcn.is_self(p_user_id uuid)
 RETURNS boolean
 LANGUAGE SQL
 STABLE
 AS $$
 	SELECT
-		target_user_id = current_setting('app.current_user_id')::uuid
+		p_user_id = current_setting('app.current_user_id')::uuid
 $$;
 
 
@@ -100,3 +100,5 @@ COMMENT ON FUNCTION app_fcn.is_coach() IS
 
 COMMENT ON FUNCTION app_fcn.is_user_active(uuid) IS
 'User domain predicate. Returns true if the specified user exists and is active (not disabled). Centralizes the user lifecycle invariant used by RLS and domain logic.';
+
+
