@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
@@ -11,10 +12,23 @@ class SessionReadRepositoryPort(Protocol):
     ) -> SessionEntity | None:
         ...
 
-    async def list_sessions(
+    async def get_all_sessions(
         self,
-        coach_id: UUID
-    ) -> list[SessionEntity]:
+        offset: int,
+        limit: int,
+        _from: datetime | None,
+        to: datetime | None
+    ) -> tuple[list[SessionEntity], bool]:
+        ...
+
+    async def get_sessions_by_coach_id(
+        self,
+        coach_id: UUID,
+        offset: int,
+        limit: int,
+        _from: datetime | None,
+        to: datetime | None
+    ) -> tuple[list[SessionEntity], bool]:
         ...
 
     async def get_attendance(

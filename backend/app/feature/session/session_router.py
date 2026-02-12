@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
 from app.feature.session.session_dto import (
     AttendanceOutputDto,
+    PaginatedSessionsOutputDTO,
     SessionCreationInputDTO,
     GetOutputDto
 )
@@ -50,16 +51,62 @@ async def create_session(
     await service.create_session(UoW, actor, payload)
 
 
-@router.get("/", response_model=list[GetOutputDto])
-async def list_sessions(
-    limit: int = Query(20, ge=0, le=100),
+@router.get(
+    "/",
+    response_model=PaginatedSessionsOutputDTO
+)
+async def get_all_sessions(
+    limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     _from: datetime | None = Query(None),
     to: datetime | None = Query(None),
-    UoW: SessionUoWPort = Depends(get_session_uow),
+    uow: SessionPulbicUoWPort = Depends(get_session_public_uow),
     service: SessionService = Depends(get_session_service)
-):
-    return await service.list_sessions(UoW)
+) -> PaginatedSessionsOutputDTO:
+    items, has_more = await service.get_all_sessions(
+        offset=offset,
+        limit=limit,
+        _from=_from,
+        to=to,
+        uow=uow,
+    )
+
+    return PaginatedSessionsOutputDTO(
+        items=items,
+        limit=limit,
+        offset=offset,
+        has_more=has_more
+    )
+
+
+@router.get(
+    "/coach/{coach_id}",
+    response_model=PaginatedSessionsOutputDTO
+)
+async def get_all_sessions_by_coach(
+    coach_id: UUID,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    _from: datetime | None = Query(None),
+    to: datetime | None = Query(None),
+    uow: SessionPulbicUoWPort = Depends(get_session_public_uow),
+    service: SessionService = Depends(get_session_service)
+) -> PaginatedSessionsOutputDTO:
+    items, has_more = await service.get_sessions_by_coach(
+        coach_id=coach_id,
+        offset=offset,
+        limit=limit,
+        _from=_from,
+        to=to,
+        uow=uow,
+    )
+
+    return PaginatedSessionsOutputDTO(
+        items=items,
+        limit=limit,
+        offset=offset,
+        has_more=has_more
+    )
 
 
 @router.put(

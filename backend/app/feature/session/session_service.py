@@ -78,23 +78,65 @@ class SessionService:
 
         await uow.session_creation_repository.create_session(new_session)
 
-    async def list_sessions(
-            self,
-            uow: SessionUoWPort
-    ) -> list[GetOutputDto]:
-        sessions = await uow.session_repo.list_sessions()
+    async def get_all_sessions(
+        self,
+        offset: int,
+        limit: int,
+        _from: datetime | None,
+        to: datetime | None,
+        uow: SessionPulbicUoWPort
+    ) -> tuple[list[GetOutputDto], bool]:
+        sessions, has_more = (
+            await uow.session_read_repository.get_all_sessions(
+                offset=offset,
+                limit=limit,
+                _from=_from,
+                to=to,
+            )
+        )
 
         return [
             GetOutputDto(
-                id=s.id,
-                coach_id=s.coach_id,
-                title=s.title,
-                starts_at=s.starts_at,
-                ends_at=s.ends_at,
-                status=s.status
+                id=session.id,
+                coach_id=session.coach_id,
+                title=session.title,
+                starts_at=session.starts_at,
+                ends_at=session.ends_at,
+                status=session.status
             )
-            for s in sessions
-        ]
+            for session in sessions
+        ], has_more
+
+    async def get_sessions_by_coach(
+        self,
+        coach_id: UUID,
+        offset: int,
+        limit: int,
+        _from: datetime | None,
+        to: datetime | None,
+        uow: SessionPulbicUoWPort
+    ) -> tuple[list[GetOutputDto], bool]:
+        sessions, has_more = (
+            await uow.session_read_repository.get_sessions_by_coach_id(
+                coach_id=coach_id,
+                offset=offset,
+                limit=limit,
+                _from=_from,
+                to=to,
+            )
+        )
+
+        return [
+            GetOutputDto(
+                id=session.id,
+                coach_id=session.coach_id,
+                title=session.title,
+                starts_at=session.starts_at,
+                ends_at=session.ends_at,
+                status=session.status
+            )
+            for session in sessions
+        ], has_more
 
     async def cancel_session(
         self,

@@ -24,6 +24,11 @@ class GetOutputDto(BaseModel):
     ends_at: datetime
     status: str
 
+class PaginatedSessionsOutputDTO(BaseModel):
+    items: list[GetOutputDto]
+    limit: int
+    offset: int
+    has_more: bool
 
 class SessionCreationInputDTO(BaseModel):
     title: str = Field(
