@@ -1,7 +1,6 @@
 from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from app.domain.user.user_profile_entity import UserProfileEntity
 from app.feature.auth.repositories.me_update_repository_port import (
     MeUpdateRepositoryPort
 )
@@ -38,9 +37,10 @@ class SqlAlchemyMeUpdateRepository(MeUpdateRepositoryPort):
         )
 
     async def update_profile_by_id(
-            self,
-            user_id: UUID,
-            profile: UserProfileEntity
+        self,
+        user_id: UUID,
+        first_name: str,
+        last_name: str
     ):
 
         await self._session.execute(
@@ -52,8 +52,8 @@ class SqlAlchemyMeUpdateRepository(MeUpdateRepositoryPort):
                 WHERE up.user_id = :user_id
             """),
             {
-                "first_name": profile.first_name,
-                "last_name": profile.last_name,
+                "first_name": first_name,
+                "last_name": last_name,
                 "user_id": user_id
             }
         )

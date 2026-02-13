@@ -2,7 +2,7 @@ from uuid import uuid4
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.domain.user.user_entity import NewUserEntity
-from app.domain.user.user_profile_entity import UserProfileEntity
+from app.domain.user.user_profile_entity import NewUserProfileEntity
 from app.feature.auth.repositories.auth_creation_respository_port import (
     AuthCreationRepositoryPort
 )
@@ -15,7 +15,7 @@ class SqlAlchemyAuthCreationRepository(AuthCreationRepositoryPort):
     async def register(
             self,
             user: NewUserEntity,
-            user_profile: UserProfileEntity
+            user_profile: NewUserProfileEntity
     ) -> None:
 
         id = uuid4()

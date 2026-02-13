@@ -195,7 +195,7 @@ class RegistrationInputDTO(BaseModel):
     @field_validator("last_name")
     @classmethod
     def last_name_policy(cls, last_name: str) -> str:
-        last_name.strip()
+        last_name = last_name.strip()
 
         if is_blank(last_name):
             raise ValueError("last name must not be blank")

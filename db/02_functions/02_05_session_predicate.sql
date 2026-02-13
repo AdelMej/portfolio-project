@@ -132,6 +132,7 @@ create or replace function app_fcn.is_session_owner(
 )
 returns boolean
 language sql
+STABLE
 security definer
 set search_path = app, app_fcn, pg_temp
 as $$
@@ -223,6 +224,7 @@ create or replace function app_fcn.is_attended(
 )
 returns boolean
 language sql
+STABLE
 security definer
 set search_path = app, app_fcn, pg_temp
 as $$
@@ -255,3 +257,68 @@ COMMENT ON FUNCTION app_fcn.is_attended(uuid) IS
 'Predicate that returns true if a session has at least one attendance record.
 Represents the domain fact that attendance has started.
 Used to enforce invariants such as disabling pre-attendance once attendance exists.';
+
+CREATE OR replace FUNCTION app_fcn.is_session_cancelled(
+	p_session_id uuid
+)
+returns boolean
+language sql
+security definer
+set search_path = app, app_fcn, pg_temp
+as $$
+	SELECT EXISTS (
+		SELECT 1
+		FROM app.sessions
+		WHERE id = p_session_id
+			AND cancelled_at IS NOT NULL
+	)
+$$;
+
+
+create or replace function app_fcn.is_attendance_open(
+	p_session_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = app, app_fcn, pg_temp
+as $$
+	/*
+	 * app_fcn.is_attendance_open
+	 *
+	 * Determines whether attendance is currently open for a session.
+	 *
+	 * Domain rule:
+	 *   - Attendance opens when the session starts
+	 *   - Attendance is not open if the session is cancelled
+	 *
+	 * This function does NOT consider session end time.
+	 * Closing attendance is a separate domain decision.
+	 *
+	 * Parameters:
+	 *   p_session_id - Identifier of the session to check
+	 *
+	 * Returns:
+	 *   TRUE  if the session exists, is not cancelled, and has started
+	 *   FALSE otherwise
+	 *
+	 * Usage:
+	 *   Used as a predicate to enforce attendance lifecycle invariants
+	 *   at the database boundary.
+	 */
+	SELECT EXISTS(
+		SELECT 1
+		FROM app.sessions
+		WHERE id = p_session_id
+			AND cancelled_at IS NULL
+			AND now() >= starts_at
+		
+	);
+$$;
+
+COMMENT ON FUNCTION app_fcn.is_attendance_open(uuid) IS
+'Predicate function determining whether attendance is open for a session.
+Attendance opens when the session start time is reached and the session
+is not cancelled. Session end time is intentionally ignored to keep
+attendance lifecycle rules explicit and composable.';

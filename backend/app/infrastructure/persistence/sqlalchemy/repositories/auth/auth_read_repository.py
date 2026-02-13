@@ -79,7 +79,7 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
     async def get_user_by_id(
             self,
             user_id: UUID
-    ) -> UserEntity | None:
+    ) -> UserEntity:
 
         res = await self._session.execute(
             text("""
@@ -90,10 +90,7 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
                 "user_id": user_id
             }
         )
-        row = res.mappings().one_or_none()
-
-        if row is None:
-            return None
+        row = res.mappings().one()
 
         roles = {Role(r) for r in row["roles"]}
 

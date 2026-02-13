@@ -10,7 +10,10 @@ from app.domain.auth.refresh_tokens_rules import (
 )
 from app.domain.auth.role import Role
 from app.domain.user.user_entity import NewUserEntity, UserEntity
-from app.domain.user.user_profile_entity import UserProfileEntity
+from app.domain.user.user_profile_entity import (
+    NewUserProfileEntity,
+    UserProfileEntity
+)
 from app.domain.user.user_profile_rules import (
     ensure_first_name_is_valid,
     ensure_last_name_is_valid
@@ -256,7 +259,7 @@ class AuthService:
             role=Role.USER
         )
 
-        new_user_profile = UserProfileEntity(
+        new_user_profile = NewUserProfileEntity(
             first_name=first_name,
             last_name=last_name
         )
@@ -365,14 +368,10 @@ class AuthService:
         ensure_first_name_is_valid(first_name)
         ensure_last_name_is_valid(last_name)
 
-        profile = UserProfileEntity(
-            first_name=first_name,
-            last_name=last_name
-        )
-
         await uow.me_update_repository.update_profile_by_id(
             user_id=actor.id,
-            profile=profile
+            first_name=first_name,
+            last_name=last_name
         )
 
     async def delete_me(
