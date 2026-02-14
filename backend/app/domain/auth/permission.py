@@ -22,6 +22,7 @@ class Permission(str, Enum):
     UPDATE_SESSION = "update:session"
     READ_ATTENDANCE = "read:attendance"
     CREATE_ATTENDANCE = "create:attendance"
+    SESSION_REGISTRATION = "session:registration"
 
 
 ROLE_PERMISSIONS: dict[Role, set[Permission]] = {

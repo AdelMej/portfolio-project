@@ -34,6 +34,8 @@ class AppSettings(BaseSettings):
 
     refresh_token_hmac_secret: str
 
+    stripe_secret_key: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

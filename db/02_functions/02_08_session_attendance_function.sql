@@ -120,6 +120,10 @@ BEGIN
             USING ERRCODE = 'AP409';
     END IF;
 
+    IF app_fcn.is_session_attended(p_session_id) THEN
+        RETURN;
+    END IF;
+
     IF NOT app_fcn.is_attendance_payload_valid(p_session_id, p_attendance) THEN
         RAISE EXCEPTION 'invalid attendance payload'
             USING ERRCODE = 'AP422';

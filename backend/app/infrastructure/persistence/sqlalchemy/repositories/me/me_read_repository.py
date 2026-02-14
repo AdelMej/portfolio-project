@@ -5,11 +5,11 @@ from app.domain.auth.role import Role
 from app.domain.user.user_entity import UserEntity
 from app.domain.user.user_profile_entity import UserProfileEntity
 from app.feature.auth.repositories.me_read_repository_port import (
-    MeReadRepositoryPort
+    MeReadRepoPort
 )
 
 
-class SqlAlchemyMeReadRepository(MeReadRepositoryPort):
+class SqlAlchemyMeReadRepo(MeReadRepoPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -54,8 +54,8 @@ class SqlAlchemyMeReadRepository(MeReadRepositoryPort):
     async def get_profile_by_id(self, user_id: UUID) -> UserProfileEntity:
         res = await self._session.execute(
             text("""
-            SELECT up.first_name, up.last_name
-            FROM app.user_profiles up
+            SELECT id, first_name, last_name
+            FROM app.user_profiles
             WHERE user_id = :user_id
             """),
             {
@@ -66,6 +66,7 @@ class SqlAlchemyMeReadRepository(MeReadRepositoryPort):
         row = res.mappings().one()
 
         return UserProfileEntity(
+            user_id=row["id"],
             first_name=row["first_name"],
             last_name=row["last_name"]
         )

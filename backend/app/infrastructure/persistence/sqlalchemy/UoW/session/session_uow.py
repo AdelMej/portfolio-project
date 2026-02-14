@@ -3,12 +3,15 @@ from app.feature.session.uow.session_uow_port import (
     SessionUoWPort
 )
 from app.infrastructure.persistence.sqlalchemy.repositories.auth import (
-    SqlAlchemyAuthReadRepository
+    SqlAlchemyAuthReadRepo
 )
 from app.infrastructure.persistence.sqlalchemy.repositories.session import (
-    SqlAlchemySessionUpdateRepository,
-    SqlAlchemySessionReadRepository,
-    SqlAlchemySessionCreationRepository
+    SqlAlchemySessionUpdateRepo,
+    SqlAlchemySessionReadRepo,
+    SqlAlchemySessionCreationRepo
+)
+from app.infrastructure.persistence.sqlalchemy.repositories import (
+    SqlAlchemySessionParticipationReadRepo
 )
 
 
@@ -16,15 +19,10 @@ class SqlAlchemySessionUoW(SessionUoWPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-        self.session_creation_repository = (
-            SqlAlchemySessionCreationRepository(session)
+        self.session_creation_repo = SqlAlchemySessionCreationRepo(session)
+        self.session_update_repo = SqlAlchemySessionUpdateRepo(session)
+        self.session_read_repo = SqlAlchemySessionReadRepo(session)
+        self.session_participation_read_repo = (
+            SqlAlchemySessionParticipationReadRepo(session)
         )
-        self.session_update_repository = (
-            SqlAlchemySessionUpdateRepository(session)
-        )
-        self.session_read_repository = (
-            SqlAlchemySessionReadRepository(session)
-        )
-        self.auth_read_repository = (
-            SqlAlchemyAuthReadRepository(session)
-        )
+        self.auth_read_repo = SqlAlchemyAuthReadRepo(session)

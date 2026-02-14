@@ -5,11 +5,11 @@ from app.domain.auth.refresh_token_entity import RefreshTokenEntity
 from app.domain.auth.role import Role
 from app.domain.user.user_entity import UserEntity
 from app.feature.auth.repositories.auth_read_repository_port import (
-    AuthReadRepositoryPort
+    AuthReadRepoPort
 )
 
 
-class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
+class SqlAlchemyAuthReadRepo(AuthReadRepoPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

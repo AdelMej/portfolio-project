@@ -4,7 +4,7 @@ from app.domain.auth.refresh_token_entity import RefreshTokenEntity
 from app.domain.user.user_entity import UserEntity
 
 
-class AuthReadRepositoryPort(Protocol):
+class AuthReadRepoPort(Protocol):
     async def exist_email(self, email: str) -> bool:
         ...
 

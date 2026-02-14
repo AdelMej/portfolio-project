@@ -1,6 +1,6 @@
-from .payment_read_repository import SqlAlchemyPaymentReadRepository
+from .payment_read_repository import SqlAlchemyPaymentReadRepo
 
 
-__ALL__ = [
-    "SqlAlchemyPaymentReadRepository"
+__all__ = [
+    "SqlAlchemyPaymentReadRepo"
 ]

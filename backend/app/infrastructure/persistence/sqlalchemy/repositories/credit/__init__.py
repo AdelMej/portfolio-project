@@ -1,6 +1,6 @@
-from .credit_read_repository import SqlAlchemyCreditReadRepository
+from .credit_read_repository import SqlAlchemyCreditLedgerReadRepo
 
 
 __all__ = [
-    "SqlAlchemyCreditReadRepository"
+    "SqlAlchemyCreditLedgerReadRepo"
 ]

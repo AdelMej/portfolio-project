@@ -5,7 +5,7 @@ from uuid import UUID
 from app.domain.credit.credit_entity import CreditEntity
 
 
-class CreditReadRepositoryPort(Protocol):
+class CreditLedgerReadRepoPort(Protocol):
     async def get_credit_by_user_id(
         self,
         limit: int,

@@ -1,19 +1,35 @@
 from uuid import UUID
 from fastapi import HTTPException
 from datetime import datetime
-
+import stripe
+from app.domain.credit.credit_cause import CreditCause
+from app.domain.credit.credit_entity import NewCreditEntity
+from app.domain.payment.payment_exception import PaymentProviderError
+from app.domain.payment_intent.payment_intent_entity import (
+    NewPaymentIntentEntity
+)
+from app.domain.payment_intent.payment_intent_providers import PaymentProvier
 from app.domain.session.session_creation_rules import (
     ensure_price_is_not_negative,
     ensure_times_valid,
     ensure_title_is_valid
 )
 from app.domain.session.session_exception import (
+    AlreadyActiveParticipationError,
+    InvalidAttendanceInputError,
     NotOwnerOfSessionError,
+    OwnerCantRegisterToOwnSessionError,
+    SessionAlreadyAttendedError,
+    SessionAttendanceNotOpenError,
+    SessionCancelledError,
+    SessionClosedForRegistration,
+    SessionIsFullError,
     SessionNotFoundError,
     SessionOverlappingError
 )
 from app.domain.session.session_status import SessionStatus
 from app.feature.session.session_dto import (
+    AttendanceInputDTO,
     GetOutputDto,
     SessionUpdateInputDTO,
     AttendanceOutputDto,
@@ -26,7 +42,10 @@ from app.feature.session.uow.session_public_uow_port import (
     SessionPulbicUoWPort
 )
 from app.feature.session.uow.session_uow_port import SessionUoWPort
-from app.domain.session.session_entity import NewSessionEntity
+from app.domain.session.session_entity import (
+    NewSessionEntity,
+    NewSessionParticipationEntity
+)
 from app.shared.exceptions.commons import NotFoundError
 from app.domain.currency.currency_rules import (
     ensure_currency_is_valid
@@ -43,7 +62,7 @@ class SessionService:
             session_id: UUID
     ) -> GetOutputDto:
         session = (
-            await uow.session_read_repository.get_session_by_id(session_id)
+            await uow.session_read_repo.get_session_by_id(session_id)
         )
 
         if not session:
@@ -75,10 +94,10 @@ class SessionService:
         ensure_title_is_valid(title)
         ensure_currency_is_valid(currency)
 
-        if await uow.auth_read_repository.is_user_disabled(actor.id):
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
 
-        if await uow.session_read_repository.is_session_overlapping(
+        if await uow.session_read_repo.is_session_overlapping(
             starts_at=input.starts_at,
             ends_at=input.ends_at
         ):
@@ -93,7 +112,7 @@ class SessionService:
             currency=currency
         )
 
-        await uow.session_creation_repository.create_session(new_session)
+        await uow.session_creation_repo.create_session(new_session)
 
     async def get_all_sessions(
         self,
@@ -104,7 +123,7 @@ class SessionService:
         uow: SessionPulbicUoWPort
     ) -> tuple[list[GetOutputDto], bool]:
         sessions, has_more = (
-            await uow.session_read_repository.get_all_sessions(
+            await uow.session_read_repo.get_all_sessions(
                 offset=offset,
                 limit=limit,
                 _from=_from,
@@ -146,59 +165,93 @@ class SessionService:
             uow: SessionUoWPort,
             actor: Actor,
             session_id: UUID
-    ) -> AttendanceOutputDto:
-        ensure_has_permission(actor, Permission.READ_SELF)
+    ) -> list[AttendanceOutputDto]:
+        ensure_has_permission(actor, Permission.READ_ATTENDANCE)
 
-        session = await uow.session_repo.get_session_by_id(session_id)
-        if not session:
-            raise NotFoundError()
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
-        if session.status == SessionStatus.CANCELLED:
-            raise HTTPException(status_code=400, detail="Session cancelled")
+        if not await uow.session_read_repo.exist_session(session_id):
+            raise SessionNotFoundError()
 
-        return await uow.session_repo.get_attendance(session_id)
+        if await uow.session_read_repo.is_session_cancelled(session_id):
+            raise SessionCancelledError()
+
+        if not await uow.session_read_repo.is_session_owner(
+            session_id, actor.id
+        ):
+            raise NotOwnerOfSessionError()
+
+        if not await (
+            uow.session_attendance_read_repo.is_session_attendance_open(
+                session_id
+            )
+        ):
+            raise SessionAttendanceNotOpenError()
+
+        if await uow.session_read_repo.is_session_attended(session_id):
+            raise SessionAlreadyAttendedError()
+
+        profiles = await uow.session_attendance_read_repo.get_attendance(
+            session_id
+        )
+
+        return [
+            AttendanceOutputDto(
+                user_id=profile.user_id,
+                first_name=profile.first_name,
+                last_name=profile.last_name
+            ) for profile in profiles
+        ]
 
     async def put_attendance(
-            self,
-            UoW,
-            actor,
-            session_id: UUID
+        self,
+        input: AttendanceInputDTO,
+        uow: SessionUoWPort,
+        actor: Actor,
+        session_id: UUID
     ) -> None:
-        ensure_has_permission(actor, Permission.READ_SELF)
+        ensure_has_permission(actor, Permission.CREATE_ATTENDANCE)
+        attendance_map: dict[UUID, bool] = {
+            dto.user_id: dto.attended
+            for dto in input.attendance
+        }
 
-        # 1. Get the session
-        session = await UoW.session_repo.get_session_by_id(session_id)
-        if not session:
-            raise NotFoundError()
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
-        if session.status == SessionStatus.CANCELLED:
-            raise HTTPException(status_code=400, detail="Session cancelled")
+        if not await uow.session_read_repo.exist_session(session_id):
+            raise SessionNotFoundError()
 
-        # 2. Check if the user is an active participant
-        is_participant = await UoW.session_repo.is_user_registered(
-            session_id=session_id,
-            user_id=actor.id
-        )
+        if await uow.session_read_repo.is_session_cancelled(session_id):
+            raise SessionCancelledError()
 
-        if not is_participant:
-            raise HTTPException(
-                status_code=403,
-                detail="User is not an active participant for this session"
+        if not await uow.session_read_repo.is_session_owner(
+            session_id, actor.id
+        ):
+            raise NotOwnerOfSessionError()
+
+        if not await (
+            uow.session_attendance_read_repo.is_session_attendance_open(
+                session_id
             )
+        ):
+            raise SessionAttendanceNotOpenError()
 
-        # 3. Check if attendance was already added
-        already_registered = await UoW.session_repo.has_attendance(
+        if await uow.session_read_repo.is_session_attended(session_id):
+            raise SessionAlreadyAttendedError()
+
+        if not await (
+            uow.session_attendance_read_repo.is_attendance_payload_valid(
+                session_id=session_id,
+                attendance_list=attendance_map
+            )
+        ):
+            raise InvalidAttendanceInputError()
+
+        await uow.session_attendance_creation_repo.create_attendance(
             session_id=session_id,
-            user_id=actor.id
-        )
-
-        if already_registered:
-            raise HTTPException(status_code=409, detail="Already registered")
-
-        # 4. Add attendance
-        await UoW.session_repo.add_attendance(
-            session_id=session_id,
-            user_id=actor.id
+            attendance_list=attendance_map
         )
 
     async def update_session(
@@ -216,23 +269,23 @@ class SessionService:
         ensure_title_is_valid(title)
         ensure_times_valid(input.starts_at, input.ends_at)
 
-        if not await uow.session_read_repository.exist_session(session_id):
+        if not await uow.session_read_repo.exist_session(session_id):
             raise SessionNotFoundError()
 
-        if not await uow.session_read_repository.is_session_owner(
+        if not await uow.session_read_repo.is_session_owner(
             session_id=session_id,
             user_id=actor.id
         ):
             raise NotOwnerOfSessionError()
 
-        if await uow.session_read_repository.is_session_overlapping_except(
+        if await uow.session_read_repo.is_session_overlapping_except(
             starts_at=input.starts_at,
             ends_at=input.ends_at,
             except_session_id=session_id
         ):
             raise SessionOverlappingError()
 
-        await uow.session_update_repository.update_session(
+        await uow.session_update_repo.update_session(
             session_id=session_id,
             title=title,
             starts_at=input.starts_at,
@@ -273,39 +326,114 @@ class SessionService:
                 detail="Failed to cancel registration"
             )
 
-    async def admin_list_sessions_by_coach(
-            self,
-            uow: SessionUoWPort,
-            actor: Actor,
-            coach_id: UUID
-    ):
-        ensure_has_permission(actor, Permission.READ_USERS)
+    async def register_user(
+        self,
+        session_id: UUID,
+        actor: Actor,
+        uow: SessionUoWPort
+    ) -> tuple[bool, str | None]:
+        ensure_has_permission(actor, Permission.SESSION_REGISTRATION)
 
-        sessions = await uow.session_repo.list_sessions(coach_id=coach_id)
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
-        return [
-            GetOutputDto(
-                id=s.id,
-                coach_id=s.coach_id,
-                title=s.title,
-                starts_at=s.starts_at,
-                ends_at=s.ends_at,
-                status=s.status
+        if await uow.session_read_repo.is_session_owner(
+            session_id,
+            actor.id
+        ):
+            raise OwnerCantRegisterToOwnSessionError()
+
+        if not await uow.session_read_repo.exist_session(session_id):
+            raise SessionNotFoundError()
+
+        if await uow.session_read_repo.is_session_cancelled(session_id):
+            raise SessionCancelledError()
+
+        if await uow.session_participation_read_repo.has_active_participation(
+            session_id,
+            actor.id
+        ):
+            raise AlreadyActiveParticipationError()
+
+        if await uow.session_participation_read_repo.is_session_full(
+            session_id
+        ):
+            raise SessionIsFullError()
+
+        if not await uow.session_participation_read_repo.is_registration_open(
+            session_id
+        ):
+            raise SessionClosedForRegistration()
+
+        session = await uow.session_read_repo.get_session_by_id(
+            session_id
+        )
+
+        credit = (
+            await uow.credit_ledger_read_repo.fetch_credit_by_user_id(
+                user_id=actor.id,
+                currency=session.currency
             )
-            for s in sessions
-        ]
+        )
 
-    async def admin_cancel_session(
-            self,
-            uow: SessionUoWPort,
-            actor: Actor,
-            session_id: UUID
-    ):
-        # Ensure admin permission
-        ensure_has_permission(actor, Permission.READ_USERS)
+        credit_applied = min(credit, session.price_cents)
 
-        session = await uow.session_repo.get_session_by_id(session_id)
-        if not session:
-            raise NotFoundError()
+        final_amount = session.price_cents - credit_applied
 
-        await uow.session_repo.cancel_session(session_id)
+        required_payment = final_amount > 0
+
+        if final_amount == 0:
+            await uow.credit_ledger_creation_repo.create_credit_entry(
+                NewCreditEntity(
+                    user_id=actor.id,
+                    amount_cents=-credit_applied,
+                    currency=session.currency,
+                    cause=CreditCause.SESSION_USAGE,
+                )
+            )
+
+            client_secret = None
+
+        else:
+            try:
+                intent = await stripe.PaymentIntent.create_async(
+                    amount=final_amount,
+                    currency=session.currency,
+                    automatic_payment_methods={"enabled": True},
+                    metadata={
+                        "resource": "session_registration",
+                        "flow_version": "v1",
+
+                        "session_id": str(session_id),
+                        "user_id": str(actor.id),
+                    },
+                )
+            except stripe.StripeError as exc:
+                raise PaymentProviderError() from exc
+
+            await uow.payment_intent_creation_repo.create_payment_intent(
+                NewPaymentIntentEntity(
+                    user_id=actor.id,
+                    session_id=session.id,
+                    provider=PaymentProvier.STRIPE,
+                    provider_intent_id=intent.id,
+                    status=intent.status,
+                    credit_applied_cents=credit_applied,
+                    amount_cents=final_amount,
+                    currency=session.currency
+                )
+            )
+
+            if intent.client_secret is None:
+                raise PaymentProviderError()
+
+            client_secret = intent.client_secret
+
+        await uow.session_participation_creation_repo.create_participation(
+            participation=NewSessionParticipationEntity(
+                session_id=session_id,
+                user_id=actor.id
+            )
+        )
+
+        return required_payment, client_secret

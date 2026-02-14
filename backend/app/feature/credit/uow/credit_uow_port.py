@@ -1,8 +1,9 @@
 from typing import Protocol
-from app.feature.credit.respositories.credit_read_repository_port import (
-    CreditReadRepositoryPort
+
+from app.feature.credit.respositories import (
+    CreditLedgerReadRepoPort
 )
 
 
 class CreditUoWPort(Protocol):
-    credit_read_repository: CreditReadRepositoryPort
+    credit_read_repo: CreditLedgerReadRepoPort

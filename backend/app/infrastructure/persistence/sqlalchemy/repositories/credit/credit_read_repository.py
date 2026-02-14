@@ -3,12 +3,12 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.domain.credit.credit_entity import CreditEntity
-from app.feature.credit.respositories.credit_read_repository_port import (
-    CreditReadRepositoryPort
+from app.feature.credit.respositories import (
+    CreditLedgerReadRepoPort
 )
 
 
-class SqlAlchemyCreditReadRepository(CreditReadRepositoryPort):
+class SqlAlchemyCreditLedgerReadRepo(CreditLedgerReadRepoPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

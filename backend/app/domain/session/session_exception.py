@@ -52,3 +52,19 @@ class SessionAttendanceNotOpenError(SessionDomainError):
 
 class InvalidAttendanceInputError(SessionDomainError):
     pass
+
+
+class AlreadyActiveParticipationError(SessionDomainError):
+    pass
+
+
+class SessionIsFullError(SessionDomainError):
+    pass
+
+
+class SessionClosedForRegistration(SessionDomainError):
+    pass
+
+
+class OwnerCantRegisterToOwnSessionError(SessionDomainError):
+    pass

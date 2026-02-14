@@ -99,7 +99,7 @@ COMMENT ON FUNCTION app_fcn.is_coach() IS
 'Authorization predicate. Returns true if the current authenticated user has the coach role. Grants coach-level capabilities; does not imply ownership of any session.';
 
 
-CREATE OR REPLACE FUNCTION app_fcn.current_actor_id()
+CREATE OR REPLACE FUNCTION app_fcn.current_user_id()
 RETURNS uuid
 LANGUAGE sql
 STABLE
@@ -132,12 +132,12 @@ AS $$
      * Stability:
      *   - STABLE: value is constant for the duration of a statement
      */
-    SELECT current_setting('app.current_actor_id', true)::uuid;
+    SELECT current_setting('app.current_user_id', true)::uuid;
 $$;
 
-COMMENT ON FUNCTION app_fcn.current_actor_id() IS
+COMMENT ON FUNCTION app_fcn.current_user_id() IS
 'Returns the UUID of the current authenticated actor from the session-scoped
-application setting app.current_actor_id. Intended for use inside SECURITY
+application setting app.current_user_id. Intended for use inside SECURITY
 DEFINER functions, authorization predicates, auditing, and RLS policies.
 Returns NULL if no actor context is present.';
 

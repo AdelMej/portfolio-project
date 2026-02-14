@@ -47,7 +47,7 @@ is not cancelled. Session end time is intentionally ignored to keep
 attendance lifecycle rules explicit and composable.';
 
 
-create or replace function app_fcn.is_attended(
+create or replace function app_fcn.is_session_attended(
 	p_session_id uuid
 )
 returns boolean
@@ -81,7 +81,7 @@ as $$
 	);
 $$;
 
-COMMENT ON FUNCTION app_fcn.is_attended(uuid) IS
+COMMENT ON FUNCTION app_fcn.is_session_attended(uuid) IS
 'Predicate that returns true if a session has at least one attendance record.
 Represents the domain fact that attendance has started.
 Used to enforce invariants such as disabling pre-attendance once attendance exists.';
@@ -127,7 +127,7 @@ BEGIN
         RETURN FALSE;
     END IF;
 
-	IF app_fcn.current_actor_id() IS NULL THEN
+	IF app_fcn.current_user_id() IS NULL THEN
 	    RAISE EXCEPTION 'missing actor context'
 	        USING ERRCODE = 'AP401';
 	END IF;

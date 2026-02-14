@@ -3,7 +3,7 @@ from app.feature.payment.uow.payment_uow_port import (
     PaymentUoWPort
 )
 from app.infrastructure.persistence.sqlalchemy.repositories.payment import (
-    SqlAlchemyPaymentReadRepository
+    SqlAlchemyPaymentReadRepo
 )
 
 
@@ -11,4 +11,4 @@ class SqlAlchemyPaymenUoW(PaymentUoWPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-        self.payment_read_repository = SqlAlchemyPaymentReadRepository(session)
+        self.payment_read_repo = SqlAlchemyPaymentReadRepo(session)

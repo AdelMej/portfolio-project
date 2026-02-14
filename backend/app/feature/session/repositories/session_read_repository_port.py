@@ -5,11 +5,11 @@ from uuid import UUID
 from app.domain.session.session_entity import SessionEntity
 
 
-class SessionReadRepositoryPort(Protocol):
+class SessionReadRepoPort(Protocol):
     async def get_session_by_id(
         self,
         session_id: UUID
-    ) -> SessionEntity | None:
+    ) -> SessionEntity:
         ...
 
     async def get_all_sessions(
@@ -36,12 +36,6 @@ class SessionReadRepositoryPort(Protocol):
     ) -> bool:
         ...
 
-    async def get_attendance(
-        self,
-        session_id: UUID
-    ) -> list[SessionEntity]:
-        ...
-
     async def exist_session(
         self,
         session_id: UUID
@@ -52,5 +46,17 @@ class SessionReadRepositoryPort(Protocol):
         self,
         session_id: UUID,
         user_id: UUID
+    ) -> bool:
+        ...
+
+    async def is_session_cancelled(
+        self,
+        session_id: UUID
+    ) -> bool:
+        ...
+
+    async def is_session_attended(
+        self,
+        session_id: UUID
     ) -> bool:
         ...

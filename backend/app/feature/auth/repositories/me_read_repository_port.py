@@ -5,7 +5,7 @@ from typing import Protocol
 from app.domain.user.user_profile_entity import UserProfileEntity
 
 
-class MeReadRepositoryPort(Protocol):
+class MeReadRepoPort(Protocol):
     async def get(self, user_id: UUID) -> UserEntity:
         ...
 

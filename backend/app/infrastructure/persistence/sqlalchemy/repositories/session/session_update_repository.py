@@ -3,11 +3,11 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.feature.session.repositories.session_update_repository_port import (
-    SessionUpdateRepositoryPort
+    SessionUpdateRepoPort
 )
 
 
-class SqlAlchemySessionUpdateRepository(SessionUpdateRepositoryPort):
+class SqlAlchemySessionUpdateRepo(SessionUpdateRepoPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

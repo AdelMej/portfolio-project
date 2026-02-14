@@ -3,11 +3,11 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql.expression import text
 from app.domain.auth.role import Role
 from app.feature.admin.users.repositories import (
-    AdminUserCreationRepositoryPort
+    AdminUserCreationRepoPort
 )
 
 
-class SqlAlchemyAdminUserCreationRepository(AdminUserCreationRepositoryPort):
+class SqlAlchemyAdminUserCreationRepo(AdminUserCreationRepoPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

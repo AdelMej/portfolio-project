@@ -3,13 +3,13 @@ from uuid import UUID
 from app.domain.auth.role import Role
 from app.domain.user.user_entity import AdminUserRead
 from app.feature.admin.users.repositories import (
-    AdminUserReadRepositoryPort
+    AdminUserReadRepoPort
 )
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
 
-class SqlalchemyAdminUserReadRepository(AdminUserReadRepositoryPort):
+class SqlalchemyAdminUserReadRepo(AdminUserReadRepoPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

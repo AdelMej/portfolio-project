@@ -14,3 +14,11 @@ class CreditEntity():
     balance_after_cents: int
     cause: CreditCause
     created_at: datetime
+
+
+@dataclass(frozen=True)
+class NewCreditEntity():
+    user_id: UUID
+    amount_cents: int
+    currency: str
+    cause: CreditCause
