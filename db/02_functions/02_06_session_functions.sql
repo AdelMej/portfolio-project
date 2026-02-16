@@ -188,4 +188,68 @@ COMMENT ON FUNCTION app_fcn.session_update(
 - Raises AP409 if the updated time range overlaps another active session.
 - Enforces session scheduling invariants at the database level.';
 
+CREATE OR REPLACE FUNCTION app_fcn.get_session_for_registration(
+    p_session_id uuid
+)
+RETURNS TABLE (
+    id uuid,
+    coach_id uuid,
+    title text,
+    price_cents int,
+    currency text,
+    status text,
+    starts_at timestamptz,
+    ends_at timestamptz,
+    cancelled_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
+	/*
+	 * get_session_for_registration
+	 *
+	 * System-level read function used during the session registration flow.
+	 *
+	 * This function returns the minimal set of session data required to
+	 * validate registration invariants and compute pricing, without granting
+	 * direct SELECT access on the sessions table to the application role.
+	 *
+	 * Security model:
+	 * - Runs as SECURITY DEFINER
+	 * - Enforces existence validation internally
+	 * - Intended for internal system workflows only (not public reads)
+	 *
+	 * Errors:
+	 * - AP404: Raised if the session does not exist
+	 *
+	 * Notes:
+	 * - This function MUST remain side-effect free
+	 * - Any additional invariants should be enforced at the service layer
+	 */
+	BEGIN
+	    IF NOT app_fcn.session_exists(p_session_id) THEN
+	        RAISE EXCEPTION 'session not found'
+	            USING ERRCODE = 'AP404';
+	    END IF;
+	
+	    RETURN QUERY
+	    SELECT
+	        s.id,
+	        s.coach_id,
+			s.title::text,
+	        s.price_cents,
+	        s.currency,
+	        s.status::text,
+	        s.starts_at,
+	        s.ends_at,
+			s.cancelled_at
+	    FROM app.sessions s
+	    WHERE s.id = p_session_id;
+	END;
+$$;
 
+COMMENT ON FUNCTION app_fcn.get_session_for_registration(uuid) IS
+'System-level read function used during session registration to fetch
+pricing and timing data without exposing direct SELECT access on app.sessions.
+Raises AP404 if the session does not exist. SECURITY DEFINER.';

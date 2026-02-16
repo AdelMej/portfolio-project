@@ -75,7 +75,7 @@ CREATE UNIQUE INDEX uq_session_participation_active
 ON app.session_participation (session_id, user_id)
 WHERE cancelled_at IS NULL;
 
-COMMENT ON INDEX uq_session_participation_active IS
+COMMENT ON INDEX app.uq_session_participation_active IS
 'Prevents multiple active registrations for the same user and session.
 A registration is active when cancelled_at IS NULL.
 Allows re-registration after cancellation (e.g. failed payment retry)

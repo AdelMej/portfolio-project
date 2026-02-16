@@ -1,3 +1,5 @@
+\c app
+
 CREATE OR REPLACE FUNCTION app_fcn.fetch_credit(
     p_user_id uuid,
     p_currency text

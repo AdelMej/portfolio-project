@@ -1,3 +1,5 @@
+\c app
+
 create or replace function app_fcn.get_pre_attendance(
 	p_session_id uuid
 )

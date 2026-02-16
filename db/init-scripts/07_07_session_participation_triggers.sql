@@ -24,17 +24,9 @@ DECLARE
     v_session_end   TIMESTAMPTZ;
 BEGIN
     ------------------------------------------------------------------
-    -- IMMUTABILITY AFTER ATTENDANCE
-    ------------------------------------------------------------------
-    IF TG_OP = 'UPDATE'
-       AND OLD.attended_at IS NOT NULL THEN
-        RAISE EXCEPTION 'Attendance already marked; row is immutable';
-    END IF;
-
-    ------------------------------------------------------------------
     -- FETCH SESSION START/END
     ------------------------------------------------------------------
-    SELECT start_at, end_at
+    SELECT starts_at, ends_at
     INTO STRICT v_session_start, v_session_end
     FROM app.sessions
     WHERE id = NEW.session_id;
@@ -144,7 +136,7 @@ DECLARE
     participation_count integer;
 BEGIN
     -- Serialize inserts per session to avoid race conditions
-    PERFORM pg_advisory_xact_lock(NEW.session_id);
+    PERFORM pg_advisory_xact_lock(hashtext('session:' || NEW.session_id::text));
 
     -- Count existing participants for this session
     SELECT COUNT(*)
