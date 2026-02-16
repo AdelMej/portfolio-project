@@ -4,6 +4,7 @@ from datetime import datetime
 import stripe
 from app.domain.credit.credit_cause import CreditCause
 from app.domain.credit.credit_entity import NewCreditEntity
+from app.domain.credit.credit_exception import CreditNegativeError
 from app.domain.payment.payment_exception import PaymentProviderError
 from app.domain.payment_intent.payment_intent_entity import (
     NewPaymentIntentEntity
@@ -189,7 +190,9 @@ class SessionService:
         ):
             raise SessionAttendanceNotOpenError()
 
-        if await uow.session_read_repo.is_session_attended(session_id):
+        if await uow.session_attendance_read_repo.is_session_attended(
+            session_id
+        ):
             raise SessionAlreadyAttendedError()
 
         profiles = await uow.session_attendance_read_repo.get_attendance(
@@ -238,7 +241,9 @@ class SessionService:
         ):
             raise SessionAttendanceNotOpenError()
 
-        if await uow.session_read_repo.is_session_attended(session_id):
+        if await uow.session_attendance_read_repo.is_session_attended(
+            session_id
+        ):
             raise SessionAlreadyAttendedError()
 
         if not await (
@@ -365,7 +370,7 @@ class SessionService:
         ):
             raise SessionClosedForRegistration()
 
-        session = await uow.session_read_repo.get_session_by_id(
+        session = await uow.session_read_repo.system_get_session_by_id(
             session_id
         )
 
@@ -380,9 +385,15 @@ class SessionService:
 
         final_amount = session.price_cents - credit_applied
 
+        if final_amount < 0:
+            raise CreditNegativeError()
+
         required_payment = final_amount > 0
 
-        if final_amount == 0:
+        if final_amount == 0 and credit_applied == 0:
+            client_secret = None
+
+        elif final_amount == 0 and credit_applied > 0:
             await uow.credit_ledger_creation_repo.create_credit_entry(
                 NewCreditEntity(
                     user_id=actor.id,

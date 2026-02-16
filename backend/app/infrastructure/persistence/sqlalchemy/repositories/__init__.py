@@ -14,11 +14,12 @@ from .auth import (
     SqlAlchemyAuthUpdateRepo,
     SqlAlchemyAuthCreationRepo,
 )
-from .credit import (
-    SqlAlchemyCreditLedgerReadRepo
+from .credit_ledger import (
+    SqlAlchemyCreditLedgerReadRepo,
+    SqlAlchemyCreditLedgerCreationRepo
 )
 from .payment import (
-    SqlAlchemyPaymentReadRepo
+    SqlAlchemyPaymentReadRepo,
 )
 from .session import (
     SqlAlchemySessionReadRepo,
@@ -26,9 +27,16 @@ from .session import (
     SqlAlchemySessionUpdateRepo
 )
 from .session_participation import (
-    SqlAlchemySessionParticipationReadRepo
+    SqlAlchemySessionParticipationReadRepo,
+    SqlAlchemySessionParticipationCreationRepo
 )
-
+from .session_attendance import (
+    SqlAlchemySessionAttendanceReadRepo,
+    SqlAlchemySessionAttendanceCreationRepo
+)
+from .payment_intent import (
+    SqlAlchemyPaymentIntentCreationRepo
+)
 
 __all__ = [
     "SqlAlchemyAuthReadRepo",
@@ -38,6 +46,7 @@ __all__ = [
     "SqlAlchemyMeUpdateRepo",
     "SqlAlchemyMeDeleteRepo",
     "SqlAlchemyCreditLedgerReadRepo",
+    "SqlAlchemyCreditLedgerCreationRepo",
     "SqlAlchemyPaymentReadRepo",
     "SqlAlchemySessionReadRepo",
     "SqlAlchemySessionUpdateRepo",
@@ -46,6 +55,9 @@ __all__ = [
     "SqlalchemyAdminUserReadRepo",
     "SqlAlchemyAdminUserUpdateRepo",
     "SqlAlchemyAdminUserCreationRepo",
-    "SqlAlchemyAdminUserDeletionRepo"
-
+    "SqlAlchemyAdminUserDeletionRepo",
+    "SqlAlchemySessionParticipationCreationRepo",
+    "SqlAlchemySessionAttendanceCreationRepo",
+    "SqlAlchemySessionAttendanceReadRepo",
+    "SqlAlchemyPaymentIntentCreationRepo"
 ]

@@ -1,11 +1,14 @@
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql.expression import text
+from app.domain.auth.auth_exceptions import PermissionDeniedError
 from app.domain.session.session_entity import NewSessionEntity
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.feature.session.repositories.session_creation_repository_port import (
     SessionCreationRepoPort
 )
-from uuid import UUID, uuid4
-import json
+from uuid import uuid4
+
+from app.shared.database.sqlstate_extractor import get_sqlstate
 
 
 class SqlAlchemySessionCreationRepo(SessionCreationRepoPort):
@@ -16,8 +19,7 @@ class SqlAlchemySessionCreationRepo(SessionCreationRepoPort):
         self,
         session: NewSessionEntity
     ) -> None:
-        await self._session.execute(
-            text("""
+        stmt = text("""
                 SELECT
                     app_fcn.session_create_session(
                         :id,
@@ -28,38 +30,22 @@ class SqlAlchemySessionCreationRepo(SessionCreationRepoPort):
                         :price_cents,
                         :currency
                     )
-            """),
-            {
-                "id": uuid4(),
-                "coach_id": session.coach_id,
-                "title": session.title,
-                "starts_at": session.starts_at,
-                "ends_at": session.ends_at,
-                "price_cents": session.price_cents,
-                "currency": session.currency
-            }
-        )
+            """)
+        try:
+            await self._session.execute(stmt, {
+                    "id": uuid4(),
+                    "coach_id": session.coach_id,
+                    "title": session.title,
+                    "starts_at": session.starts_at,
+                    "ends_at": session.ends_at,
+                    "price_cents": session.price_cents,
+                    "currency": session.currency
+                }
+            )
+        except DBAPIError as exc:
+            code = get_sqlstate(exc)
 
-    async def create_attendance(
-        self,
-        session_id: UUID,
-        attendance_list: dict[UUID, bool]
-    ) -> None:
-        payload = [
-            {
-                "user_id": str(user_id),
-                "attended": attended
-            }
-            for user_id, attended in attendance_list.items()
-        ]
+            if code == "AP401":
+                raise PermissionDeniedError() from exc
 
-        await self._session.execute(
-            text("""
-                :session_id,
-                :attendance_list
-            """),
-            {
-                "session_id": session_id,
-                "attendance_list": json.dumps(payload)
-            }
-        )
+            raise

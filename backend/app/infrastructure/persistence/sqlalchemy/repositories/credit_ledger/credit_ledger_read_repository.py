@@ -1,11 +1,14 @@
 from datetime import datetime
 from uuid import UUID
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio.session import AsyncSession
+from app.domain.auth.auth_exceptions import PermissionDeniedError
 from app.domain.credit.credit_entity import CreditEntity
 from app.feature.credit.respositories import (
     CreditLedgerReadRepoPort
 )
+from app.shared.database.sqlstate_extractor import get_sqlstate
 
 
 class SqlAlchemyCreditLedgerReadRepo(CreditLedgerReadRepoPort):
@@ -74,3 +77,31 @@ class SqlAlchemyCreditLedgerReadRepo(CreditLedgerReadRepoPort):
                 created_at=row["created_at"]
             ) for row in rows
         ], has_more
+
+    async def fetch_credit_by_user_id(
+        self,
+        user_id: UUID,
+        currency: str
+    ) -> int:
+        stmt = text("""
+            SELECT
+                app_fcn.fetch_credit(
+                    :user_id,
+                    :currency
+                )
+        """)
+
+        try:
+            result = await self._session.execute(stmt, {
+                "user_id": user_id,
+                "currency": currency
+            })
+        except DBAPIError as exc:
+            code = get_sqlstate(exc)
+
+            if code == 'AP401':
+                raise PermissionDeniedError() from exc
+
+            raise
+
+        return result.scalar_one()

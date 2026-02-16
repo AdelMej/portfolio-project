@@ -32,7 +32,8 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.UPDATE_SELF,
         Permission.DELETE_SELF,
         Permission.READ_CREDIT,
-        Permission.READ_PAYMENT
+        Permission.READ_PAYMENT,
+        Permission.SESSION_REGISTRATION
     },
     Role.ADMIN: {
         Permission.READ_SELF,

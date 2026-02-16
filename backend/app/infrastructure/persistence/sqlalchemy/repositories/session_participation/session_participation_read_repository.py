@@ -39,7 +39,7 @@ class SqlAlchemySessionParticipationReadRepo(SessionParticipationReadRepoPort):
         result = await self._session.execute(
             text("""
                 SELECT
-                    app_fcn.is_session_full(:session_id)
+                    app_fcn.is_session_full(:session_id, 6)
             """),
             {
                 "session_id": session_id

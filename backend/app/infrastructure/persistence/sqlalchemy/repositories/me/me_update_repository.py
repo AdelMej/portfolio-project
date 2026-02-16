@@ -1,9 +1,16 @@
 from uuid import UUID
 from sqlalchemy import text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio.session import AsyncSession
+from app.domain.auth.auth_exceptions import (
+    EmailAlreadyExistError,
+    PasswordIsBlankError,
+    PermissionDeniedError
+)
 from app.feature.auth.repositories.me_update_repository_port import (
     MeUpdateRepoPort
 )
+from app.shared.database.sqlstate_extractor import get_sqlstate
 
 
 class SqlAlchemyMeUpdateRepo(MeUpdateRepoPort):
@@ -11,30 +18,47 @@ class SqlAlchemyMeUpdateRepo(MeUpdateRepoPort):
         self._session = session
 
     async def update_email_by_user_id(self, email: str, user_id: UUID):
-        await self._session.execute(
-            text(
+        stmt = text(
                 """
                 SELECT
                     app_fcn.me_change_email(:user_id, :email)
                 """
-            ),
-            {
-                "email": email,
-                "user_id": user_id
-            }
-        )
+            )
+        try:
+            await self._session.execute(stmt, {
+                    "email": email,
+                    "user_id": user_id
+                }
+            )
+        except DBAPIError as exc:
+            code = get_sqlstate(exc)
+
+            if code == "AP401":
+                raise PermissionDeniedError()
+
+            if code == "AP400":
+                raise EmailAlreadyExistError()
 
     async def update_password_by_id(self, user_id: UUID, password_hash: str):
-        await self._session.execute(
-            text("""
+        stmt = text("""
                 SELECT
                     app_fcn.me_change_password(:user_id, :password_hash)
-            """),
-            {
-                "password_hash": password_hash,
-                "user_id": user_id
-            }
-        )
+            """)
+
+        try:
+            await self._session.execute(stmt, {
+                    "password_hash": password_hash,
+                    "user_id": user_id
+                }
+            )
+        except DBAPIError as exc:
+            code = get_sqlstate(exc)
+
+            if code == "AP401":
+                raise PermissionDeniedError() from exc
+
+            if code == "AP400":
+                raise PasswordIsBlankError() from exc
 
     async def update_profile_by_id(
         self,

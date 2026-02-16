@@ -8,7 +8,7 @@ from app.shared.exceptions.commons import (
 )
 import logging
 
-logger = logging.getLogger("app.exceptions")
+logger = logging.getLogger("app.commons.exceptions")
 
 
 def register_exception_handler(app: FastAPI):

@@ -2,16 +2,18 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.feature.session.uow.session_uow_port import (
     SessionUoWPort
 )
-from app.infrastructure.persistence.sqlalchemy.repositories.auth import (
-    SqlAlchemyAuthReadRepo
-)
-from app.infrastructure.persistence.sqlalchemy.repositories.session import (
+from app.infrastructure.persistence.sqlalchemy.repositories import (
+    SqlAlchemySessionParticipationReadRepo,
+    SqlAlchemySessionParticipationCreationRepo,
     SqlAlchemySessionUpdateRepo,
     SqlAlchemySessionReadRepo,
-    SqlAlchemySessionCreationRepo
-)
-from app.infrastructure.persistence.sqlalchemy.repositories import (
-    SqlAlchemySessionParticipationReadRepo
+    SqlAlchemySessionCreationRepo,
+    SqlAlchemyAuthReadRepo,
+    SqlAlchemySessionAttendanceReadRepo,
+    SqlAlchemySessionAttendanceCreationRepo,
+    SqlAlchemyPaymentIntentCreationRepo,
+    SqlAlchemyCreditLedgerReadRepo,
+    SqlAlchemyCreditLedgerCreationRepo
 )
 
 
@@ -26,3 +28,21 @@ class SqlAlchemySessionUoW(SessionUoWPort):
             SqlAlchemySessionParticipationReadRepo(session)
         )
         self.auth_read_repo = SqlAlchemyAuthReadRepo(session)
+        self.session_participation_creation_repo = (
+            SqlAlchemySessionParticipationCreationRepo(session)
+        )
+        self.session_attendance_read_repo = (
+            SqlAlchemySessionAttendanceReadRepo(session)
+        )
+        self.session_attendance_creation_repo = (
+            SqlAlchemySessionAttendanceCreationRepo(session)
+        )
+        self.payment_intent_creation_repo = (
+            SqlAlchemyPaymentIntentCreationRepo(session)
+        )
+        self.credit_ledger_read_repo = (
+            SqlAlchemyCreditLedgerReadRepo(session)
+        )
+        self.credit_ledger_creation_repo = (
+            SqlAlchemyCreditLedgerCreationRepo(session)
+        )

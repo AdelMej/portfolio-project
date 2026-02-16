@@ -5,6 +5,12 @@ from app.domain.user.user_profile_entity import UserProfileEntity
 
 
 class SessionAttendanceReadRepoPort(Protocol):
+    async def is_session_attended(
+        self,
+        session_id: UUID
+    ) -> bool:
+        ...
+
     async def get_attendance(
         self,
         session_id: UUID

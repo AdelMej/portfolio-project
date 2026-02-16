@@ -55,8 +55,8 @@ class SessionReadRepoPort(Protocol):
     ) -> bool:
         ...
 
-    async def is_session_attended(
+    async def system_get_session_by_id(
         self,
         session_id: UUID
-    ) -> bool:
+    ) -> SessionEntity:
         ...
