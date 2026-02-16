@@ -33,7 +33,9 @@ CREATE TABLE IF NOT EXISTS app.payment (
     provider_payment_id TEXT NOT NULL,
     
     -- Payment amount in cents
-    amount_cents INTEGER NOT NULL,
+	gross_amount_cents   integer not null,
+	provider_fee_cents  integer not null,
+	net_amount_cents    integer not null, 
 
     -- ISO 4217 currency code (e.g. EUR, USD)
     currency CHAR(3) NOT NULL,

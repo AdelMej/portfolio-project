@@ -101,12 +101,12 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    IF NEW.cause IN ('payment', 'refund') AND NEW.payment_intent_id IS NULL THEN
-        RAISE EXCEPTION 'payment_intent_id required for %', NEW.cause;
+    IF NEW.cause IN ('session_cancelled') AND NEW.payment_id IS NULL THEN
+        RAISE EXCEPTION 'payment_id required for %', NEW.cause;
     END IF;
 
-    IF NEW.cause NOT IN ('payment', 'refund') AND NEW.payment_intent_id IS NOT NULL THEN
-        RAISE EXCEPTION 'payment_intent_id forbidden for %', NEW.cause;
+    IF NEW.cause IN ('session_usage', 'admin_adjustment') AND NEW.payment_id IS NOT NULL THEN
+        RAISE EXCEPTION 'payment_id forbidden for %', NEW.cause;
     END IF;
 
     RETURN NEW;

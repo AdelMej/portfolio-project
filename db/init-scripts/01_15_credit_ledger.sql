@@ -72,10 +72,6 @@ CREATE TABLE IF NOT EXISTS app.credit_ledger (
         FOREIGN KEY (user_id)
         REFERENCES app.users(id),
 
-    CONSTRAINT fk_credit_ledger_payment_id
-        FOREIGN KEY (payment_id)
-        REFERENCES app.payments(id),
-
     -- ------------------------------------------------------------------
     -- Invariants
     -- ------------------------------------------------------------------
@@ -123,3 +119,4 @@ COMMENT ON COLUMN app.credit_ledger.cause IS
 
 COMMENT ON COLUMN app.credit_ledger.created_at IS
 'Timestamp when the ledger entry was created (UTC).';
+

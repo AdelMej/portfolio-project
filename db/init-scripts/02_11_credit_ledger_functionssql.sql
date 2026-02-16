@@ -141,3 +141,83 @@ increase balance and negative amounts decrease balance.
 
 An advisory transaction lock scoped to the user is used to prevent
 concurrent credit modifications.';
+
+CREATE OR REPLACE FUNCTION app_fcn.issue_credit_for_payment(
+    p_payment_id uuid,
+    p_cause app.credit_ledger_cause
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+/*
+ * app_fcn.issue_credit_for_payment
+ *
+ * Issues a credit ledger entry for a given payment, if and only if
+ * such a credit has not already been issued for the same cause.
+ *
+ * This function is designed to be:
+ *   - Idempotent: repeated calls with the same parameters have no
+ *     additional side effects.
+ *   - RLS-safe: operates on a single payment row by primary key and
+ *     relies on database-enforced visibility rules.
+ *   - Transactional: intended to be invoked as part of a larger
+ *     domain operation (e.g. session cancellation).
+ *
+ * Behavior:
+ *   - Reads the payment identified by p_payment_id.
+ *   - Creates a corresponding credit_ledger entry using the payment's
+ *     user, amount, and currency.
+ *   - Skips insertion if a credit entry with the same payment_id and
+ *     cause already exists.
+ *
+ * Parameters:
+ *   - p_payment_id: Identifier of the payment being credited.
+ *   - p_cause: Domain cause for the credit (e.g. 'session_cancelled').
+ *
+ * Preconditions:
+ *   - The payment must exist.
+ *   - The caller must be authorized to read the payment under RLS.
+ *
+ * Postconditions:
+ *   - At most one credit_ledger row exists for (payment_id, cause).
+ *
+ * Notes:
+ *   - This function performs no permission checks beyond those enforced
+ *     by RLS and table constraints.
+ *   - Absence of a visible payment row results in a no-op.
+ */
+BEGIN
+    INSERT INTO app.credit_ledger (
+        id,
+        user_id,
+        amount_cents,
+        currency,
+        cause,
+        payment_id
+    )
+    SELECT
+        gen_random_uuid(),
+        p.user_id,
+        p.amount_cents,
+        p.currency,
+        p_cause,
+        p.id
+    FROM app.payments p
+    WHERE p.id = p_payment_id
+      AND NOT EXISTS (
+          SELECT 1
+          FROM app.credit_ledger cl
+          WHERE cl.payment_id = p_payment_id
+            AND cl.cause = p_cause
+      );
+END;
+$$;
+
+COMMENT ON FUNCTION app_fcn.issue_credit_for_payment(uuid, app.credit_ledger_cause)
+IS
+'Idempotently issues a credit ledger entry for a specific payment and cause.
+Reads payment data by primary key and inserts a corresponding credit entry
+only if one does not already exist. Intended for internal domain workflows
+such as session cancellation, and safe to call repeatedly.';
+
