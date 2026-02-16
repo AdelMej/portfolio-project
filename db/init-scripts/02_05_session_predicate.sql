@@ -134,6 +134,7 @@ create or replace function app_fcn.is_session_owner(
 )
 returns boolean
 language sql
+STABLE
 security definer
 set search_path = app, app_fcn, pg_temp
 as $$
@@ -220,7 +221,7 @@ COMMENT ON FUNCTION app_fcn.is_session_overlapping_except(
 ) IS
 'Predicate: checks for overlapping active sessions, excluding the given session id. Raises if excluded id is NULL.';
 
-create or replace function app_fcn.is_attended(
+CREATE OR replace FUNCTION app_fcn.is_session_cancelled(
 	p_session_id uuid
 )
 returns boolean
@@ -228,32 +229,11 @@ language sql
 security definer
 set search_path = app, app_fcn, pg_temp
 as $$
-	/*
-	 * app_fcn.is_attended
-	 *
-	 * Predicate that returns true if the given session
-	 * has at least one attendance record.
-	 *
-	 * This represents the domain fact that attendance
-	 * has started for the session.
-	 *
-	 * Domain invariants:
-	 *   - Once a session is attended, pre-attendance
-	 *     operations must no longer be allowed.
-	 *
-	 * Notes:
-	 *   - This is a pure predicate (no side effects)
-	 *   - Intended to be used under an advisory lock
-	 *   - Used to enforce idempotent, race-safe workflows
-	 */
 	SELECT EXISTS (
 		SELECT 1
-		FROM app.session_attendance
-		WHERE session_id = p_session_id
-	);
+		FROM app.sessions
+		WHERE id = p_session_id
+			AND cancelled_at IS NOT NULL
+	)
 $$;
 
-COMMENT ON FUNCTION app_fcn.is_attended(uuid) IS
-'Predicate that returns true if a session has at least one attendance record.
-Represents the domain fact that attendance has started.
-Used to enforce invariants such as disabling pre-attendance once attendance exists.';

@@ -2,8 +2,10 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
 from app.feature.session.session_dto import (
+    AttendanceInputDTO,
     AttendanceOutputDto,
     PaginatedSessionsOutputDTO,
+    RegistrationOutputDTO,
     SessionCreationInputDTO,
     GetOutputDto,
     SessionUpdateInputDTO
@@ -21,7 +23,10 @@ from app.infrastructure.persistence.sqlalchemy.provider import (
 )
 from app.feature.session.uow.session_uow_port import SessionUoWPort
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/sessions",
+    tags=["sessions"]
+)
 
 
 @router.get(
@@ -137,50 +142,52 @@ async def get_attendance(
 )
 async def put_attendance(
     session_id: UUID,
+    input: AttendanceInputDTO,
     actor: Actor = Depends(get_current_actor),
-    UoW: SessionUoWPort = Depends(get_session_uow),
+    uow: SessionUoWPort = Depends(get_session_uow),
     service: SessionService = Depends(get_session_service),
 ):
     """
     Register the current actor as attending the session.
     """
-    await service.put_attendance(UoW, actor, session_id)
+    await service.put_attendance(
+        input=input,
+        uow=uow,
+        actor=actor,
+        session_id=session_id
+    )
 
 
 @router.post(
-    "/sessions/{session_id}/cancel-registration",
+    "/{session_id}/cancel-registration",
     status_code=204
 )
 async def cancel_registration(
     session_id: UUID,
     actor: Actor = Depends(get_current_actor),
-    UoW: SessionUoWPort = Depends(get_session_uow),
+    uow: SessionUoWPort = Depends(get_session_uow),
     service: SessionService = Depends(get_session_service),
 ):
-    await service.cancel_registration(UoW, actor, session_id)
+    await service.cancel_registration(uow, actor, session_id)
 
 
-@router.get(
-    "/admin/sessions/{coach_id}",
-    response_model=list[GetOutputDto]
+@router.post(
+    "/{session_id}/register",
+    status_code=201
 )
-async def admin_get_sessions_by_coach(
-    coach_id: UUID,
-    actor: Actor = Depends(get_current_actor),
-    UoW: SessionUoWPort = Depends(get_session_uow),
-    service: SessionService = Depends(get_session_service),
-):
-    return await service.admin_list_sessions_by_coach(UoW, actor, coach_id)
-
-
-@router.put(
-    "/admin/sessions/{session_id}/cancel",
-    status_code=status.HTTP_204_NO_CONTENT
-)
-async def admin_cancel_session(
+async def register_user(
     session_id: UUID,
     actor: Actor = Depends(get_current_actor),
-    UoW: SessionUoWPort = Depends(get_session_uow),
-    service: SessionService = Depends(get_session_service),
-):
-    await service.admin_cancel_session(UoW, actor, session_id)
+    uow: SessionUoWPort = Depends(get_session_uow),
+    service: SessionService = Depends(get_session_service)
+) -> RegistrationOutputDTO:
+    required_payment, key = await service.register_user(
+        session_id=session_id,
+        actor=actor,
+        uow=uow
+    )
+
+    return RegistrationOutputDTO(
+        payment_intent_client_secret=key,
+        require_payment=required_payment
+    )

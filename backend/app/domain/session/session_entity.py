@@ -25,3 +25,9 @@ class NewSessionEntity:
     ends_at: datetime
     price_cents: int
     currency: str
+
+
+@dataclass(frozen=True)
+class NewSessionParticipationEntity:
+    session_id: UUID
+    user_id: UUID

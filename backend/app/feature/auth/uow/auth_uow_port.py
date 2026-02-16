@@ -1,17 +1,17 @@
 from typing_extensions import Protocol
 
 from app.feature.auth.repositories.auth_creation_respository_port import (
-    AuthCreationRepositoryPort
+    AuthCreationRepoPort
 )
 from app.feature.auth.repositories.auth_read_repository_port import (
-    AuthReadRepositoryPort
+    AuthReadRepoPort
 )
 from app.feature.auth.repositories.auth_update_repository_port import (
-    AuthUpdateRepositoryPort
+    AuthUpdateRepoPort
 )
 
 
 class AuthUoWPort(Protocol):
-    auth_read_repository: AuthReadRepositoryPort
-    auth_update_repository: AuthUpdateRepositoryPort
-    auth_creation_repository: AuthCreationRepositoryPort
+    auth_read_repo: AuthReadRepoPort
+    auth_update_repo: AuthUpdateRepoPort
+    auth_creation_repo: AuthCreationRepoPort

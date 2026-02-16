@@ -33,5 +33,38 @@ class SessionOverlappingError(SessionDomainError):
 class SessionNotFoundError(SessionDomainError):
     pass
 
+
 class NotOwnerOfSessionError(SessionDomainError):
+    pass
+
+
+class SessionCancelledError(SessionDomainError):
+    pass
+
+
+class SessionAlreadyAttendedError(SessionDomainError):
+    pass
+
+
+class SessionAttendanceNotOpenError(SessionDomainError):
+    pass
+
+
+class InvalidAttendanceInputError(SessionDomainError):
+    pass
+
+
+class AlreadyActiveParticipationError(SessionDomainError):
+    pass
+
+
+class SessionIsFullError(SessionDomainError):
+    pass
+
+
+class SessionClosedForRegistration(SessionDomainError):
+    pass
+
+
+class OwnerCantRegisterToOwnSessionError(SessionDomainError):
     pass

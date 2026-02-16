@@ -3,11 +3,11 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import text
 from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
 from app.feature.auth.repositories.auth_update_repository_port import (
-    AuthUpdateRepositoryPort
+    AuthUpdateRepoPort
 )
 
 
-class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
+class SqlAlchemyAuthUpdateRepo(AuthUpdateRepoPort):
     def __init__(
         self,
         session: AsyncSession,

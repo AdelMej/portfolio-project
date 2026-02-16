@@ -33,11 +33,6 @@ CREATE TABLE IF NOT EXISTS app.session_participation (
     -- ------------------------------------------------------------------
     -- Invariants
     -- ------------------------------------------------------------------
-
-    -- Prevent double registration for the same session
-    CONSTRAINT uq_session_participation_user_session
-        UNIQUE (session_id, user_id),
-
     -- Payment must not predate registration
     CONSTRAINT chk_participation_paid_after_registered
         CHECK (

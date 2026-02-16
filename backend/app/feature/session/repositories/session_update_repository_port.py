@@ -3,7 +3,7 @@ from typing import Protocol
 from uuid import UUID
 
 
-class SessionUpdateRepositoryPort(Protocol):
+class SessionUpdateRepoPort(Protocol):
 
     async def update_session(
         self,

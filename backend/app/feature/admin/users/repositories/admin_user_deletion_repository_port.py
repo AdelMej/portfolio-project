@@ -4,7 +4,7 @@ from uuid import UUID
 from app.domain.auth.role import Role
 
 
-class AdminUserDeletionRepositoryPort(Protocol):
+class AdminUserDeletionRepoPort(Protocol):
     async def revoke_role(
         self,
         user_id: UUID,

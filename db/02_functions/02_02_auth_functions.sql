@@ -255,7 +255,7 @@ as $$
 	
 		if v_role_id IS NULL then
 			RAISE EXCEPTION 'unknown_role'
-				USING ERRCODE = 'AP002'; 
+				USING ERRCODE = 'AP400'; 
 		end if;
 	
 		-- assign role
@@ -265,13 +265,13 @@ as $$
 	EXCEPTION 
 		WHEN unique_violation THEN
 			RAISE EXCEPTION 'user_already_exists'
-				USING ERRCODE = 'AP001';
+				USING ERRCODE = 'AP409';
 	
 	END;
 $$;
 
 COMMENT ON FUNCTION app_fcn.register_user IS
-'Atomic user registration. Inserts user, profile, and role. Raises AP001 (user_already_exists) or AP002 (unknown_role).';
+'Atomic user registration. Inserts user, profile, and role. Raises AP409 (user_already_exists) or AP400 (unknown_role).';
 
 
 create or replace function app_fcn.auth_user_by_id(p_user_id uuid)

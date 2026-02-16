@@ -56,7 +56,7 @@ from app.shared.rules.refresh_token_rules import (
     REFRESH_TOKEN_MIN_SIZE,
     REFRESH_TOKEN_MAX_SIZE
 )
-logger = logging.getLogger("app.exceptions")
+logger = logging.getLogger("app.auth.exceptions")
 
 
 def register_exception_handler(app: FastAPI):

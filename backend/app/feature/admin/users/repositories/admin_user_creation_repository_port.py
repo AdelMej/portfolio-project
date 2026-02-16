@@ -4,7 +4,7 @@ from uuid import UUID
 from app.domain.auth.role import Role
 
 
-class AdminUserCreationRepositoryPort(Protocol):
+class AdminUserCreationRepoPort(Protocol):
     async def grant_role(
         self,
         user_id: UUID,

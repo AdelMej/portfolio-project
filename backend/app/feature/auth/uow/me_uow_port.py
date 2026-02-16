@@ -1,20 +1,16 @@
 from typing import Protocol
 from app.feature.auth.repositories.auth_read_repository_port import (
-    AuthReadRepositoryPort
-)
-from app.feature.auth.repositories.me_delete_repository_port import (
-    MeDeleteRepositoryPort
+    AuthReadRepoPort
 )
 from app.feature.auth.repositories.me_read_repository_port import (
-    MeReadRepositoryPort
+    MeReadRepoPort
 )
 from app.feature.auth.repositories.me_update_repository_port import (
-    MeUpdateRepositoryPort
+    MeUpdateRepoPort
 )
 
 
 class MeUoWPort(Protocol):
-    me_read_repository: MeReadRepositoryPort
-    me_update_repository: MeUpdateRepositoryPort
-    me_delete_repository: MeDeleteRepositoryPort
-    auth_read_repository: AuthReadRepositoryPort
+    me_read_repo: MeReadRepoPort
+    me_update_repo: MeUpdateRepoPort
+    auth_read_repo: AuthReadRepoPort

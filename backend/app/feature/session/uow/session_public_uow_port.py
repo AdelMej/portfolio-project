@@ -1,9 +1,9 @@
 from typing import Protocol
 
 from app.feature.session.repositories.session_read_repository_port import (
-    SessionReadRepositoryPort
+    SessionReadRepoPort
 )
 
 
 class SessionPulbicUoWPort(Protocol):
-    session_read_repository: SessionReadRepositoryPort
+    session_read_repo: SessionReadRepoPort

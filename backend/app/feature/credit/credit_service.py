@@ -21,7 +21,7 @@ class CreditService():
         ensure_has_permission(actor, Permission.READ_CREDIT)
 
         credits, has_more = (
-            await uow.credit_read_repository.get_credit_by_user_id(
+            await uow.credit_read_repo.get_credit_by_user_id(
                 limit=limit,
                 offset=offset,
                 to=to,

@@ -5,7 +5,7 @@ from uuid import UUID
 from app.domain.payment.payment_entity import PaymentEnity
 
 
-class PaymentReadRepositoryPort(Protocol):
+class PaymentReadRepoPort(Protocol):
     async def get_payment_by_user_id(
         self,
         offset: int,
