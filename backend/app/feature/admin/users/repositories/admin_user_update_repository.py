@@ -2,7 +2,7 @@ from typing import Protocol
 from uuid import UUID
 
 
-class AdminUserUpdateRepositoryPort(Protocol):
+class AdminUserUpdateRepoPort(Protocol):
     async def disable_user(
         self,
         user_id: UUID

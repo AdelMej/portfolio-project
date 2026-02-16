@@ -4,7 +4,7 @@ from uuid import UUID
 from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
 
 
-class AuthUpdateRepositoryPort(Protocol):
+class AuthUpdateRepoPort(Protocol):
     async def revoke_refresh_token(self, token_hash: str) -> None:
         ...
 

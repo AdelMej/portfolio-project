@@ -58,7 +58,7 @@ DECLARE
     v_last_balance INTEGER;
 BEGIN
     -- Serialize ledger inserts per user to avoid race conditions
-    PERFORM pg_advisory_xact_lock(hashtext(NEW.user_id::text));
+    PERFORM pg_advisory_xact_lock(hashtext('user:' || NEW.user_id::text));
 
     -- Fetch the most recent balance for the user
     SELECT balance_after_cents

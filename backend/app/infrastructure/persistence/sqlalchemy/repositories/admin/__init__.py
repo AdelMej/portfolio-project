@@ -1,17 +1,17 @@
-from .users.admin_user_read_repository import SqlalchemyAdminUserReadRepository
+from .users.admin_user_read_repository import SqlalchemyAdminUserReadRepo
 from .users.admin_user_update_repository import (
-    SqlAlchemyAdminUserUpdateRepository
+    SqlAlchemyAdminUserUpdateRepo
 )
 from .users.admin_user_creatiton_repository import (
-    SqlAlchemyAdminUserCreationRepository
+    SqlAlchemyAdminUserCreationRepo
 )
 from .users.admin_user_deletion_repository_port import (
-    SqlAlchemyAdminUserDeletionRepository
+    SqlAlchemyAdminUserDeletionRepo
 )
 
 __all__ = [
-    "SqlalchemyAdminUserReadRepository",
-    "SqlAlchemyAdminUserUpdateRepository",
-    "SqlAlchemyAdminUserCreationRepository",
-    "SqlAlchemyAdminUserDeletionRepository"
+    "SqlalchemyAdminUserReadRepo",
+    "SqlAlchemyAdminUserUpdateRepo",
+    "SqlAlchemyAdminUserCreationRepo",
+    "SqlAlchemyAdminUserDeletionRepo"
 ]

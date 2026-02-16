@@ -5,18 +5,18 @@ from sqlalchemy.sql.expression import text
 from app.domain.session.session_entity import SessionEntity
 from app.domain.session.session_status import SessionStatus
 from app.feature.session.repositories.session_read_repository_port import (
-    SessionReadRepositoryPort
+    SessionReadRepoPort
 )
 
 
-class SqlAlchemySessionReadRepository(SessionReadRepositoryPort):
+class SqlAlchemySessionReadRepo(SessionReadRepoPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
     async def get_session_by_id(
         self,
         session_id: UUID
-    ) -> SessionEntity | None:
+    ) -> SessionEntity:
         result = await self._session.execute(
             text(
                 """SELECT
@@ -38,9 +38,7 @@ class SqlAlchemySessionReadRepository(SessionReadRepositoryPort):
             }
         )
 
-        row = result.mappings().one_or_none()
-        if not row:
-            return None
+        row = result.mappings().one()
 
         return SessionEntity(
             id=row["id"],
@@ -255,18 +253,47 @@ class SqlAlchemySessionReadRepository(SessionReadRepositoryPort):
 
         return result.scalar_one()
 
-    async def get_attendance(self, session_id: UUID) -> list[UUID]:
+    async def is_session_cancelled(
+        self,
+        session_id: UUID
+    ) -> bool:
         result = await self._session.execute(
-            text(
-                """
-                SELECT user_id
-                FROM app.session_attendance
-                WHERE session_id = :session_id
-                """
-            ),
+            text("""
+                SELECT
+                    app_fcn.is_session_cancelled(:session_id)
+            """),
             {
                 "session_id": session_id
-            },
+            }
         )
 
-        return [row.user_id for row in result.fetchall()]
+        return result.scalar_one()
+
+    async def system_get_session_by_id(
+        self,
+        session_id: UUID
+    ) -> SessionEntity:
+        stmt = text("""
+            SELECT *
+            FROM app_fcn.get_session_for_registration(
+                :session_id
+            )
+        """)
+
+        result = await self._session.execute(stmt, {
+            "session_id": session_id
+        })
+
+        row = result.mappings().one()
+
+        return SessionEntity(
+            id=row["id"],
+            coach_id=row["coach_id"],
+            title=row["title"],
+            starts_at=row["starts_at"],
+            ends_at=row["ends_at"],
+            status=row["status"],
+            cancelled_at=row["cancelled_at"],
+            price_cents=row["price_cents"],
+            currency=row["currency"]
+        )

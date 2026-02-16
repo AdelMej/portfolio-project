@@ -35,7 +35,6 @@ def get_token_hmac_secret(request: Request) -> str:
 def get_app_user_engine(request: Request) -> str:
     return request.app.state.settings.app_system_dsn()
 
-
 async def get_app_user_session(
     request: Request,
 ) -> AsyncGenerator[AsyncSession, None]:

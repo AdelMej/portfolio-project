@@ -10,7 +10,10 @@ from app.domain.auth.refresh_tokens_rules import (
 )
 from app.domain.auth.role import Role
 from app.domain.user.user_entity import NewUserEntity, UserEntity
-from app.domain.user.user_profile_entity import UserProfileEntity
+from app.domain.user.user_profile_entity import (
+    NewUserProfileEntity,
+    UserProfileEntity
+)
 from app.domain.user.user_profile_rules import (
     ensure_first_name_is_valid,
     ensure_last_name_is_valid
@@ -111,10 +114,10 @@ class AuthService:
         email = input.email.strip().lower()
         password = input.password.strip()
 
-        if not await uow.auth_read_repository.exist_email(email):
+        if not await uow.auth_read_repo.exist_email(email):
             raise InvalidEmailError()
 
-        user = await uow.auth_read_repository.get_user_by_email(email)
+        user = await uow.auth_read_repo.get_user_by_email(email)
 
         if user is None:
             raise InvalidEmailError()
@@ -128,7 +131,7 @@ class AuthService:
         token = None
         if existing_refresh:
             refresh_hash = token_hasher.hash(existing_refresh)
-            token = await uow.auth_read_repository.get_refresh_token(
+            token = await uow.auth_read_repo.get_refresh_token(
                 refresh_hash
             )
 
@@ -136,7 +139,7 @@ class AuthService:
         refresh_hash = token_hasher.hash(refresh_plain)
 
         if token:
-            await uow.auth_update_repository.rotate_refresh_token(
+            await uow.auth_update_repo.rotate_refresh_token(
                 current_token_hash=token.token_hash,
                 new_token=NewRefreshTokenEntity(
                     user_id=user.id,
@@ -145,7 +148,7 @@ class AuthService:
                 )
             )
         else:
-            await uow.auth_update_repository.rotate_refresh_token(
+            await uow.auth_update_repo.rotate_refresh_token(
                 current_token_hash=None,
                 new_token=NewRefreshTokenEntity(
                     user_id=user.id,
@@ -178,7 +181,7 @@ class AuthService:
         ensure_refresh_token_is_valid(current_refresh_token)
 
         current_refresh_hash = token_hasher.hash(current_refresh_token)
-        current_refresh = await uow.auth_read_repository.get_refresh_token(
+        current_refresh = await uow.auth_read_repo.get_refresh_token(
             current_refresh_hash
         )
 
@@ -191,7 +194,7 @@ class AuthService:
         if current_refresh.is_revoked():
             raise RevokedRefreshTokenError()
 
-        user = await uow.auth_read_repository.get_user_by_id(
+        user = await uow.auth_read_repo.get_user_by_id(
             current_refresh.user_id
         )
 
@@ -204,7 +207,7 @@ class AuthService:
             expires_at=utcnow() + timedelta(seconds=refresh_ttl)
         )
 
-        await uow.auth_update_repository.rotate_refresh_token(
+        await uow.auth_update_repo.rotate_refresh_token(
             current_token_hash=current_refresh_hash,
             new_token=new_refresh_token
         )
@@ -228,7 +231,7 @@ class AuthService:
     ) -> None:
         token_hash = token_hasher.hash(token)
 
-        await uow.auth_update_repository.revoke_refresh_token(token_hash)
+        await uow.auth_update_repo.revoke_refresh_token(token_hash)
 
     async def register(
         self,
@@ -247,7 +250,7 @@ class AuthService:
         ensure_first_name_is_valid(first_name)
         ensure_last_name_is_valid(last_name)
 
-        if await uow.auth_read_repository.exist_email(email):
+        if await uow.auth_read_repo.exist_email(email):
             raise EmailAlreadyExistError()
 
         new_user = NewUserEntity(
@@ -256,12 +259,12 @@ class AuthService:
             role=Role.USER
         )
 
-        new_user_profile = UserProfileEntity(
+        new_user_profile = NewUserProfileEntity(
             first_name=first_name,
             last_name=last_name
         )
 
-        await uow.auth_creation_repository.register(new_user, new_user_profile)
+        await uow.auth_creation_repo.register(new_user, new_user_profile)
 
     async def get_me(
         self,
@@ -271,10 +274,10 @@ class AuthService:
 
         ensure_has_permission(actor, Permission.READ_SELF)
 
-        if uow.auth_read_repository.is_user_disabled(actor.id):
+        if uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
 
-        return await uow.me_read_repository.get(actor.id)
+        return await uow.me_read_repo.get(actor.id)
 
     async def email_change_me(
         self,
@@ -284,16 +287,16 @@ class AuthService:
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
 
-        if await uow.auth_read_repository.is_user_disabled(actor.id):
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
 
         # normalization
         email = input.email.strip().lower()
 
-        if await uow.auth_read_repository.exist_email(email):
+        if await uow.auth_read_repo.exist_email(email):
             raise EmailAlreadyExistError()
 
-        await uow.me_update_repository.update_email_by_user_id(
+        await uow.me_update_repo.update_email_by_user_id(
             email,
             actor.id
         )
@@ -307,7 +310,7 @@ class AuthService:
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
 
-        if await uow.auth_read_repository.is_user_disabled(actor.id):
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
 
         # normalization
@@ -316,7 +319,7 @@ class AuthService:
 
         ensure_password_is_strong(new_password)
 
-        user = await uow.auth_read_repository.get_user_by_id(actor.id)
+        user = await uow.auth_read_repo.get_user_by_id(actor.id)
         if not user:
             raise InvariantViolationError(
                 "Actor doesn't exist"
@@ -330,7 +333,7 @@ class AuthService:
 
         new_password_hash = password_hasher.hash(new_password)
 
-        await uow.me_update_repository.update_password_by_id(
+        await uow.me_update_repo.update_password_by_id(
             user_id=actor.id,
             password_hash=new_password_hash
         )
@@ -342,10 +345,10 @@ class AuthService:
     ) -> UserProfileEntity:
         ensure_has_permission(actor, Permission.READ_SELF)
 
-        if await uow.auth_read_repository.is_user_disabled(actor.id):
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
 
-        return await uow.me_read_repository.get_profile_by_id(actor.id)
+        return await uow.me_read_repo.get_profile_by_id(actor.id)
 
     async def update_me_profile(
         self,
@@ -355,7 +358,7 @@ class AuthService:
     ) -> None:
         ensure_has_permission(actor, Permission.UPDATE_SELF)
 
-        if await uow.auth_read_repository.is_user_disabled(actor.id):
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
 
         # normalization
@@ -365,14 +368,10 @@ class AuthService:
         ensure_first_name_is_valid(first_name)
         ensure_last_name_is_valid(last_name)
 
-        profile = UserProfileEntity(
+        await uow.me_update_repo.update_profile_by_id(
+            user_id=actor.id,
             first_name=first_name,
             last_name=last_name
-        )
-
-        await uow.me_update_repository.update_profile_by_id(
-            user_id=actor.id,
-            profile=profile
         )
 
     async def delete_me(
@@ -386,13 +385,13 @@ class AuthService:
 
         ensure_has_permission(actor, Permission.DELETE_SELF)
 
-        if await uow.auth_read_repository.is_user_disabled(actor.id):
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
 
-        await uow.me_delete_repository.soft_delete_user(
+        await uow.me_delete_repo.soft_delete_user(
             user_id=actor.id,
         )
 
-        await refresh_uow.auth_update_repository.revoke_all_refresh_token(
+        await refresh_uow.auth_update_repo.revoke_all_refresh_token(
             user_id=actor.id
         )

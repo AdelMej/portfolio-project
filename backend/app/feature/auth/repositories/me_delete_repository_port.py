@@ -2,7 +2,7 @@ from typing import Protocol
 from uuid import UUID
 
 
-class MeDeleteRepositoryPort(Protocol):
+class MeDeleteRepoPort(Protocol):
     async def soft_delete_user(
             self,
             user_id: UUID,

@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import text
 from app.domain.payment.payment_entity import PaymentEnity
 from app.feature.payment.repostories.payment_read_repository import (
-    PaymentReadRepositoryPort
+    PaymentReadRepoPort
 )
 
 
-class SqlAlchemyPaymentReadRepository(PaymentReadRepositoryPort):
+class SqlAlchemyPaymentReadRepo(PaymentReadRepoPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 

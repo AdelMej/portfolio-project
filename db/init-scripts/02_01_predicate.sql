@@ -51,6 +51,9 @@ AS $$
 	)
 $$;
 
+COMMENT ON FUNCTION app_fcn.is_user_active(uuid) IS
+'User domain predicate. Returns true if the specified user exists and is active (not disabled). Centralizes the user lifecycle invariant used by RLS and domain logic.';
+
 CREATE OR REPLACE FUNCTION app_fcn.is_self(p_user_id uuid)
 RETURNS boolean
 LANGUAGE SQL
@@ -60,6 +63,8 @@ AS $$
 		p_user_id = current_setting('app.current_user_id')::uuid
 $$;
 
+COMMENT ON FUNCTION app_fcn.is_self(uuid) IS
+'Authorization predicate. Returns true if the target user id matches the current authenticated user. Used for self-access checks in RLS.';
 
 CREATE OR REPLACE FUNCTION app_fcn.is_admin()
 RETURNS boolean
@@ -75,6 +80,9 @@ AS $$
 	)
 $$;
 
+COMMENT ON FUNCTION app_fcn.is_admin() IS
+'Authorization predicate. Returns true if the current authenticated user has the admin role. Used to gate admin-level access.';
+
 CREATE OR REPLACE FUNCTION app_fcn.is_coach()
 RETURNS boolean
 LANGUAGE SQL
@@ -89,16 +97,50 @@ AS $$
 	)
 $$;
 
-COMMENT ON FUNCTION app_fcn.is_self(uuid) IS
-'Authorization predicate. Returns true if the target user id matches the current authenticated user. Used for self-access checks in RLS.';
-
-COMMENT ON FUNCTION app_fcn.is_admin() IS
-'Authorization predicate. Returns true if the current authenticated user has the admin role. Used to gate admin-level access.';
-
 COMMENT ON FUNCTION app_fcn.is_coach() IS
 'Authorization predicate. Returns true if the current authenticated user has the coach role. Grants coach-level capabilities; does not imply ownership of any session.';
 
-COMMENT ON FUNCTION app_fcn.is_user_active(uuid) IS
-'User domain predicate. Returns true if the specified user exists and is active (not disabled). Centralizes the user lifecycle invariant used by RLS and domain logic.';
+
+CREATE OR REPLACE FUNCTION app_fcn.current_user_id()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
+    /*
+     * app_fcn.current_actor_id
+     *
+     * Returns the UUID of the current authenticated actor
+     * from the database execution context.
+     *
+     * Source:
+     *   - Reads from the session-scoped setting:
+     *       app.current_actor_id
+     *
+     * Behavior:
+     *   - Returns NULL if the setting is not present
+     *   - Does not raise on missing context
+     *
+     * Intended usage:
+     *   - Authorization checks inside SECURITY DEFINER functions
+     *   - Audit attribution (created_by, coach_id, etc.)
+     *   - RLS policies and domain predicates
+     *
+     * Security:
+     *   - SECURITY DEFINER to allow controlled access to
+     *     application context regardless of caller role
+     *
+     * Stability:
+     *   - STABLE: value is constant for the duration of a statement
+     */
+    SELECT current_setting('app.current_user_id', true)::uuid;
+$$;
+
+COMMENT ON FUNCTION app_fcn.current_user_id() IS
+'Returns the UUID of the current authenticated actor from the session-scoped
+application setting app.current_user_id. Intended for use inside SECURITY
+DEFINER functions, authorization predicates, auditing, and RLS policies.
+Returns NULL if no actor context is present.';
 
 

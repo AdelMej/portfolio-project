@@ -5,11 +5,11 @@ from app.domain.auth.refresh_token_entity import RefreshTokenEntity
 from app.domain.auth.role import Role
 from app.domain.user.user_entity import UserEntity
 from app.feature.auth.repositories.auth_read_repository_port import (
-    AuthReadRepositoryPort
+    AuthReadRepoPort
 )
 
 
-class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
+class SqlAlchemyAuthReadRepo(AuthReadRepoPort):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -79,7 +79,7 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
     async def get_user_by_id(
             self,
             user_id: UUID
-    ) -> UserEntity | None:
+    ) -> UserEntity:
 
         res = await self._session.execute(
             text("""
@@ -90,10 +90,7 @@ class SqlAlchemyAuthReadRepository(AuthReadRepositoryPort):
                 "user_id": user_id
             }
         )
-        row = res.mappings().one_or_none()
-
-        if row is None:
-            return None
+        row = res.mappings().one()
 
         roles = {Role(r) for r in row["roles"]}
 

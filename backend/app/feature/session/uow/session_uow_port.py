@@ -1,20 +1,30 @@
 from typing import Protocol
-from app.feature.session.repositories.session_creation_repository_port import (
-    SessionCreationRepositoryPort
-)
-from app.feature.session.repositories.session_read_repository_port import (
-    SessionReadRepositoryPort
-)
-from app.feature.session.repositories.session_update_repository_port import (
-    SessionUpdateRepositoryPort
-)
 from app.feature.auth.repositories.auth_read_repository_port import (
-    AuthReadRepositoryPort
+    AuthReadRepoPort
+)
+from app.feature.session.repositories import (
+    PaymentIntentCreationRepoPort,
+    SessionUpdateRepoPort,
+    SessionCreationRepoPort,
+    SessionReadRepoPort,
+    CreditLedgerReadRepoPort,
+    CreditLedgerCreationRepoPort,
+    SessionParticipationCreationRepoPort,
+    SessionAttendanceReadRepoPort,
+    SessionAttendanceCreationRepoPort,
+    SessionParticipationReadRepoPort,
 )
 
 
 class SessionUoWPort(Protocol):
-    session_creation_repository: SessionCreationRepositoryPort
-    session_update_repository: SessionUpdateRepositoryPort
-    session_read_repository: SessionReadRepositoryPort
-    auth_read_repository: AuthReadRepositoryPort
+    session_creation_repo: SessionCreationRepoPort
+    session_update_repo: SessionUpdateRepoPort
+    session_read_repo: SessionReadRepoPort
+    session_participation_read_repo: SessionParticipationReadRepoPort
+    session_participation_creation_repo: SessionParticipationCreationRepoPort
+    session_attendance_read_repo: SessionAttendanceReadRepoPort
+    session_attendance_creation_repo: SessionAttendanceCreationRepoPort
+    payment_intent_creation_repo: PaymentIntentCreationRepoPort
+    credit_ledger_read_repo: CreditLedgerReadRepoPort
+    credit_ledger_creation_repo: CreditLedgerCreationRepoPort
+    auth_read_repo: AuthReadRepoPort

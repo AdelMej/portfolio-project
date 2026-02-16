@@ -188,72 +188,68 @@ COMMENT ON FUNCTION app_fcn.session_update(
 - Raises AP409 if the updated time range overlaps another active session.
 - Enforces session scheduling invariants at the database level.';
 
-create or replace function app_fcn.get_pre_attendance(
-	p_session_id uuid
+CREATE OR REPLACE FUNCTION app_fcn.get_session_for_registration(
+    p_session_id uuid
 )
-returns table(
-	user_id uuid,
-	first_name text,
-	last_name text
+RETURNS TABLE (
+    id uuid,
+    coach_id uuid,
+    title text,
+    price_cents int,
+    currency text,
+    status text,
+    starts_at timestamptz,
+    ends_at timestamptz,
+    cancelled_at timestamptz
 )
-language plpgsql
-security definer
-set search_path = app, app_fcn, pg_temp
-as $$
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
 	/*
-	 * app_fcn.get_pre_attendance
+	 * get_session_for_registration
 	 *
-	 * Returns the list of participants eligible for attendance
-	 * for a given session, before attendance has started.
+	 * System-level read function used during the session registration flow.
 	 *
-	 * This function represents the "pre-attendance" phase of
-	 * the session lifecycle.
+	 * This function returns the minimal set of session data required to
+	 * validate registration invariants and compute pricing, without granting
+	 * direct SELECT access on the sessions table to the application role.
 	 *
-	 * Domain invariants:
-	 *   - Only coaches may access pre-attendance data
-	 *   - Once a session is attended, pre-attendance is no longer available
-	 *   - Only paid and non-cancelled participants are returned
+	 * Security model:
+	 * - Runs as SECURITY DEFINER
+	 * - Enforces existence validation internally
+	 * - Intended for internal system workflows only (not public reads)
 	 *
-	 * Concurrency:
-	 *   - Uses an advisory transaction lock scoped to the session
-	 *     to ensure race safety with attendance creation
+	 * Errors:
+	 * - AP404: Raised if the session does not exist
 	 *
-	 * Idempotency:
-	 *   - If attendance already exists, returns an empty result set
-	 *     without raising an error
+	 * Notes:
+	 * - This function MUST remain side-effect free
+	 * - Any additional invariants should be enforced at the service layer
 	 */
 	BEGIN
-		PERFORM pg_advisory_xact_lock(
-			hashtext('session:' || p_session_id::text)
-		);
-
-		IF NOT app_fcn.is_coach() THEN
-			RAISE EXCEPTION 'permission denied'
-				USING ERRCODE = 'AP401';
-		END IF;
-
-		-- Pre-attendance is invalid once attendance has started
-		IF app_fcn.is_attended(p_session_id) THEN
-			RETURN;
-		END IF;
-
-		RETURN QUERY
-		SELECT
-			up.user_id,
-			up.first_name,
-			up.last_name
-		FROM app.session_participation sp
-		JOIN app.user_profiles up
-			ON up.user_id = sp.user_id
-		WHERE sp.session_id = p_session_id 
-			AND sp.cancelled_at IS NULL
-			AND sp.paid_at IS NOT NULL;
+	    IF NOT app_fcn.session_exists(p_session_id) THEN
+	        RAISE EXCEPTION 'session not found'
+	            USING ERRCODE = 'AP404';
+	    END IF;
+	
+	    RETURN QUERY
+	    SELECT
+	        s.id,
+	        s.coach_id,
+			s.title::text,
+	        s.price_cents,
+	        s.currency,
+	        s.status::text,
+	        s.starts_at,
+	        s.ends_at,
+			s.cancelled_at
+	    FROM app.sessions s
+	    WHERE s.id = p_session_id;
 	END;
 $$;
 
-COMMENT ON FUNCTION app_fcn.get_pre_attendance(uuid) IS
-'Returns the list of paid, non-cancelled participants eligible for attendance
-before attendance has started for a session.
-Enforces domain invariants via authorization checks, attendance-state predicates,
-and advisory transaction locking.';
-
+COMMENT ON FUNCTION app_fcn.get_session_for_registration(uuid) IS
+'System-level read function used during session registration to fetch
+pricing and timing data without exposing direct SELECT access on app.sessions.
+Raises AP404 if the session does not exist. SECURITY DEFINER.';

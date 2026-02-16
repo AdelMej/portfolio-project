@@ -63,14 +63,26 @@ COMMENT ON INDEX app.idx_sp_session_id IS
 -- ---------------------------------------------------------------
 -- Prevent double registration enforcement
 --
--- Used by:
--- - Queries validating uniqueness before inserts (extra safety)
+-- Ensures a user cannot have more than one active registration
+-- for the same session.
+--
+-- A registration is considered active when `cancelled_at IS NULL`.
+-- Cancelled registrations are preserved for audit and allow
+-- safe re-registration (e.g. payment retry flows).
+--
+-- This constraint is enforced at the database level to guarantee
+-- correctness under concurrency and webhook retries.
 -- ---------------------------------------------------------------
-CREATE UNIQUE INDEX idx_sp_user_session_unique
-ON app.session_participation(session_id, user_id);
+CREATE UNIQUE INDEX uq_session_participation_active
+ON app.session_participation (session_id, user_id)
+WHERE cancelled_at IS NULL;
 
-COMMENT ON INDEX app.idx_sp_user_session_unique IS
-'Ensures a user cannot register twice for the same session. Supports fast validation and join operations.';
+COMMENT ON INDEX app.uq_session_participation_active IS
+'Prevents multiple active registrations for the same user and session.
+A registration is active when cancelled_at IS NULL.
+Allows re-registration after cancellation (e.g. failed payment retry)
+while preserving historical participation records.';
+
 
 -- ---------------------------------------------------------------
 -- Time-based lookups for analytics

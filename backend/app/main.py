@@ -18,6 +18,7 @@ from app.feature.admin.users.admin_users_router import (
 )
 from app.shared.handlers import register_exception_handlers
 import logging
+import stripe
 
 from app.feature.session.session_router import router as session_router
 from app.feature.credit.credit_router import router as credit_router
@@ -41,6 +42,7 @@ async def lifespan(api: FastAPI):
 
     app_user_engine = create_app_engine(settings.app_user_dsn())
     app_system_engine = create_system_engine(settings.app_system_dsn())
+    stripe.api_key = settings.stripe_secret_key
 
     try:
         async with app_user_engine.connect() as conn:
@@ -86,7 +88,7 @@ app.add_middleware(
 register_exception_handlers(app)
 
 app.include_router(auth_router)
-app.include_router(session_router, prefix="/sessions", tags=["sessions"])
+app.include_router(session_router)
 app.include_router(admin_users_router)
 app.include_router(credit_router)
 app.include_router(payment_router)

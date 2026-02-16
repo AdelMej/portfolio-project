@@ -18,7 +18,7 @@ class PaymentService():
     ) -> tuple[list[GetPaymentOutputDTO], bool]:
         ensure_has_permission(actor, Permission.READ_PAYMENT)
         payments, has_more = (
-            await uow.payment_read_repository.get_payment_by_user_id(
+            await uow.payment_read_repo.get_payment_by_user_id(
                 offset=offset,
                 limit=limit,
                 _from=_from,
