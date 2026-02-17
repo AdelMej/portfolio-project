@@ -14,26 +14,26 @@ from app.feature.payment.uow.payment_uow_port import PaymentUoWPort
 from app.feature.session.uow.session_public_uow_port import (
     SessionPulbicUoWPort
 )
-from app.infrastructure.persistence.sqlalchemy.UoW.admin import (
+from app.infrastructure.persistence.sqlalchemy.uow.admin import (
     SqlAlchemyAdminUserUoW,
     SqlAlchemyAdminUserSystemUoW
 )
-from app.infrastructure.persistence.sqlalchemy.UoW.auth import (
+from app.infrastructure.persistence.sqlalchemy.uow.auth import (
     SqlAlchemyMeUoW,
 )
-from app.infrastructure.persistence.sqlalchemy.UoW.auth.auth_uow import (
+from app.infrastructure.persistence.sqlalchemy.uow.auth.auth_uow import (
     SqlAlchemyAuthUoW
 )
-from app.infrastructure.persistence.sqlalchemy.UoW.auth.me_system_uow import (
+from app.infrastructure.persistence.sqlalchemy.uow.auth.me_system_uow import (
     SqlAlchemyMeSystemUoW
 )
-from app.infrastructure.persistence.sqlalchemy.UoW.credit.credit_uow import (
+from app.infrastructure.persistence.sqlalchemy.uow.credit.credit_uow import (
     SqlAlchemyCreditUoW
 )
-from app.infrastructure.persistence.sqlalchemy.UoW.payment.payment_uow import (
+from app.infrastructure.persistence.sqlalchemy.uow.payment.payment_uow import (
     SqlAlchemyPaymenUoW
 )
-from app.infrastructure.persistence.sqlalchemy.UoW.session import (
+from app.infrastructure.persistence.sqlalchemy.uow.session import (
     SqlAlchemySessionPublicUoW,
     SqlAlchemySessionUoW
 )
@@ -44,6 +44,10 @@ from app.infrastructure.settings.provider import (
 )
 
 from app.feature.session.uow.session_uow_port import SessionUoWPort
+from app.feature.stripe.uow.stripe_uow_port import StripeUoWPort
+from app.infrastructure.persistence.sqlalchemy.uow.stripe.stripe_uow import (
+    SqlAlchemyStripeUoW
+)
 
 
 async def get_auth_uow(
@@ -152,3 +156,9 @@ async def get_payment_uow(
         }
     )
     return SqlAlchemyPaymenUoW(session)
+
+
+async def get_stripe_uow(
+    session: AsyncSession = Depends(get_app_system_session)
+) -> StripeUoWPort:
+    return SqlAlchemyStripeUoW(session)

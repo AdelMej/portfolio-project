@@ -40,7 +40,7 @@ class SqlAlchemyCreditLedgerCreationRepo(
                 "user_id": entry.user_id,
                 "amount_cents": entry.amount_cents,
                 "currency": entry.currency,
-                "cause": entry.cause
+                "cause": entry.cause.value
             })
         except DBAPIError as exc:
             code = get_sqlstate(exc)
@@ -55,3 +55,24 @@ class SqlAlchemyCreditLedgerCreationRepo(
                 raise CreditNegativeError() from exc
 
             raise
+
+    async def append_credit_ledger(
+        self,
+        credit: NewCreditEntity
+    ) -> None:
+        stmt = text("""
+            SELECT
+                app_fcn.append_credit_ledger(
+                    :user_id,
+                    :amount_cents,
+                    :currency,
+                    :cause
+                )
+        """)
+
+        await self._session.execute(stmt, {
+            "user_id": credit.user_id,
+            "amount_cents": credit.amount_cents,
+            "currency": credit.currency,
+            "cause": credit.cause.value
+        })

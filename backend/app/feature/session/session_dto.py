@@ -28,6 +28,8 @@ class GetOutputDto(BaseModel):
     title: str
     starts_at: datetime
     ends_at: datetime
+    price_cents: int
+    currency: str
     status: str
 
 

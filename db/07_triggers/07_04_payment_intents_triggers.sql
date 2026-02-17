@@ -85,32 +85,27 @@ RETURNS trigger
 LANGUAGE plpgsql
 AS $$
 BEGIN
+    -- no-op
     IF NEW.status = OLD.status THEN
         RETURN NEW;
     END IF;
 
-    -- terminal states: no exit
-    IF OLD.status IN ('succeeded', 'canceled', 'failed') THEN
+    -- terminal states are final
+    IF OLD.status IN ('succeeded', 'failed', 'canceled') THEN
         RAISE EXCEPTION
             'payment_intent status is terminal (current=%)', OLD.status;
     END IF;
 
-    -- allowed forward transitions
-    IF OLD.status = 'requires_payment'
-       AND NEW.status IN ('processing', 'canceled', 'failed') THEN
+    -- always allow transition to terminal states
+    IF NEW.status IN ('succeeded', 'failed', 'canceled') THEN
         RETURN NEW;
     END IF;
 
-    IF OLD.status = 'processing'
-       AND NEW.status IN ('succeeded', 'canceled', 'failed') THEN
-        RETURN NEW;
-    END IF;
-
-    RAISE EXCEPTION
-        'invalid payment_intent status transition: % -> %',
-        OLD.status, NEW.status;
+    -- allow any other forward informational update
+    RETURN NEW;
 END;
 $$;
+
 
 COMMENT ON FUNCTION app.tg_payment_intents_status_guard() IS
 'Enforces valid status transitions for payment_intents and prevents changes from terminal states.';

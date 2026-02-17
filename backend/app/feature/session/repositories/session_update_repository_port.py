@@ -17,5 +17,5 @@ class SessionUpdateRepoPort(Protocol):
     async def cancel_session(
             self,
             session_id: UUID
-    ) -> bool:
+    ) -> None:
         ...

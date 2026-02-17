@@ -7,7 +7,9 @@ class GetPaymentOutputDTO(BaseModel):
     session_id: UUID
     provider: str
     provider_payment_id: str
-    amount_cents: int
+    gross_amount_cents: int
+    provider_fee_cents: int
+    net_amount_cents: int
     currency: str
     created_at: datetime
 

@@ -227,6 +227,32 @@ language sql
 security definer
 set search_path = app, app_fcn, pg_temp
 as $$
+	/*
+	 * is_session_cancelled
+	 * --------------------
+	 * Checks whether a session has been cancelled.
+	 *
+	 * A session is considered cancelled if its `cancelled_at` column
+	 * is non-NULL in the `app.sessions` table.
+	 *
+	 * This function is:
+	 * - Read-only
+	 * - Side-effect free
+	 * - Safe to call multiple times
+	 *
+	 * Parameters:
+	 *   p_session_id (uuid)
+	 *     The unique identifier of the session to check.
+	 *
+	 * Returns:
+	 *   boolean
+	 *     TRUE  if the session exists and is cancelled
+	 *     FALSE otherwise
+	 *
+	 * Notes:
+	 * - Does not raise if the session does not exist
+	 * - Intended for use in invariants, guards, and early-return checks
+	 */
 	SELECT EXISTS (
 		SELECT 1
 		FROM app.sessions
@@ -234,4 +260,7 @@ as $$
 			AND cancelled_at IS NOT NULL
 	)
 $$;
+
+COMMENT ON FUNCTION app_fcn.is_session_cancelled(uuid)
+IS 'Returns true if the given session has been cancelled (cancelled_at IS NOT NULL).';
 

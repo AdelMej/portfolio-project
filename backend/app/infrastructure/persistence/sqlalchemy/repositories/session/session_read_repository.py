@@ -82,6 +82,7 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
                     CAST(:to_ts as timestamptz) IS NULL
                     OR ends_at <= CAST(:to_ts as timestamptz)
                 )
+                AND cancelled_at IS NULL
                 ORDER BY created_at DESC
                 LIMIT :limit
                 OFFSET :offset

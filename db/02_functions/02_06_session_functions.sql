@@ -253,3 +253,97 @@ COMMENT ON FUNCTION app_fcn.get_session_for_registration(uuid) IS
 'System-level read function used during session registration to fetch
 pricing and timing data without exposing direct SELECT access on app.sessions.
 Raises AP404 if the session does not exist. SECURITY DEFINER.';
+
+create or replace function app_fcn.cancel_session(
+	p_session_id uuid
+)
+returns void
+language plpgsql
+security definer
+SET search_path = app, app_fcn, pg_temp
+as $$
+	/*
+	 * app_fcn.cancel_session
+	 *
+	 * Cancels a session and applies all required domain side effects
+	 * in a single transactional, database-enforced operation.
+	 *
+	 * Behavior:
+	 *   - Acquires an advisory transaction lock scoped to the session
+	 *     to guarantee race-free cancellation.
+	 *   - Marks all active session participations as cancelled.
+	 *   - Issues credits for all successful payments linked to the
+	 *     cancelled participations (idempotent).
+	 *   - Marks the session itself as cancelled.
+	 *
+	 * Preconditions (enforced here):
+	 *   - Caller must be an admin or coach.
+	 *   - Session must exist.
+	 *
+	 * Idempotency:
+	 *   - If the session is already cancelled, the function is a no-op.
+	 *   - Credit creation is protected against duplication.
+	 *
+	 * Consistency guarantees:
+	 *   - All side effects occur atomically within a single transaction.
+	 *   - Ordering of operations reflects causal domain events.
+	 *
+	 * Notes:
+	 *   - Payments are only refunded via credits if a successful payment exists.
+	 *   - Timestamp differences between side effects are intentional and
+	 *     preserve causal ordering for auditability.
+	 */
+	DECLARE
+    	v_payment_id uuid;
+	BEGIN
+		PERFORM pg_advisory_xact_lock(
+			hashtext('session:' || p_session_id::text)
+		);
+
+		IF NOT (app_fcn.is_admin() or app_fcn.is_coach()) THEN
+			RAISE EXCEPTION 'permission denied'
+				USING ERRCODE = 'AP401';
+		END IF;
+
+		IF NOT app_fcn.session_exists(p_session_id) THEN
+			RAISE EXCEPTION 'session not found'
+				USING ERRCODE = 'AP404';
+		END IF;
+
+		IF app_fcn.is_session_cancelled(p_session_id) THEN
+			RETURN;
+		END IF;
+
+		-- Cancel participations first
+		UPDATE app.session_participation
+		SET cancelled_at = now()
+		WHERE session_id = p_session_id
+		  AND cancelled_at IS NULL;
+
+		-- Issue credits BEFORE updating session status
+		-- This prevents any cascade issues
+		FOR v_payment_id IN
+		    SELECT id
+		    FROM app.payments
+		    WHERE session_id = p_session_id
+		    FOR UPDATE  -- Lock the payment rows
+		LOOP
+		    PERFORM app_fcn.issue_credit_for_payment(v_payment_id, 'session_cancelled'::credit_ledger_cause);
+		END LOOP;
+
+		-- Update session last
+		UPDATE app.sessions
+		SET cancelled_at = now(),
+			status = 'cancelled'
+		WHERE id = p_session_id
+			AND cancelled_at IS NULL;
+	END;
+$$;
+
+COMMENT ON FUNCTION app_fcn.cancel_session(uuid) IS
+'Cancels a session and enforces all domain side effects atomically.
+The function acquires a session-scoped advisory transaction lock,
+cancels all active participations, issues credits for successful
+payments linked to the session (idempotent), and marks the session
+as cancelled. Permission, existence, and idempotency rules are fully
+enforced at the database level.';

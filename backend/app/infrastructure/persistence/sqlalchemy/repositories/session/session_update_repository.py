@@ -4,7 +4,10 @@ from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.domain.auth.auth_exceptions import PermissionDeniedError
-from app.domain.session.session_exception import SessionOverlappingError
+from app.domain.session.session_exception import (
+    SessionNotFoundError,
+    SessionOverlappingError
+)
 from app.feature.session.repositories.session_update_repository_port import (
     SessionUpdateRepoPort
 )
@@ -54,5 +57,23 @@ class SqlAlchemySessionUpdateRepo(SessionUpdateRepoPort):
     async def cancel_session(
             self,
             session_id: UUID
-    ) -> bool:
-        ...
+    ) -> None:
+        stmt = text("""
+            SELECT
+                app_fcn.cancel_session(:session_id)
+        """)
+
+        try:
+            await self._session.execute(stmt, {
+                "session_id": session_id
+            })
+        except DBAPIError as exc:
+            code = get_sqlstate(exc)
+
+            if code == "AP401":
+                raise PermissionDeniedError()
+
+            if code == "404":
+                raise SessionNotFoundError()
+
+            raise

@@ -75,6 +75,8 @@ class SessionService:
             title=session.title,
             starts_at=session.starts_at,
             ends_at=session.ends_at,
+            price_cents=session.price_cents,
+            currency=session.currency,
             status=session.status
         )
 
@@ -139,6 +141,8 @@ class SessionService:
                 title=session.title,
                 starts_at=session.starts_at,
                 ends_at=session.ends_at,
+                price_cents=session.price_cents,
+                currency=session.currency,
                 status=session.status
             )
             for session in sessions
@@ -152,14 +156,22 @@ class SessionService:
     ):
         ensure_has_permission(actor, Permission.CANCEL_SESSION)
 
-        session = await uow.session_repo.get_session_by_id(session_id)
-        if not session:
-            raise NotFoundError()
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
-        if session.coach_id != actor.id:
-            raise HTTPException(status_code=403, detail="Not your session")
+        if not await uow.session_read_repo.exist_session(session_id):
+            raise SessionNotFoundError()
 
-        await uow.session_repo.cancel_session(session_id)
+        if await uow.session_read_repo.is_session_cancelled(session_id):
+            raise SessionCancelledError()
+
+        if not await uow.session_read_repo.is_session_owner(
+            session_id,
+            actor.id
+        ):
+            raise NotOwnerOfSessionError()
+
+        await uow.session_update_repo.cancel_session(session_id)
 
     async def get_attendance(
             self,
