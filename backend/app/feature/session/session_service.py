@@ -1,5 +1,4 @@
 from uuid import UUID
-from fastapi import HTTPException
 from datetime import datetime
 import stripe
 from app.domain.credit.credit_cause import CreditCause
@@ -28,7 +27,6 @@ from app.domain.session.session_exception import (
     SessionNotFoundError,
     SessionOverlappingError
 )
-from app.domain.session.session_status import SessionStatus
 from app.feature.session.session_dto import (
     AttendanceInputDTO,
     GetOutputDto,
@@ -317,31 +315,22 @@ class SessionService:
     ):
         ensure_has_permission(actor, Permission.READ_SELF)
 
-        session = await uow.session_repo.get_session_by_id(session_id)
-        if not session:
-            raise NotFoundError()
+        if not await uow.session_read_repo.exist_session(session_id):
+            raise SessionNotFoundError()
 
-        if session.status == SessionStatus.CANCELLED:
-            raise HTTPException(status_code=400, detail="Session cancelled")
+        if await uow.session_read_repo.is_session_cancelled(session_id):
+            raise SessionCancelledError()
 
-        already_registered = await uow.session_repo.is_user_registered(
+        if await uow.session_read_repo.is_user_disabled(
+            session_id=session_id,
+            user_id=actor.id
+       ):
+            raise AuthUserIsDisabledError()
+
+        await uow.session_update_repo.cancel_registration(
             session_id=session_id,
             user_id=actor.id
         )
-
-        if not already_registered:
-            raise HTTPException(status_code=409, detail="Not registered")
-
-        removed = await uow.session_repo.remove_attendance(
-            session_id=session_id,
-            user_id=actor.id
-        )
-
-        if not removed:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to cancel registration"
-            )
 
     async def register_user(
         self,

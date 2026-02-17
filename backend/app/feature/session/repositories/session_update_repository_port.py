@@ -19,3 +19,10 @@ class SessionUpdateRepoPort(Protocol):
             session_id: UUID
     ) -> None:
         ...
+
+    async def cancel_registration(
+        self,
+        user_id: UUID,
+        session_id: UUID
+    ) -> None:
+        ...
