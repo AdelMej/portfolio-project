@@ -56,14 +56,41 @@ COMMENT ON INDEX app.idx_payment_created_at IS
 'Optimizes queries filtering payments by creation timestamp.';
 
 -- ---------------------------------------------------------------
--- Optional: amount + currency (aggregations, dashboards)
+-- Optional: gross_amount + currency (aggregations, dashboards)
 --
 -- Used by:
 -- - Reporting
 -- - Revenue analytics
 -- ---------------------------------------------------------------
-CREATE INDEX idx_payment_amount_currency
-ON app.payments (amount_cents, currency);
+CREATE INDEX idx_payment_gross_amount_currency
+ON app.payments (gross_amount_cents, currency);
 
-COMMENT ON INDEX app.idx_payment_amount_currency IS
-'Speeds up queries aggregating payments by amount and currency.';
+COMMENT ON INDEX app.idx_payment_gross_amount_currency IS
+'Speeds up queries aggregating payments by gross amount and currency.';
+
+-- ---------------------------------------------------------------
+-- Optional: net_amount + currency (aggregations, dashboards)
+--
+-- Used by:
+-- - Reporting
+-- - Revenue analytics
+-- ---------------------------------------------------------------
+CREATE INDEX idx_payment_net_amount_currency
+ON app.payments (net_amount_cents, currency);
+
+COMMENT ON INDEX app.idx_payment_net_amount_currency IS
+'Speeds up queries aggregating payments by net amount and currency.';
+
+-- ---------------------------------------------------------------
+-- Optional: provider fee + currency (aggregations, dashboards)
+--
+-- Used by:
+-- - Reporting
+-- - Revenue analytics
+-- ---------------------------------------------------------------
+CREATE INDEX idx_payment_provider_fee_currency
+ON app.payments (provider_fee_cents, currency);
+
+COMMENT ON INDEX app.idx_payment_provider_fee_currency IS
+'Speeds up queries aggregating payments by provider fee and currency.'
+

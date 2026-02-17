@@ -5,7 +5,9 @@ create or replace function app_fcn.create_payment(
 	p_user_id uuid,
 	p_provider text,
 	p_provider_payment_id text,
-	p_amount_cents int,
+	p_gross_amount_cents int,
+	p_provider_fee_cents int,
+	p_net_amount_cents int,
 	p_currency text
 )
 RETURNS void
@@ -55,7 +57,9 @@ AS $$
 	        user_id,
 	        provider,
 	        provider_payment_id,
-	        amount_cents,
+	        gross_amount_cents,
+			provider_fee_cents,
+			net_amount_cents,
 	        currency,
 	        created_at
 	    ) VALUES (
@@ -64,7 +68,9 @@ AS $$
 	        p_user_id,
 	        p_provider,
 	        p_provider_payment_id,
-	        p_amount_cents,
+	        p_gross_amount_cents,
+			p_provider_fee_cents,
+			p_net_amount_cents,
 	        p_currency,
 	        now()
 	    );
@@ -77,8 +83,12 @@ COMMENT ON FUNCTION app_fcn.create_payment(
     text,
     text,
     integer,
+    integer,
+    integer,
     text
 )
 IS
 'Creates a finalized payment record in an idempotent and race-safe manner.
 Intended for payment provider webhooks. No-ops if the payment already exists.';
+
+

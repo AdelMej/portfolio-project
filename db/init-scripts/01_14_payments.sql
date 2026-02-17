@@ -35,7 +35,11 @@ CREATE TABLE IF NOT EXISTS app.payments (
     provider_payment_id TEXT NOT NULL,
     
     -- Payment amount in cents
-    amount_cents INTEGER NOT NULL,
+	gross_amount_cents   integer not null,
+	
+	provider_fee_cents  integer not null,
+	
+	net_amount_cents    integer not null, 
 
     -- ISO 4217 currency code (e.g. EUR, USD)
     currency CHAR(3) NOT NULL,
@@ -67,10 +71,18 @@ CREATE TABLE IF NOT EXISTS app.payments (
     -- Invariants
     -- ------------------------------------------------------------------
 
-    -- Payment amount must be strictly positive
-    CONSTRAINT chk_payment_amount_positive
-        CHECK (amount_cents > 0),
-        
+    -- Payment gross amount must be strictly positive
+    CONSTRAINT chk_payment_gross_amount_cents_positive
+        CHECK (gross_amount_cents > 0),
+  
+	-- Payment fee amount must be strictly positive
+    CONSTRAINT chk_provider_fee_cents_positive
+    	CHECK (provider_fee_cents > 0),
+    	
+    -- Payment net amount must be strictly positive
+    CONSTRAINT chk_net_amount_cents_positive
+    	CHECK (net_amount_cents > 0),
+
     -- Enforce uppercase 3-letter currency code
     CONSTRAINT chk_payment_currency_format
         CHECK (currency ~ '^[A-Z]{3}$')
@@ -98,11 +110,19 @@ COMMENT ON COLUMN app.payments.provider IS
 COMMENT ON COLUMN app.payments.provider_payment_id IS
 'Unique payment identifier provided by the payment provider.';
 
-COMMENT ON COLUMN app.payments.amount_cents IS
-'Payment amount expressed in cents.';
+COMMENT ON COLUMN app.payments.gross_amount_cents IS
+'Payment gross amount expressed in cents.';
+
+COMMENT ON COLUMN app.payments.net_amount_cents IS
+'Payment net amount expressed in cents.';
+
+COMMENT ON COLUMN app.payments.gross_amount_cents IS
+'Payment gross amount expressed in cents.';
 
 COMMENT ON COLUMN app.payments.currency IS
 'ISO 4217 three-letter currency code.';
 
 COMMENT ON COLUMN app.payments.created_at IS
 'Timestamp when the payment record was created (UTC).';
+
+

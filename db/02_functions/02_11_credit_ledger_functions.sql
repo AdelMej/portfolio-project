@@ -117,7 +117,7 @@ as $$
 	        p_user_id,
 	        p_amount_cents,
 	        p_currency,
-	        p_cause,
+	        p_cause::app.credit_ledger_cause,
 	        now()
 	    );
 	END;
@@ -198,7 +198,7 @@ BEGIN
     SELECT
         gen_random_uuid(),
         p.user_id,
-        p.amount_cents,
+        p.net_amount_cents,
         p.currency,
         p_cause,
         p.id
@@ -219,3 +219,119 @@ IS
 Reads payment data by primary key and inserts a corresponding credit entry
 only if one does not already exist. Intended for internal domain workflows
 such as session cancellation, and safe to call repeatedly.';
+
+create or replace function app_fcn.append_credit_ledger(
+    p_user_id uuid,
+    p_amount_cents int,
+    p_currency text,
+    p_cause app.credit_ledger_cause
+)
+returns void
+language plpgsql
+security definer
+set search_path = app, app_fcn, pg_temp
+as $$
+	/*
+	 * append_credit_ledger
+	 * --------------------
+	 * Appends a single entry to the credit ledger for a user while enforcing
+	 * all monetary invariants.
+	 *
+	 * This function is intentionally AUTH-AGNOSTIC and MUST only be called
+	 * by trusted wrappers (e.g. user actions, admin actions, payment webhooks).
+	 *
+	 * Guarantees:
+	 *  - Credit balance can never go negative
+	 *  - Zero-amount entries are rejected
+	 *  - Per-user advisory lock prevents concurrent balance races
+	 *
+	 * Concurrency:
+	 *  - Uses pg_advisory_xact_lock scoped to user_id to serialize mutations
+	 *
+	 * Parameters:
+	 *  - p_user_id        : Target user
+	 *  - p_amount_cents  : Signed amount in cents (positive or negative)
+	 *  - p_currency      : ISO currency code (e.g. EUR)
+	 *  - p_cause         : Business cause enum for auditing
+	 *
+	 * Errors:
+	 *  - AP400 : amount is zero
+	 *  - AB400 : resulting credit would be negative
+	 */
+	begin
+	    perform pg_advisory_xact_lock(
+	        hashtext('user:' || p_user_id::text)
+	    );
+	
+	    if p_amount_cents = 0 then
+	        raise exception 'amount cannot be zero' using errcode = 'AP400';
+	    end if;
+	
+	    if app_fcn.fetch_credit_internal(p_user_id, p_currency) + p_amount_cents < 0 then
+	        raise exception 'credit cannot be negative' using errcode = 'AB400';
+	    end if;
+	
+	    insert into app.credit_ledger (
+	        id,
+	        user_id,
+	        amount_cents,
+	        currency,
+	        cause,
+	        created_at
+	    ) values (
+	        gen_random_uuid(),
+	        p_user_id,
+	        p_amount_cents,
+	        p_currency,
+	        p_cause,
+	        now()
+	    );
+	end;
+$$;
+
+comment on function app_fcn.append_credit_ledger(
+    uuid,
+    int,
+    text,
+    app.credit_ledger_cause
+) is
+'Low-level credit ledger mutation primitive.
+
+This function enforces all monetary invariants (non-zero amounts, non-negative
+balances) and serializes concurrent updates per user via advisory locks.
+
+It performs NO authorization checks and must only be called by trusted,
+auth-validated wrapper functions (user actions, admin actions, payment
+webhooks).';
+
+CREATE OR REPLACE FUNCTION app_fcn.fetch_credit_internal(
+    p_user_id uuid,
+    p_currency text
+)
+RETURNS integer
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
+	/*
+	 * fetch_credit_internal
+	 *
+	 * Computes the current credit balance for a user and currency.
+	 *
+	 * This is a low-level, auth-agnostic primitive intended for internal use
+	 * by trusted database functions (e.g. ledger appenders, triggers).
+	 *
+	 * - No permission checks
+	 * - No dependency on session GUCs
+	 * - Safe to call from triggers and background workers
+	 */
+	SELECT COALESCE(SUM(amount_cents), 0)::int
+	FROM app.credit_ledger
+	WHERE user_id = p_user_id
+	AND currency = p_currency
+$$;
+
+
+comment on function app_fcn.fetch_credit_internal(uuid, text)
+is 'Auth-free primitive that computes a user credit balance from the ledger';

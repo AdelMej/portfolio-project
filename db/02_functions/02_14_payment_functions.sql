@@ -81,9 +81,12 @@ COMMENT ON FUNCTION app_fcn.create_payment(
     text,
     text,
     integer,
+    integer,
+    integer,
     text
 )
 IS
 'Creates a finalized payment record in an idempotent and race-safe manner.
 Intended for payment provider webhooks. No-ops if the payment already exists.';
+
 
