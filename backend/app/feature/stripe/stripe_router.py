@@ -5,7 +5,10 @@ from app.feature.stripe.stripe_dependencies import get_stripe_service
 from app.feature.stripe.stripe_service import StripeService
 from app.feature.stripe.uow.stripe_uow_port import StripeUoWPort
 from app.infrastructure.persistence.sqlalchemy.provider import get_stripe_uow
-from app.infrastructure.settings.provider import get_web_hook_secret
+from app.infrastructure.settings.provider import (
+    get_stripe_client,
+    get_web_hook_secret
+)
 
 router = APIRouter(
     prefix="/stripe",
@@ -22,6 +25,7 @@ async def stripe_webhook(
     uow: StripeUoWPort = Depends(get_stripe_uow),
     stripe_signature: str = Header(None, alias="Stripe-Signature"),
     webhook_secret: str = Depends(get_web_hook_secret),
+    stripe_client: stripe.StripeClient = Depends(get_stripe_client),
     service: StripeService = Depends(get_stripe_service)
 ):
     if not stripe_signature:
@@ -42,7 +46,8 @@ async def stripe_webhook(
 
     await service.handle_stripe_event(
         uow,
-        event
+        event,
+        stripe_client
     )
 
     return {"status": "ok"}

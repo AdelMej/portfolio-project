@@ -24,7 +24,9 @@ class SqlAlchemyPaymentCreationRepo(PaymentCreationRepoPort):
                     :user_id,
                     :provider,
                     :provider_payment_id,
-                    :amount_cents,
+                    :gross_amount_cents,
+                    :provider_fee_cents,
+                    :net_amount_cents,
                     :currency
                 )
         """)
@@ -34,6 +36,8 @@ class SqlAlchemyPaymentCreationRepo(PaymentCreationRepoPort):
             "user_id": new_payment.user_id,
             "provider": new_payment.provider,
             "provider_payment_id": new_payment.provider_payment_id,
-            "amount_cents": new_payment.amount_cents,
+            "gross_amount_cents": new_payment.gross_amount_cents,
+            "provider_fee_cents": new_payment.provider_fee_cents,
+            "net_amount_cents": new_payment.net_amount_cents,
             "currency": new_payment.currency
         })

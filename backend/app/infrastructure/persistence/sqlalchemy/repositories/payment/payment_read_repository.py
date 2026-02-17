@@ -28,7 +28,9 @@ class SqlAlchemyPaymentReadRepo(PaymentReadRepoPort):
                     user_id,
                     provider,
                     provider_payment_id,
-                    amount_cents,
+                    gross_amount_cents,
+                    provider_fee_cents,
+                    net_amount_cents,
                     currency,
                     created_at
                 FROM app.payments
@@ -67,7 +69,9 @@ class SqlAlchemyPaymentReadRepo(PaymentReadRepoPort):
                 user_id=row["user_id"],
                 provider=row["provider"],
                 provider_payment_id=row["provider_payment_id"],
-                amount_cents=row["amount_cents"],
+                gross_amount_cents=row["gross_amount_cents"],
+                provider_fee_cents=row["provider_fee_cents"],
+                net_amount_cents=row["net_amount_cents"],
                 currency=row["currency"],
                 created_at=row["created_at"]
             ) for row in rows

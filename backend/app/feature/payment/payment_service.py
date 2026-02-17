@@ -32,7 +32,9 @@ class PaymentService():
                 session_id=payment.session_id,
                 provider=payment.provider,
                 provider_payment_id=payment.provider_payment_id,
-                amount_cents=payment.amount_cents,
+                gross_amount_cents=payment.gross_amount_cents,
+                provider_fee_cents=payment.provider_fee_cents,
+                net_amount_cents=payment.net_amount_cents,
                 currency=payment.currency,
                 created_at=payment.created_at
             ) for payment in payments

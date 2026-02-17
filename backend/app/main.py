@@ -42,6 +42,9 @@ async def lifespan(api: FastAPI):
     app_user_engine = create_app_engine(settings.app_user_dsn())
     app_system_engine = create_system_engine(settings.app_system_dsn())
     stripe.api_key = settings.stripe_secret_key
+    stripe_client = stripe.StripeClient(
+        api_key=settings.stripe_secret_key
+    )
 
     try:
         async with app_user_engine.connect() as conn:
@@ -56,6 +59,7 @@ async def lifespan(api: FastAPI):
         raise RuntimeError("app_system DB connection failed") from exc
 
     api.state.settings = settings
+    api.state.stripe_client = stripe_client
     api.state.app_user_engine = app_user_engine
     api.state.app_system_engine = app_system_engine
     api.state.app_user_session_factory = create_session_factory(
