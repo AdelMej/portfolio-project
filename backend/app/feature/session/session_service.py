@@ -75,6 +75,8 @@ class SessionService:
             title=session.title,
             starts_at=session.starts_at,
             ends_at=session.ends_at,
+            price_cents=session.price_cents,
+            currency=session.currency,
             status=session.status
         )
 
@@ -139,6 +141,8 @@ class SessionService:
                 title=session.title,
                 starts_at=session.starts_at,
                 ends_at=session.ends_at,
+                price_cents=session.price_cents,
+                currency=session.currency,
                 status=session.status
             )
             for session in sessions
