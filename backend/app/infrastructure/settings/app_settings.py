@@ -35,6 +35,7 @@ class AppSettings(BaseSettings):
     refresh_token_hmac_secret: str
 
     stripe_secret_key: str
+    stripe_webhook_secret: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -1,3 +1,4 @@
+
 -- ------------------------------------------------------------------
 -- Triggers: app.session_participation
 --
@@ -67,28 +68,8 @@ BEGIN
         IF OLD.cancelled_at IS NULL
            AND NEW.cancelled_at IS NOT NULL THEN
 
-            IF OLD.paid_at IS NOT NULL THEN
-                RAISE EXCEPTION 'Cannot cancel a paid participation';
-            END IF;
-
             IF now() >= v_session_start THEN
                 RAISE EXCEPTION 'Cannot cancel after session start';
-            END IF;
-        END IF;
-
-        ------------------------------------------------------------------
-        -- ATTENDANCE RULE
-        -- Only allowed after session end, cancelled participants cannot be marked
-        ------------------------------------------------------------------
-        IF OLD.attended_at IS NULL
-           AND NEW.attended_at IS NOT NULL THEN
-
-            IF now() < v_session_end THEN
-                RAISE EXCEPTION 'Cannot mark attendance before session end';
-            END IF;
-
-            IF OLD.cancelled_at IS NOT NULL THEN
-                RAISE EXCEPTION 'Cancelled participants cannot be marked as attended';
             END IF;
         END IF;
 
@@ -134,7 +115,7 @@ DECLARE
     participation_count integer;
 BEGIN
     -- Serialize inserts per session to avoid race conditions
-    PERFORM pg_advisory_xact_lock('session:' || NEW.session_id::text);
+    PERFORM pg_advisory_xact_lock(hashtext('session:' || NEW.session_id::text));
 
     -- Count existing participants for this session
     SELECT COUNT(*)

@@ -2,6 +2,7 @@ from typing import AsyncGenerator
 from fastapi import Request
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.infrastructure.settings.app_settings import AppSettings
+import stripe
 
 
 def get_settings(request: Request) -> AppSettings:
@@ -32,8 +33,17 @@ def get_token_hmac_secret(request: Request) -> str:
     return request.app.state.settings.refresh_token_hmac_secret
 
 
+def get_web_hook_secret(request: Request) -> str:
+    return request.app.state.settings.stripe_webhook_secret
+
+
+def get_stripe_client(request: Request) -> stripe.StripeClient:
+    return request.app.state.stripe_client
+
+
 def get_app_user_engine(request: Request) -> str:
     return request.app.state.settings.app_system_dsn()
+
 
 async def get_app_user_session(
     request: Request,

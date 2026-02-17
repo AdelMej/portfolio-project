@@ -45,7 +45,6 @@ TO app_admin;
 -- ------------------------------------------------------------------
 -- Documentation
 -- ------------------------------------------------------------------
-
 COMMENT ON TABLE app.payments IS
 'Immutable payment records table.
 SELECT is granted to app_user and app_admin; INSERT is granted to app_system.

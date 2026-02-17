@@ -1,62 +1,45 @@
 \c app
 
-CREATE OR REPLACE FUNCTION app_fcn.create_payment_intent(
-    p_user_id uuid,
-    p_session_id uuid,
-    p_provider text,
-    p_provider_intent_id text,
-    p_status text,
-    p_amount_cents integer,
-    p_credit_applied_cents integer,
-    p_currency text
+create or replace function app_fcn.intent_exists(
+	p_provider_payment_id text
 )
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = app, app_fcn, pg_temp
-AS $$
-	BEGIN
-	    IF NOT app_fcn.is_self(p_user_id) THEN
-	        RAISE EXCEPTION 'permission denied'
-	            USING ERRCODE = 'AP401';
-	    END IF;
-	
-	    IF NOT app_fcn.session_exists(p_session_id) THEN
-	        RAISE EXCEPTION 'session not found'
-	            USING ERRCODE = 'AP404';
-	    END IF;
-	
-	    IF EXISTS (
-	        SELECT 1
-	        FROM app.payment_intent
-	        WHERE session_id = p_session_id
-	          AND user_id = p_user_id
-	          AND status NOT IN ('canceled', 'failed')
-	    ) THEN
-	        RAISE EXCEPTION 'payment intent already exists'
-	            USING ERRCODE = 'AP409';
-	    END IF;
-	
-	    INSERT INTO app.payment_intent (
-	        user_id,
-	        session_id,
-	        provider,
-	        provider_intent_id,
-	        status,
-	        amount_cents,
-	        credit_applied_cents,
-	        currency,
-	        created_at
-	    ) VALUES (
-	        p_user_id,
-	        p_session_id,
-	        p_provider,
-	        p_provider_intent_id,
-	        p_status,
-	        p_amount_cents,
-	        p_credit_applied_cents,
-	        p_currency,
-	        now()
-	    );
-	END;
+returns boolean
+language sql
+security definer
+stable
+set search_path = app, app_fcn, pg_temp
+as $$
+	/*
+	 * intent_exists
+	 * -------------
+	 * Checks whether a payment intent exists for the given provider intent ID.
+	 *
+	 * This function performs a simple existence check against the
+	 * `app.payment_intents` table using the provider-side identifier.
+	 *
+	 * Parameters:
+	 *   p_provider_payment_id (text)
+	 *     The payment intent identifier as provided by the payment provider
+	 *     (e.g. Stripe payment_intent.id).
+	 *
+	 * Returns:
+	 *   boolean
+	 *     TRUE  if a matching payment intent exists
+	 *     FALSE otherwise
+	 *
+	 * Notes:
+	 * - This function does not perform any permission checks
+	 * - Does not raise if the intent does not exist
+	 * - Intended for idempotency guards and webhook filtering
+	 * - Marked STABLE as it performs a read-only lookup
+	 */
+	SELECT EXISTS(
+		SELECT 1
+		FROM app.payment_intents
+		WHERE provider_intent_id = p_provider_payment_id
+	)
 $$;
+
+COMMENT ON FUNCTION app_fcn.intent_exists(text)
+IS 'Returns true if a payment intent exists for the given provider intent ID.';
+

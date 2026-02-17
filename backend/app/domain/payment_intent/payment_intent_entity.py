@@ -12,7 +12,7 @@ class PaymentIntentEntity:
     status: str
     credit_applied_cents: int
     amount_cents: int
-    curency: str
+    currency: str
 
 
 @dataclass(frozen=True)

@@ -20,6 +20,7 @@ from .credit_ledger import (
 )
 from .payment import (
     SqlAlchemyPaymentReadRepo,
+    SqlAlchemyPaymentCreationRepo
 )
 from .session import (
     SqlAlchemySessionReadRepo,
@@ -28,14 +29,17 @@ from .session import (
 )
 from .session_participation import (
     SqlAlchemySessionParticipationReadRepo,
-    SqlAlchemySessionParticipationCreationRepo
+    SqlAlchemySessionParticipationCreationRepo,
+    SqlAlchemySessionParticipationUpdateRepo
 )
 from .session_attendance import (
     SqlAlchemySessionAttendanceReadRepo,
     SqlAlchemySessionAttendanceCreationRepo
 )
 from .payment_intent import (
-    SqlAlchemyPaymentIntentCreationRepo
+    SqlAlchemyPaymentIntentCreationRepo,
+    SqlAlchemyPaymentIntentReadRepo,
+    SqlAlchemyPaymentIntentUpdateRepo
 )
 
 __all__ = [
@@ -48,16 +52,20 @@ __all__ = [
     "SqlAlchemyCreditLedgerReadRepo",
     "SqlAlchemyCreditLedgerCreationRepo",
     "SqlAlchemyPaymentReadRepo",
+    "SqlAlchemyPaymentCreationRepo",
     "SqlAlchemySessionReadRepo",
     "SqlAlchemySessionUpdateRepo",
     "SqlAlchemySessionCreationRepo",
-    "SqlAlchemySessionParticipationReadRepo",
     "SqlalchemyAdminUserReadRepo",
     "SqlAlchemyAdminUserUpdateRepo",
     "SqlAlchemyAdminUserCreationRepo",
     "SqlAlchemyAdminUserDeletionRepo",
+    "SqlAlchemySessionParticipationReadRepo",
+    "SqlAlchemySessionParticipationUpdateRepo",
     "SqlAlchemySessionParticipationCreationRepo",
     "SqlAlchemySessionAttendanceCreationRepo",
     "SqlAlchemySessionAttendanceReadRepo",
-    "SqlAlchemyPaymentIntentCreationRepo"
+    "SqlAlchemyPaymentIntentReadRepo",
+    "SqlAlchemyPaymentIntentCreationRepo",
+    "SqlAlchemyPaymentIntentUpdateRepo"
 ]

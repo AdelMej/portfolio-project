@@ -23,6 +23,7 @@ import stripe
 from app.feature.session.session_router import router as session_router
 from app.feature.credit.credit_router import router as credit_router
 from app.feature.payment.payment_router import router as payment_router
+from app.feature.stripe.stripe_router import router as stripe_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,6 +44,9 @@ async def lifespan(api: FastAPI):
     app_user_engine = create_app_engine(settings.app_user_dsn())
     app_system_engine = create_system_engine(settings.app_system_dsn())
     stripe.api_key = settings.stripe_secret_key
+    stripe_client = stripe.StripeClient(
+        api_key=settings.stripe_secret_key
+    )
 
     try:
         async with app_user_engine.connect() as conn:
@@ -57,6 +61,7 @@ async def lifespan(api: FastAPI):
         raise RuntimeError("app_system DB connection failed") from exc
 
     api.state.settings = settings
+    api.state.stripe_client = stripe_client
     api.state.app_user_engine = app_user_engine
     api.state.app_system_engine = app_system_engine
     api.state.app_user_session_factory = create_session_factory(
@@ -92,6 +97,7 @@ app.include_router(session_router)
 app.include_router(admin_users_router)
 app.include_router(credit_router)
 app.include_router(payment_router)
+app.include_router(stripe_router)
 
 
 @app.get("/health", include_in_schema=False)

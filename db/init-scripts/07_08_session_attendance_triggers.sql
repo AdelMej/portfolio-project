@@ -84,3 +84,4 @@ EXECUTE FUNCTION app.tg_session_attendance_guard();
 
 COMMENT ON TRIGGER trg_session_attendance_guard ON app.session_attendance IS
 'Prevents invalid inserts/updates/deletes on session_attendance according to session timing and participation rules.';
+
