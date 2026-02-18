@@ -159,3 +159,10 @@ is
 'Cancels an active session participation for the calling user.
 Performs self-authorization, validates session existence, enforces
 single active participation, and marks it as cancelled atomically.';
+
+
+create or replace function app_fcn.revoke_all_active_session(
+	p_user_id
+)
+returns void
+language plpgsql

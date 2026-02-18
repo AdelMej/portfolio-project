@@ -42,8 +42,8 @@ class SqlAlchemySessionAttendanceReadRepo(
     ) -> list[UserProfileEntity]:
         stmt = text(
                 """
-                SELECT
-                    app_fcn.get_pre_attendance(:session_id)
+                SELECT *
+                FROM app_fcn.get_pre_attendance(:session_id)
                 """
             )
         try:

@@ -41,6 +41,11 @@ from .payment_intent import (
     SqlAlchemyPaymentIntentReadRepo,
     SqlAlchemyPaymentIntentUpdateRepo
 )
+from .coach_stripe_account import (
+    SqlAlchemyCoachStripeAccountCreationRepo,
+    SqlAlchemyCoachStripeAccountReadRepo,
+    SqlAlchemyCoachStripeAccountUpdateRepo
+)
 
 __all__ = [
     "SqlAlchemyAuthReadRepo",
@@ -67,5 +72,8 @@ __all__ = [
     "SqlAlchemySessionAttendanceReadRepo",
     "SqlAlchemyPaymentIntentReadRepo",
     "SqlAlchemyPaymentIntentCreationRepo",
-    "SqlAlchemyPaymentIntentUpdateRepo"
+    "SqlAlchemyPaymentIntentUpdateRepo",
+    "SqlAlchemyCoachStripeAccountReadRepo",
+    "SqlAlchemyCoachStripeAccountUpdateRepo",
+    "SqlAlchemyCoachStripeAccountCreationRepo"
 ]
