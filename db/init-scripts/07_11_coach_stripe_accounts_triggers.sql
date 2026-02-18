@@ -48,3 +48,33 @@ EXECUTE FUNCTION app.tg_touch_coach_stripe_accounts_updated_at();
 COMMENT ON FUNCTION app.tg_touch_coach_stripe_accounts_updated_at() IS
 'Trigger function that updates updated_at only when Stripe capability state changes.
 Prevents no-op updates and timestamp churn caused by repeated or idempotent Stripe webhooks.';
+
+-- ------------------------------------------------------------------
+-- Trigger: prevent stripe_account_id mutation
+--
+-- Rationale:
+-- - stripe_account_id represents a stable external identifier
+-- - Changing it would break the association with Stripe
+-- - Prevents accidental reassignment due to bugs or bad updates
+-- ------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION app.trg_prevent_stripe_account_id_update()
+RETURNS trigger AS $$
+BEGIN
+    IF OLD.stripe_account_id IS NOT NULL
+       AND NEW.stripe_account_id <> OLD.stripe_account_id THEN
+        RAISE EXCEPTION 'stripe_account_id is immutable';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_prevent_stripe_account_id_update
+BEFORE UPDATE ON app.coach_stripe_accounts
+FOR EACH ROW
+EXECUTE FUNCTION app.trg_prevent_stripe_account_id_update();
+
+COMMENT ON FUNCTION app.trg_prevent_stripe_account_id_update() IS
+'Prevents mutation of stripe_account_id after initial assignment.
+
+Enforces immutability of the Stripe external account identifier to
+maintain consistency with Stripe state and avoid accidental reassociation.';

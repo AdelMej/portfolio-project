@@ -45,7 +45,7 @@ as $$
 		END IF;
 
 		-- Pre-attendance is invalid once attendance has started
-		IF app_fcn.is_attended(p_session_id) THEN
+		IF app_fcn.is_session_attended(p_session_id) THEN
 			RETURN;
 		END IF;
 
