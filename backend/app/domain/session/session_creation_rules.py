@@ -14,6 +14,7 @@ from app.shared.rules.session_title_rules import (
     MAX_TITLE_LENGTH,
     MIN_TITLE_LENGTH
 )
+from app.shared.utils.time import utcnow
 
 
 def ensure_price_is_not_negative(price: int):
@@ -22,6 +23,9 @@ def ensure_price_is_not_negative(price: int):
 
 
 def ensure_times_valid(starts_at: datetime, end_at: datetime):
+    if starts_at <= utcnow():
+        raise SessionTimeIsInvalidError()
+
     if end_at <= starts_at:
         raise SessionTimeIsInvalidError()
 

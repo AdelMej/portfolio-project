@@ -17,6 +17,7 @@ from app.domain.session.session_creation_rules import (
 from app.domain.session.session_exception import (
     AlreadyActiveParticipationError,
     InvalidAttendanceInputError,
+    NoActiveParticipationFoundError,
     NotOwnerOfSessionError,
     OwnerCantRegisterToOwnSessionError,
     SessionAlreadyAttendedError,
@@ -193,8 +194,8 @@ class SessionService:
         ):
             raise NotOwnerOfSessionError()
 
-        if not await (
-            uow.session_attendance_read_repo.is_session_attendance_open(
+        if not (
+            await uow.session_attendance_read_repo.is_session_attendance_open(
                 session_id
             )
         ):
@@ -309,11 +310,11 @@ class SessionService:
 
     async def cancel_registration(
         self,
-        uow,
+        uow: SessionUoWPort,
         actor: Actor,
         session_id: UUID
     ):
-        ensure_has_permission(actor, Permission.READ_SELF)
+        ensure_has_permission(actor, Permission.CANCEL_REGISTRATION)
 
         if not await uow.session_read_repo.exist_session(session_id):
             raise SessionNotFoundError()
@@ -321,13 +322,20 @@ class SessionService:
         if await uow.session_read_repo.is_session_cancelled(session_id):
             raise SessionCancelledError()
 
-        if await uow.session_read_repo.is_user_disabled(
-            session_id=session_id,
+        if await uow.auth_read_repo.is_user_disabled(
             user_id=actor.id
-       ):
+        ):
             raise AuthUserIsDisabledError()
 
-        await uow.session_update_repo.cancel_registration(
+        if not (
+            await uow.session_participation_read_repo.has_active_participation(
+                session_id=session_id,
+                user_id=actor.id
+            )
+        ):
+            raise NoActiveParticipationFoundError()
+
+        await uow.session_participation_update_repo.cancel_registration(
             session_id=session_id,
             user_id=actor.id
         )

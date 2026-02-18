@@ -274,7 +274,7 @@ class AuthService:
 
         ensure_has_permission(actor, Permission.READ_SELF)
 
-        if uow.auth_read_repo.is_user_disabled(actor.id):
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
 
         return await uow.me_read_repo.get(actor.id)

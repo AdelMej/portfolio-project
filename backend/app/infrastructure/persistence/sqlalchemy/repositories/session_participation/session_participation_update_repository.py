@@ -50,3 +50,21 @@ class SqlAlchemySessionParticipationUpdateRepo(
             "session_id": session_id,
             "user_id": user_id
         })
+
+    async def cancel_registration(
+        self,
+        user_id: UUID,
+        session_id: UUID
+    ) -> None:
+        stmt = text("""
+            SELECT
+                app_fcn.cancel_participation(
+                    :user_id,
+                    :session_id
+                )
+        """)
+
+        await self._session.execute(stmt, {
+            "user_id": user_id,
+            "session_id": session_id
+        })

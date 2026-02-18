@@ -18,7 +18,8 @@ from app.domain.session.session_exception import (
     OwnerCantRegisterToOwnSessionError,
     SessionTimeIsInvalidError,
     SessionCreditNegativeError,
-    SessionPriceIsNegativeError
+    SessionPriceIsNegativeError,
+    NoActiveParticipationFoundError
 )
 import logging
 from app.shared.rules.session_title_rules import (
@@ -361,4 +362,23 @@ def register_exception_handler(app: FastAPI):
         return JSONResponse(
             content={"error": "price cannot be negative"},
             status_code=400
+        )
+
+    @app.exception_handler(NoActiveParticipationFoundError)
+    async def no_active_paritcipation_found_handler(
+        request: Request,
+        exc: NoActiveParticipationFoundError
+    ) -> JSONResponse:
+        logger.info(
+            "no active participation found",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={"error": "no active participation found"},
+            status_code=404
         )

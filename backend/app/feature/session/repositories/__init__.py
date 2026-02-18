@@ -28,6 +28,9 @@ from .session_attendance_read_repository import (
 from .session_participation_read_repository import (
     SessionParticipationReadRepoPort
 )
+from .session_participation_update_repository_port import (
+    SessionParticipationUpdateRepoPort
+)
 
 __all__ = [
     "SessionReadRepoPort",
@@ -39,5 +42,6 @@ __all__ = [
     "SessionParticipationCreationRepoPort",
     "SessionAttendanceReadRepoPort",
     "SessionAttendanceCreationRepoPort",
-    "SessionParticipationReadRepoPort"
+    "SessionParticipationReadRepoPort",
+    "SessionParticipationUpdateRepoPort"
 ]
