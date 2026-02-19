@@ -76,3 +76,42 @@ class SqlAlchemyPaymentReadRepo(PaymentReadRepoPort):
                 created_at=row["created_at"]
             ) for row in rows
         ], has_more
+
+    async def is_alread_paid(
+        self,
+        session_id: UUID,
+        user_id: UUID
+    ) -> bool:
+        stmt = text("""
+            SELECT
+                app_fcn.is_already_paid(
+                    :session_id,
+                    :user_id
+                )
+        """)
+
+        res = await self._session.execute(stmt, {
+            "session_id": session_id,
+            "user_id": user_id
+        })
+
+        return res.scalar_one()
+
+    async def get_payment_for_session(
+        self,
+        session_id: UUID
+    ) -> tuple[int, str]:
+        stmt = text("""
+            SELECT *
+            FROM app_fcn.get_payment_for_session(
+                    :session_id
+                )
+        """)
+
+        res = await self._session.execute(stmt, {
+            "session_id": session_id
+        })
+
+        row = res.mappings().one()
+
+        return row["amount_cents"], row["currency"]

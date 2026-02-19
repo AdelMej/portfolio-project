@@ -5,7 +5,8 @@ import logging
 from app.domain.stripe.stripe_exception import (
     ChargeNotReadyError,
     IntentIsInvalidError,
-    BalanceNotExpendedError
+    BalanceNotExpendedError,
+    CoachPayoutFailedError
 )
 
 logger = logging.getLogger("app.session.exceptions")
@@ -67,4 +68,23 @@ def register_exception_handler(app: FastAPI):
         return JSONResponse(
             content={"error": "balance is not expended"},
             status_code=503
+        )
+
+    @app.exception_handler(CoachPayoutFailedError)
+    async def coach_payout_failed_handler(
+        request: Request,
+        exc: CoachPayoutFailedError
+    ) -> JSONResponse:
+        logger.info(
+            "payout failed",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={"error": "payout failed"},
+            status_code=400
         )

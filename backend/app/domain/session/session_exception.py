@@ -72,3 +72,11 @@ class OwnerCantRegisterToOwnSessionError(SessionDomainError):
 
 class NoActiveParticipationFoundError(SessionDomainError):
     pass
+
+
+class InvalidCoachAccountError(SessionDomainError):
+    pass
+
+
+class SessionNotFinishedError(SessionDomainError):
+    pass

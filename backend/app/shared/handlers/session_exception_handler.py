@@ -7,6 +7,7 @@ from app.domain.session.session_exception import (
     AlreadyActiveParticipationError,
     SessionCancelledError,
     NotOwnerOfSessionError,
+    SessionNotFinishedError,
     SessionNotFoundError,
     InvalidAttendanceInputError,
     SessionOverlappingError,
@@ -19,7 +20,8 @@ from app.domain.session.session_exception import (
     SessionTimeIsInvalidError,
     SessionCreditNegativeError,
     SessionPriceIsNegativeError,
-    NoActiveParticipationFoundError
+    NoActiveParticipationFoundError,
+    InvalidCoachAccountError
 )
 import logging
 from app.shared.rules.session_title_rules import (
@@ -381,4 +383,41 @@ def register_exception_handler(app: FastAPI):
         return JSONResponse(
             content={"error": "no active participation found"},
             status_code=404
+        )
+
+    @app.exception_handler(InvalidCoachAccountError)
+    async def invalid_coach_account_error(
+        request: Request,
+        exc: InvalidCoachAccountError
+    ) -> JSONResponse:
+        logger.info(
+            "stripe account is invalid",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={"error": "stripe account is invalid"},
+            status_code=400
+        )
+    @app.exception_handler(SessionNotFinishedError)
+    async def session_not_finished_error(
+        request: Request,
+        exc: SessionNotFinishedError
+    ) -> JSONResponse:
+        logger.info(
+            "session is not finished",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={"error": "session is not finished"},
+            status_code=409
         )

@@ -4,3 +4,7 @@ class PaymentDomainException(Exception):
 
 class PaymentProviderError(PaymentDomainException):
     pass
+
+
+class PaymentAlreadyPaidError(PaymentDomainException):
+    pass

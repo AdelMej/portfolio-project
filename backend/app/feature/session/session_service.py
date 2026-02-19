@@ -17,6 +17,7 @@ from app.domain.session.session_creation_rules import (
 from app.domain.session.session_exception import (
     AlreadyActiveParticipationError,
     InvalidAttendanceInputError,
+    InvalidCoachAccountError,
     NoActiveParticipationFoundError,
     NotOwnerOfSessionError,
     OwnerCantRegisterToOwnSessionError,
@@ -99,6 +100,11 @@ class SessionService:
 
         if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
+
+        if not await uow.coach_stripe_account_read_repo.is_coach_account_valid(
+            actor.id
+        ):
+            raise InvalidCoachAccountError()
 
         if await uow.session_read_repo.is_session_overlapping(
             starts_at=input.starts_at,

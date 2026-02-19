@@ -16,3 +16,7 @@ class BalanceNotExpendedError(StripeDomainError):
 
 class AccountIsInvalid(StripeDomainError):
     pass
+
+
+class CoachPayoutFailedError(StripeDomainError):
+    pass

@@ -298,3 +298,20 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
             price_cents=row["price_cents"],
             currency=row["currency"]
         )
+
+    async def is_session_finished(
+        self,
+        session_id: UUID
+    ) -> bool:
+        stmt = text("""
+            SELECT
+                app_fcn.is_session_finished(
+                    :session_id
+                )
+        """)
+
+        res = await self._session.execute(stmt, {
+            "session_id": session_id
+        })
+
+        return res.scalar_one()

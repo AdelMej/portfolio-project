@@ -14,7 +14,8 @@ from app.infrastructure.persistence.sqlalchemy.repositories import (
     SqlAlchemySessionAttendanceCreationRepo,
     SqlAlchemyPaymentIntentCreationRepo,
     SqlAlchemyCreditLedgerReadRepo,
-    SqlAlchemyCreditLedgerCreationRepo
+    SqlAlchemyCreditLedgerCreationRepo,
+    SqlAlchemyCoachStripeAccountReadRepo
 )
 
 
@@ -49,4 +50,7 @@ class SqlAlchemySessionUoW(SessionUoWPort):
         )
         self.session_participation_update_repo = (
             SqlAlchemySessionParticipationUpdateRepo(session)
+        )
+        self.coach_stripe_account_read_repo = (
+            SqlAlchemyCoachStripeAccountReadRepo(session)
         )
