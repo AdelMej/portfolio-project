@@ -37,6 +37,8 @@ class AppSettings(BaseSettings):
     stripe_secret_key: str
     stripe_webhook_secret: str
 
+    session_participation_ttl_seconds: int
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

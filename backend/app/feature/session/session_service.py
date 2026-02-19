@@ -1,5 +1,5 @@
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timedelta
 import stripe
 from app.domain.credit.credit_cause import CreditCause
 from app.domain.credit.credit_entity import NewCreditEntity
@@ -53,6 +53,7 @@ from app.domain.currency.currency_rules import (
 from app.domain.auth.auth_exceptions import (
     AuthUserIsDisabledError
 )
+from app.shared.utils.time import utcnow
 
 
 class SessionService:
@@ -344,7 +345,8 @@ class SessionService:
         self,
         session_id: UUID,
         actor: Actor,
-        uow: SessionUoWPort
+        uow: SessionUoWPort,
+        session_ttl: int
     ) -> tuple[bool, str | None]:
         ensure_has_permission(actor, Permission.SESSION_REGISTRATION)
 
@@ -452,8 +454,9 @@ class SessionService:
         await uow.session_participation_creation_repo.create_participation(
             participation=NewSessionParticipationEntity(
                 session_id=session_id,
-                user_id=actor.id
-            )
+                user_id=actor.id,
+            ),
+            expires_at=utcnow() + timedelta(seconds=session_ttl)
         )
 
         return required_payment, client_secret

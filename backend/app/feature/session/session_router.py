@@ -22,6 +22,7 @@ from app.infrastructure.persistence.sqlalchemy.provider import (
     get_session_uow
 )
 from app.feature.session.uow.session_uow_port import SessionUoWPort
+from app.infrastructure.settings.provider import get_session_participation_ttl
 
 router = APIRouter(
     prefix="/sessions",
@@ -179,12 +180,14 @@ async def register_user(
     session_id: UUID,
     actor: Actor = Depends(get_current_actor),
     uow: SessionUoWPort = Depends(get_session_uow),
-    service: SessionService = Depends(get_session_service)
+    service: SessionService = Depends(get_session_service),
+    session_ttl: int = Depends(get_session_participation_ttl)
 ) -> RegistrationOutputDTO:
     required_payment, key = await service.register_user(
         session_id=session_id,
         actor=actor,
-        uow=uow
+        uow=uow,
+        session_ttl=session_ttl
     )
 
     return RegistrationOutputDTO(
