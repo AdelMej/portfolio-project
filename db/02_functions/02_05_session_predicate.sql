@@ -264,3 +264,39 @@ $$;
 COMMENT ON FUNCTION app_fcn.is_session_cancelled(uuid)
 IS 'Returns true if the given session has been cancelled (cancelled_at IS NOT NULL).';
 
+CREATE OR REPLACE FUNCTION app_fcn.is_session_finished(
+    p_session_id uuid
+)
+RETURNS boolean
+LANGUAGE SQL
+STABLE
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
+    /*
+     * app_fcn.is_session_finished
+     *
+     * Determines whether a session has finished.
+     *
+     * A session is considered finished when its end timestamp
+     * is in the past or equal to the current time.
+     *
+     * Usage:
+     *   - Coach payout eligibility checks
+     *   - Post-session workflows
+     *
+     * Notes:
+     *   - Read-only predicate
+     *   - Relies on server time (now())
+     */
+    SELECT EXISTS(
+        SELECT 1
+        FROM app.sessions
+        WHERE id = p_session_id
+          AND ends_at <= now()
+    );
+$$;
+
+COMMENT ON FUNCTION app_fcn.is_session_finished(uuid)
+IS
+'Returns true if the session end time is in the past, indicating the session has finished. Used to gate post-session actions such as coach payouts.';
