@@ -265,7 +265,7 @@ class AuthService:
         )
 
         await uow.auth_creation_repo.register(new_user, new_user_profile)
-
+#
     async def get_me(
         self,
         actor: Actor,
@@ -274,7 +274,7 @@ class AuthService:
 
         ensure_has_permission(actor, Permission.READ_SELF)
 
-        if uow.auth_read_repo.is_user_disabled(actor.id):
+        if await uow.auth_read_repo.is_user_disabled(actor.id): #changed it , FrontEnd issue
             raise AuthUserIsDisabledError()
 
         return await uow.me_read_repo.get(actor.id)
