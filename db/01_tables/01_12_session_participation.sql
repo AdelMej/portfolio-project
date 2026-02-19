@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS app.session_participation (
     -- Cancellation timestamp (NULL = active)
     cancelled_at TIMESTAMPTZ NULL,
 
+    -- expiration time
+    expires_at timestamptz NOT NULL,
     -- ------------------------------------------------------------------
     -- Invariants
     -- ------------------------------------------------------------------
@@ -56,6 +58,8 @@ CREATE TABLE IF NOT EXISTS app.session_participation (
                 AND paid_at > cancelled_at
             )
         ),
+	CONSTRAINT uq_session_participation_user_session
+		UNIQUE (session_id, user_id),
 
     -- ------------------------------------------------------------------
     -- Foreign keys
@@ -88,6 +92,7 @@ COMMENT ON COLUMN app.session_participation.session_id IS
 COMMENT ON COLUMN app.session_participation.user_id IS
 'User registering for the session.';
 
+
 COMMENT ON COLUMN app.session_participation.registered_at IS
 'Timestamp when the user registered for the session.';
 
@@ -96,3 +101,6 @@ COMMENT ON COLUMN app.session_participation.cancelled_at IS
 
 COMMENT ON COLUMN app.session_participation.paid_at IS
 'Timestamp when the participation was successfully paid. NULL means the registration is not yet financially confirmed.';
+
+COMMENT ON COLUMN app.session_participation.expires_at IS
+'Timestamp defining when a session becomes expired';

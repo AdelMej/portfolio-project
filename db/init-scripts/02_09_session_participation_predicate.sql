@@ -34,7 +34,11 @@ as $$
 	SELECT count(*) >= p_capacity
 	FROM app.session_participation
 	WHERE session_id = p_session_id
-		AND cancelled_at IS NULL;
+		AND cancelled_at IS NULL
+		AND (
+			paid_at IS NOT NULL
+			OR expires_at > now()
+		)
 $$;
 
 COMMENT ON FUNCTION app_fcn.is_session_full(uuid, int) IS
@@ -81,6 +85,10 @@ as $$
 		WHERE session_id = p_session_id
 			AND user_id = p_user_id
 			AND cancelled_at IS NULL
+			AND (
+				paid_at IS NOT NULL
+				OR expires_at > now()
+			)
 	);
 $$;
 

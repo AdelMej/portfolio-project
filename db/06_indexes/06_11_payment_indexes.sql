@@ -92,7 +92,7 @@ CREATE INDEX idx_payment_provider_fee_currency
 ON app.payments (provider_fee_cents, currency);
 
 COMMENT ON INDEX app.idx_payment_provider_fee_currency IS
-'Speeds up queries aggregating payments by provider fee and currency.'
+'Speeds up queries aggregating payments by provider fee and currency.';
 
 -- ---------------------------------------------------------------
 -- Unique: one coach payout per session
