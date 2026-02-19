@@ -25,7 +25,7 @@ from app.infrastructure.persistence.sqlalchemy.provider import (
 
 router = APIRouter(
     prefix="/admin/users",
-    tags=["admin"]
+    tags=["admin-user"]
 )
 
 
