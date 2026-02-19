@@ -6,7 +6,7 @@ from app.domain.payment_intent.payment_intent_entity import (
     NewPaymentIntentEntity
 )
 from app.domain.payment_intent.payment_intent_exceptions import (
-    PaymentInntentAlreadyExist
+    PaymentIntentAlreadyExist
 )
 from app.domain.session.session_exception import SessionNotFoundError
 from app.feature.session.repositories import (
@@ -60,6 +60,6 @@ class SqlAlchemyPaymentIntentCreationRepo(
                 raise SessionNotFoundError() from exc
 
             if code == "AP409":
-                raise PaymentInntentAlreadyExist() from exc
+                raise PaymentIntentAlreadyExist() from exc
 
             raise

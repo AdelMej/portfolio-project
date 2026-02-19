@@ -7,7 +7,8 @@ from app.infrastructure.persistence.sqlalchemy.repositories import (
     SqlAlchemyPaymentIntentUpdateRepo,
     SqlAlchemySessionParticipationUpdateRepo,
     SqlAlchemyPaymentCreationRepo,
-    SqlAlchemyCreditLedgerCreationRepo
+    SqlAlchemyCreditLedgerCreationRepo,
+    SqlAlchemyCoachStripeAccountUpdateRepo
 )
 
 
@@ -28,4 +29,9 @@ class SqlAlchemyStripeUoW(StripeUoWPort):
             SqlAlchemySessionParticipationUpdateRepo(session)
         )
         self.payment_creation_repo = SqlAlchemyPaymentCreationRepo(session)
-        self.credit_ledger_creation_repo = SqlAlchemyCreditLedgerCreationRepo(session)
+        self.credit_ledger_creation_repo = (
+            SqlAlchemyCreditLedgerCreationRepo(session)
+        )
+        self.coach_stripe_account_update_repo = (
+            SqlAlchemyCoachStripeAccountUpdateRepo(session)
+        )

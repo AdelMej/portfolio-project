@@ -45,7 +45,7 @@ as $$
 		END IF;
 
 		-- Pre-attendance is invalid once attendance has started
-		IF app_fcn.is_attended(p_session_id) THEN
+		IF app_fcn.is_session_attended(p_session_id) THEN
 			RETURN;
 		END IF;
 
@@ -107,7 +107,7 @@ BEGIN
             USING ERRCODE = 'AP401';
     END IF;
 
-    IF NOT app_fcn.exist_session(p_session_id) THEN
+    IF NOT app_fcn.session_exists(p_session_id) THEN
         RAISE EXCEPTION 'session not found'
             USING ERRCODE = 'AP404';
     END IF;
@@ -145,7 +145,7 @@ BEGIN
         r.user_id,
         r.attended,
         now(),
-		app_fcn.current_actor_id()
+		current_setting('app.current_user_id')::uuid
     FROM jsonb_to_recordset(p_attendance) AS r(
         user_id uuid,
         attended boolean
@@ -157,4 +157,3 @@ COMMENT ON FUNCTION app_fcn.create_attendance(uuid, jsonb) IS
 'Creates attendance records for a session in an append-only manner.
 Enforces authorization, session state, time window, payload integrity,
 and race safety via advisory locking.';
-

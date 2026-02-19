@@ -9,6 +9,7 @@ from app.feature.admin.users.uow.admin_user_uow_port import AdminUserUoWPort
 from app.feature.auth.uow.auth_uow_port import AuthUoWPort
 from app.feature.auth.uow.me_system_uow_port import MeSystemUoWPort
 from app.feature.auth.uow.me_uow_port import MeUoWPort
+from app.feature.coach.uow.coach_uow_port import CoachUoWPort
 from app.feature.credit.uow.credit_uow_port import CreditUoWPort
 from app.feature.payment.uow.payment_uow_port import PaymentUoWPort
 from app.feature.session.uow.session_public_uow_port import (
@@ -26,6 +27,9 @@ from app.infrastructure.persistence.sqlalchemy.uow.auth.auth_uow import (
 )
 from app.infrastructure.persistence.sqlalchemy.uow.auth.me_system_uow import (
     SqlAlchemyMeSystemUoW
+)
+from app.infrastructure.persistence.sqlalchemy.uow.coach.coach_uow import (
+    SqlAlchemyCoachUoW
 )
 from app.infrastructure.persistence.sqlalchemy.uow.credit.credit_uow import (
     SqlAlchemyCreditUoW
@@ -162,3 +166,18 @@ async def get_stripe_uow(
     session: AsyncSession = Depends(get_app_system_session)
 ) -> StripeUoWPort:
     return SqlAlchemyStripeUoW(session)
+
+
+async def get_coach_uow(
+    session: AsyncSession = Depends(get_app_system_session),
+    actor: Actor = Depends(get_current_actor)
+) -> CoachUoWPort:
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true)"
+        ),
+        {
+            "user_id": str(actor.id)
+        }
+    )
+    return SqlAlchemyCoachUoW(session)

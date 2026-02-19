@@ -13,6 +13,7 @@ from app.feature.session.repositories import (
     SessionAttendanceReadRepoPort,
     SessionAttendanceCreationRepoPort,
     SessionParticipationReadRepoPort,
+    SessionParticipationUpdateRepoPort
 )
 
 
@@ -22,6 +23,7 @@ class SessionUoWPort(Protocol):
     session_read_repo: SessionReadRepoPort
     session_participation_read_repo: SessionParticipationReadRepoPort
     session_participation_creation_repo: SessionParticipationCreationRepoPort
+    session_participation_update_repo: SessionParticipationUpdateRepoPort
     session_attendance_read_repo: SessionAttendanceReadRepoPort
     session_attendance_creation_repo: SessionAttendanceCreationRepoPort
     payment_intent_creation_repo: PaymentIntentCreationRepoPort

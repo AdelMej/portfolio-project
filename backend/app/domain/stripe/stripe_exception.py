@@ -12,3 +12,7 @@ class ChargeNotReadyError(StripeDomainError):
 
 class BalanceNotExpendedError(StripeDomainError):
     pass
+
+
+class AccountIsInvalid(StripeDomainError):
+    pass

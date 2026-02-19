@@ -3,7 +3,8 @@ from app.feature.stripe.repositories import (
     PaymentIntentUpdateRepoPort,
     SessionParticipationUpdateRepoPort,
     PaymentCreationRepoPort,
-    CreditLedgerCreationRepoPort
+    CreditLedgerCreationRepoPort,
+    CoachStripeAccountUpdateRepoPort
 )
 
 
@@ -13,3 +14,4 @@ class StripeUoWPort():
     session_participation_update_repo: SessionParticipationUpdateRepoPort
     payment_creation_repo: PaymentCreationRepoPort
     credit_ledger_creation_repo: CreditLedgerCreationRepoPort
+    coach_stripe_account_update_repo: CoachStripeAccountUpdateRepoPort

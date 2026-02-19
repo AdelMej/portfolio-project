@@ -93,3 +93,76 @@ Errors:
 - AP404: session not found
 - AP410: session cancelled
 - AP409: already participating or session full';
+
+
+create or replace function app_fcn.cancel_participation(
+	p_user_id uuid,
+	p_session_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = app, app_fcn, pg_temp
+as $$
+	/*
+	 * cancel_participation
+	 * --------------------
+	 * Cancels an active participation for the calling user in a given session.
+	 *
+	 * Invariants:
+	 * - The caller must be the same as `p_user_id` (self-action only).
+	 * - The session must exist.
+	 * - The user must have an active (non-cancelled) participation.
+	 *
+	 * Concurrency:
+	 * - Uses an advisory transaction lock scoped to (user_id, session_id)
+	 *   to prevent double-cancellation or race conditions.
+	 *
+	 * Effects:
+	 * - Sets `cancelled_at` to the current timestamp.
+	 *
+	 * Errors:
+	 * - AP401: caller is not the target user.
+	 * - AP404: session does not exist.
+	 * - AB404: no active participation found to cancel.
+	 */
+	begin
+		perform pg_advisory_xact_lock(
+			hashtext('user:' || p_user_id::text || ':session:' || p_session_id::text) 
+		);
+
+		IF NOT app_fcn.is_self(p_user_id) THEN
+			RAISE EXCEPTION 'permission denied'
+				USING ERRCODE = 'AP401';
+		END IF;
+
+		IF NOT app_fcn.session_exists(p_session_id) THEN
+			RAISE EXCEPTION 'session not found'
+				USING ERRCODE = 'AP404';
+		END IF;
+
+		UPDATE app.session_participation
+		SET cancelled_at = now()
+		WHERE user_id = p_user_id
+		AND session_id = p_session_id
+		AND cancelled_at IS NULL;
+
+		IF NOT FOUND THEN
+		    RAISE EXCEPTION 'no active participation found'
+		        USING ERRCODE = 'AB404';
+		END IF;
+	end;
+$$;
+
+comment on function app_fcn.cancel_participation(uuid, uuid)
+is
+'Cancels an active session participation for the calling user.
+Performs self-authorization, validates session existence, enforces
+single active participation, and marks it as cancelled atomically.';
+
+
+create or replace function app_fcn.revoke_all_active_session(
+	p_user_id
+)
+returns void
+language plpgsql

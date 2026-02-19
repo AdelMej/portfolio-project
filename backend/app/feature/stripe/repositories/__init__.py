@@ -13,12 +13,15 @@ from .session_participation_update_repository_port import (
 from .credit_ledger_cretion_repository_port import (
     CreditLedgerCreationRepoPort
 )
-
+from .coach_stripe_account_update_repository_port import (
+    CoachStripeAccountUpdateRepoPort
+)
 
 __all__ = [
     "PaymentIntentUpdateRepoPort",
     "PaymentIntentReadRepoPort",
     "PaymentCreationRepoPort",
     "SessionParticipationUpdateRepoPort",
-    "CreditLedgerCreationRepoPort"
+    "CreditLedgerCreationRepoPort",
+    "CoachStripeAccountUpdateRepoPort"
 ]

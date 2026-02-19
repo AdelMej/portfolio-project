@@ -37,8 +37,10 @@ class SqlAlchemySessionAttendanceCreationRepo(
         ]
 
         stmt = text("""
+            SELECT app_fcn.create_attendance(
                 :session_id,
                 :attendance_list
+            )
             """)
 
         try:
