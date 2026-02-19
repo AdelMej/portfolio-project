@@ -19,3 +19,5 @@ class SessionUpdateRepoPort(Protocol):
             session_id: UUID
     ) -> None:
         ...
+
+

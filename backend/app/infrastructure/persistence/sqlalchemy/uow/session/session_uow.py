@@ -5,6 +5,7 @@ from app.feature.session.uow.session_uow_port import (
 from app.infrastructure.persistence.sqlalchemy.repositories import (
     SqlAlchemySessionParticipationReadRepo,
     SqlAlchemySessionParticipationCreationRepo,
+    SqlAlchemySessionParticipationUpdateRepo,
     SqlAlchemySessionUpdateRepo,
     SqlAlchemySessionReadRepo,
     SqlAlchemySessionCreationRepo,
@@ -45,4 +46,7 @@ class SqlAlchemySessionUoW(SessionUoWPort):
         )
         self.credit_ledger_creation_repo = (
             SqlAlchemyCreditLedgerCreationRepo(session)
+        )
+        self.session_participation_update_repo = (
+            SqlAlchemySessionParticipationUpdateRepo(session)
         )

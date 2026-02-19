@@ -68,3 +68,7 @@ class SessionClosedForRegistration(SessionDomainError):
 
 class OwnerCantRegisterToOwnSessionError(SessionDomainError):
     pass
+
+
+class NoActiveParticipationFoundError(SessionDomainError):
+    pass

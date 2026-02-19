@@ -24,6 +24,8 @@ from app.feature.session.session_router import router as session_router
 from app.feature.credit.credit_router import router as credit_router
 from app.feature.payment.payment_router import router as payment_router
 from app.feature.stripe.stripe_router import router as stripe_router
+from app.feature.coach.coach_router import router as coach_router
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -98,6 +100,7 @@ app.include_router(admin_users_router)
 app.include_router(credit_router)
 app.include_router(payment_router)
 app.include_router(stripe_router)
+app.include_router(coach_router)
 
 
 @app.get("/health", include_in_schema=False)

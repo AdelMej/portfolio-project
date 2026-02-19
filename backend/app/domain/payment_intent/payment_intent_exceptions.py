@@ -2,5 +2,5 @@ class PaymentIntentDomainError(Exception):
     pass
 
 
-class PaymentInntentAlreadyExist(PaymentIntentDomainError):
+class PaymentIntentAlreadyExist(PaymentIntentDomainError):
     pass

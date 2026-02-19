@@ -123,7 +123,7 @@ BEGIN
 	END IF;
 	
     -- Attendance must not already exist
-    IF app_fcn.is_attended(p_session_id) THEN
+    IF app_fcn.is_session_attended(p_session_id) THEN
         RETURN FALSE;
     END IF;
 

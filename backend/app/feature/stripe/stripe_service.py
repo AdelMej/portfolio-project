@@ -1,6 +1,7 @@
 from app.domain.credit.credit_cause import CreditCause
 from app.domain.credit.credit_entity import NewCreditEntity
 from app.domain.stripe.stripe_exception import (
+    AccountIsInvalid,
     BalanceNotExpendedError,
     ChargeNotReadyError,
     IntentIsInvalidError
@@ -149,6 +150,20 @@ class StripeService:
                     payment_intent.session_id,
                     payment_intent.user_id,
                 )
+            case "account.updated":
+                account = event.data.object
+                if not isinstance(account, stripe.Account):
+                    raise AccountIsInvalid()
 
+                print(account)
+
+                await (
+                    uow.coach_stripe_account_update_repo.update_by_account_id(
+                        account_id=account.id,
+                        details_submitted=bool(account.details_submitted),
+                        charges_enabled=bool(account.charges_enabled),
+                        payouts_enabled=bool(account.payouts_enabled)
+                    )
+                )
             case _:
                 return

@@ -54,7 +54,7 @@ class SqlAlchemyMeReadRepo(MeReadRepoPort):
     async def get_profile_by_id(self, user_id: UUID) -> UserProfileEntity:
         res = await self._session.execute(
             text("""
-            SELECT id, first_name, last_name
+            SELECT user_id, first_name, last_name
             FROM app.user_profiles
             WHERE user_id = :user_id
             """),
@@ -66,7 +66,7 @@ class SqlAlchemyMeReadRepo(MeReadRepoPort):
         row = res.mappings().one()
 
         return UserProfileEntity(
-            user_id=row["id"],
+            user_id=row["user_id"],
             first_name=row["first_name"],
             last_name=row["last_name"]
         )

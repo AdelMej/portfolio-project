@@ -23,6 +23,8 @@ class Permission(str, Enum):
     READ_ATTENDANCE = "read:attendance"
     CREATE_ATTENDANCE = "create:attendance"
     SESSION_REGISTRATION = "session:registration"
+    CANCEL_REGISTRATION = "cancel:registration"
+    CREATE_STRIPE_ACCOUNT = "creat:stripe"
 
 
 ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
@@ -33,7 +35,8 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.DELETE_SELF,
         Permission.READ_CREDIT,
         Permission.READ_PAYMENT,
-        Permission.SESSION_REGISTRATION
+        Permission.SESSION_REGISTRATION,
+        Permission.CANCEL_REGISTRATION
     },
     Role.ADMIN: {
         Permission.READ_SELF,
@@ -59,6 +62,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.CANCEL_SESSION,
         Permission.UPDATE_SESSION,
         Permission.READ_ATTENDANCE,
-        Permission.CREATE_ATTENDANCE
+        Permission.CREATE_ATTENDANCE,
+        Permission.CREATE_STRIPE_ACCOUNT
     }
 }
