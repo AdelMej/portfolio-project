@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from app.domain.auth.actor_entity import Actor
 from app.domain.auth.permission import Permission

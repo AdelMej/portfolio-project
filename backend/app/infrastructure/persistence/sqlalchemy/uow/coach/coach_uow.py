@@ -7,7 +7,8 @@ from app.infrastructure.persistence.sqlalchemy.repositories import (
     SqlAlchemyCoachStripeAccountCreationRepo,
     SqlAlchemyPaymentReadRepo,
     SqlAlchemyPaymentCreationRepo,
-    SqlAlchemySessionReadRepo
+    SqlAlchemySessionReadRepo,
+    SqlAlchemyAuthReadRepo
 )
 
 
@@ -29,4 +30,7 @@ class SqlAlchemyCoachUoW(CoachUoWPort):
         )
         self.session_read_repo = (
             SqlAlchemySessionReadRepo(session)
+        )
+        self.auth_read_repo = (
+            SqlAlchemyAuthReadRepo(session)
         )

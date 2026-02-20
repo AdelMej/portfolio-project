@@ -21,7 +21,9 @@ from app.domain.session.session_exception import (
     SessionCreditNegativeError,
     SessionPriceIsNegativeError,
     NoActiveParticipationFoundError,
-    InvalidCoachAccountError
+    InvalidCoachAccountError,
+    SessionNotAttendedError,
+    SessionStartedError
 )
 import logging
 from app.shared.rules.session_title_rules import (
@@ -166,7 +168,7 @@ def register_exception_handler(app: FastAPI):
         return JSONResponse(
             content={"error": "invalid attendance input"},
             status_code=400
-     )
+        )
 
     @app.exception_handler(SessionOverlappingError)
     async def session_overlapping_handler(
@@ -403,6 +405,7 @@ def register_exception_handler(app: FastAPI):
             content={"error": "stripe account is invalid"},
             status_code=400
         )
+
     @app.exception_handler(SessionNotFinishedError)
     async def session_not_finished_error(
         request: Request,
@@ -419,5 +422,43 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={"error": "session is not finished"},
+            status_code=409
+        )
+
+    @app.exception_handler(SessionNotAttendedError)
+    async def session_not_attended_error(
+        request: Request,
+        exc: SessionNotAttendedError
+    ) -> JSONResponse:
+        logger.info(
+            "session was not attended",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={"error": "session was not attended"},
+            status_code=404
+        )
+
+    @app.exception_handler(SessionStartedError)
+    async def session_started_error(
+        request: Request,
+        exc: SessionStartedError
+    ) -> JSONResponse:
+        logger.info(
+            "cannot cancel after a session started",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={"error": "cannot cancel after a session started"},
             status_code=409
         )

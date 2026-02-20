@@ -27,7 +27,8 @@ from app.domain.session.session_exception import (
     SessionClosedForRegistration,
     SessionIsFullError,
     SessionNotFoundError,
-    SessionOverlappingError
+    SessionOverlappingError,
+    SessionStartedError
 )
 from app.feature.session.session_dto import (
     AttendanceInputDTO,
@@ -47,7 +48,6 @@ from app.domain.session.session_entity import (
     NewSessionEntity,
     NewSessionParticipationEntity
 )
-from app.shared.exceptions.commons import NotFoundError
 from app.domain.currency.currency_rules import (
     ensure_currency_is_valid
 )
@@ -68,7 +68,7 @@ class SessionService:
         )
 
         if not session:
-            raise NotFoundError()
+            raise SessionNotFoundError()
 
         return GetOutputDto(
             id=session.id,
@@ -156,7 +156,7 @@ class SessionService:
 
     async def cancel_session(
         self,
-        uow,
+        uow: SessionUoWPort,
         actor: Actor,
         session_id: UUID
     ):
@@ -176,6 +176,11 @@ class SessionService:
             actor.id
         ):
             raise NotOwnerOfSessionError()
+
+        if await uow.session_read_repo.is_session_started(
+            session_id=session_id
+        ):
+            raise SessionStartedError()
 
         await uow.session_update_repo.cancel_session(session_id)
 

@@ -15,6 +15,15 @@ from app.feature.auth.auth_router import router as auth_router
 from app.feature.admin.users.admin_users_router import (
     router as admin_users_router
 )
+from app.feature.admin.session.admin_session_router import (
+    router as admin_session_router
+)
+from app.feature.admin.payment.admin_payment_router import (
+    router as admin_payment_router
+)
+from app.feature.admin.credit.admin_credit_router import (
+    router as admin_credit_router
+)
 from app.shared.handlers import register_exception_handlers
 import logging
 import stripe
@@ -83,11 +92,14 @@ register_exception_handlers(app)
 
 app.include_router(auth_router)
 app.include_router(session_router)
-app.include_router(admin_users_router)
 app.include_router(credit_router)
 app.include_router(payment_router)
 app.include_router(stripe_router)
 app.include_router(coach_router)
+app.include_router(admin_users_router)
+app.include_router(admin_session_router)
+app.include_router(admin_payment_router)
+app.include_router(admin_credit_router)
 
 
 @app.get("/health", include_in_schema=False)

@@ -13,10 +13,15 @@ from .payment_creation_repository_port import (
 from .session_read_repository_port import (
     SessionReadRepoPort
 )
+from .auth_read_repository_port import (
+    AuthReadRepoPort
+)
 
 __all__ = [
     "CoachStripeAccountReadRepoPort",
     "CoachStripeAccountCreationRepoPort",
     "PaymentReadRepoPort",
-    "SessionReadRepoPort"
+    "PaymentCreationRepoPort",
+    "SessionReadRepoPort",
+    "AuthReadRepoPort"
 ]

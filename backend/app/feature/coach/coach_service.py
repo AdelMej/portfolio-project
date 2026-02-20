@@ -2,6 +2,7 @@ from uuid import UUID
 import stripe
 
 from app.domain.auth.actor_entity import Actor
+from app.domain.auth.auth_exceptions import AuthUserIsDisabledError
 from app.domain.auth.permission import Permission
 from app.domain.payment.payment_entity import NewPaymentEntity
 from app.domain.payment.payment_exception import PaymentAlreadyPaidError
@@ -31,6 +32,9 @@ class CoachService():
         client: stripe.StripeClient
     ) -> str | None:
         ensure_has_permission(actor, Permission.CREATE_STRIPE_ACCOUNT)
+
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         stripe_acount_id = (
             await uow.coach_stripe_account_read_repo.get_account_id(
@@ -73,6 +77,9 @@ class CoachService():
         client: stripe.StripeClient,
     ) -> None:
         ensure_has_permission(actor, Permission.COACH_PAYOUT)
+
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         if not await uow.coach_stripe_account_read_repo.is_coach_account_valid(
             actor.id

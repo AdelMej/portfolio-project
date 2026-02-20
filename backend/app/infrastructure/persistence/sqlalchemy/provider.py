@@ -2,6 +2,18 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql.expression import text
 from app.domain.auth.actor_entity import Actor
+from app.feature.admin.credit.uow.admin_credit_uow_port import (
+    AdminCreditUoWPort
+)
+from app.feature.admin.payment.uow.admin_payment_uow_port import (
+    AdminPaymentUoWPort
+)
+from app.feature.admin.session.uow.admin_session_system_uow_port import (
+    AdminSessionSystemUoWPort
+)
+from app.feature.admin.session.uow.admin_session_uow_port import (
+    AdminSessionUoWPort
+)
 from app.feature.admin.users.uow.admin_user_system_uow_port import (
     AdminUserSystemUoWPort
 )
@@ -17,7 +29,11 @@ from app.feature.session.uow.session_public_uow_port import (
 )
 from app.infrastructure.persistence.sqlalchemy.uow.admin import (
     SqlAlchemyAdminUserUoW,
-    SqlAlchemyAdminUserSystemUoW
+    SqlAlchemyAdminUserSystemUoW,
+    SqlAlchemyAdminSessionUoW,
+    SqlAlchemyAdminSessionSystemUoW,
+    SqlAlchemyAdminPaymentUoW,
+    SqlAlchemyAdminCreditUoW
 )
 from app.infrastructure.persistence.sqlalchemy.uow.auth import (
     SqlAlchemyMeUoW,
@@ -106,32 +122,6 @@ async def get_session_uow(
     return SqlAlchemySessionUoW(session)
 
 
-async def get_admin_user_uow(
-        session: AsyncSession = Depends(get_app_user_session),
-        actor: Actor = Depends(get_current_actor)
-) -> AdminUserUoWPort:
-    await session.execute(
-        text(
-            "SELECT set_config('app.current_user_id', :user_id, true)"
-        ),
-        {"user_id": str(actor.id)},
-    )
-    return SqlAlchemyAdminUserUoW(session)
-
-
-async def get_admin_system_user_uow(
-        session: AsyncSession = Depends(get_app_system_session),
-        actor: Actor = Depends(get_current_actor)
-) -> AdminUserSystemUoWPort:
-    await session.execute(
-        text(
-            "SELECT set_config('app.current_user_id', :user_id, true)"
-        ),
-        {"user_id": str(actor.id)},
-    )
-    return SqlAlchemyAdminUserSystemUoW(session)
-
-
 async def get_credit_uow(
         session: AsyncSession = Depends(get_app_user_session),
         actor: Actor = Depends(get_current_actor)
@@ -181,3 +171,81 @@ async def get_coach_uow(
         }
     )
     return SqlAlchemyCoachUoW(session)
+
+
+async def get_admin_user_uow(
+        session: AsyncSession = Depends(get_app_user_session),
+        actor: Actor = Depends(get_current_actor)
+) -> AdminUserUoWPort:
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true)"
+        ),
+        {"user_id": str(actor.id)},
+    )
+    return SqlAlchemyAdminUserUoW(session)
+
+
+async def get_admin_system_user_uow(
+        session: AsyncSession = Depends(get_app_system_session),
+        actor: Actor = Depends(get_current_actor)
+) -> AdminUserSystemUoWPort:
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true)"
+        ),
+        {"user_id": str(actor.id)},
+    )
+    return SqlAlchemyAdminUserSystemUoW(session)
+
+
+async def get_admin_session_uow(
+    session: AsyncSession = Depends(get_app_user_session),
+    actor: Actor = Depends(get_current_actor)
+) -> AdminSessionUoWPort:
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true)"
+        ),
+        {"user_id": str(actor.id)},
+    )
+    return SqlAlchemyAdminSessionUoW(session)
+
+
+async def get_admin_session_system_uow(
+    session: AsyncSession = Depends(get_app_system_session),
+    actor: Actor = Depends(get_current_actor)
+) -> AdminSessionSystemUoWPort:
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true)"
+        ),
+        {"user_id": str(actor.id)},
+    )
+    return SqlAlchemyAdminSessionSystemUoW(session)
+
+
+async def get_admin_payment_uow(
+    session: AsyncSession = Depends(get_app_system_session),
+    actor: Actor = Depends(get_current_actor)
+) -> AdminPaymentUoWPort:
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true)"
+        ),
+        {"user_id": str(actor.id)},
+    )
+    return SqlAlchemyAdminPaymentUoW(session)
+
+
+async def get_admin_credit_uow(
+    session: AsyncSession = Depends(get_app_system_session),
+    actor: Actor = Depends(get_current_actor)
+) -> AdminCreditUoWPort:
+    await session.execute(
+        text(
+            "SELECT set_config('app.current_user_id', :user_id, true)"
+        ),
+        {"user_id": str(actor.id)},
+    )
+    return SqlAlchemyAdminCreditUoW(session)

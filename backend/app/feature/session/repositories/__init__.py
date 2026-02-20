@@ -34,6 +34,9 @@ from .session_participation_update_repository_port import (
 from .coach_stripe_account_read_repository_port import (
     CoachStripeAccountReadRepoPort
 )
+from .auth_read_repository_port import (
+    AuthReadRepoPort
+)
 
 __all__ = [
     "SessionReadRepoPort",
@@ -47,5 +50,6 @@ __all__ = [
     "SessionAttendanceCreationRepoPort",
     "SessionParticipationReadRepoPort",
     "SessionParticipationUpdateRepoPort",
-    "CoachStripeAccountReadRepoPort"
+    "CoachStripeAccountReadRepoPort",
+    "AuthReadRepoPort"
 ]

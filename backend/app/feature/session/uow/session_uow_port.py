@@ -1,7 +1,4 @@
 from typing import Protocol
-from app.feature.auth.repositories.auth_read_repository_port import (
-    AuthReadRepoPort
-)
 from app.feature.session.repositories import (
     PaymentIntentCreationRepoPort,
     SessionUpdateRepoPort,
@@ -14,7 +11,8 @@ from app.feature.session.repositories import (
     SessionAttendanceCreationRepoPort,
     SessionParticipationReadRepoPort,
     SessionParticipationUpdateRepoPort,
-    CoachStripeAccountReadRepoPort
+    CoachStripeAccountReadRepoPort,
+    AuthReadRepoPort
 )
 
 

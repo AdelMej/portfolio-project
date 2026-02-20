@@ -5,7 +5,8 @@ from app.feature.coach.repositories import (
     CoachStripeAccountReadRepoPort,
     PaymentReadRepoPort,
     SessionReadRepoPort,
-    PaymentCreationRepoPort
+    PaymentCreationRepoPort,
+    AuthReadRepoPort
 )
 
 
@@ -15,3 +16,4 @@ class CoachUoWPort(Protocol):
     payment_read_repo: PaymentReadRepoPort
     payment_creation_repo: PaymentCreationRepoPort
     session_read_repo: SessionReadRepoPort
+    auth_read_repo: AuthReadRepoPort

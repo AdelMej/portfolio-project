@@ -80,3 +80,11 @@ class InvalidCoachAccountError(SessionDomainError):
 
 class SessionNotFinishedError(SessionDomainError):
     pass
+
+
+class SessionStartedError(SessionDomainError):
+    pass
+
+
+class SessionNotAttendedError(SessionDomainError):
+    pass
