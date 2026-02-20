@@ -300,3 +300,34 @@ $$;
 COMMENT ON FUNCTION app_fcn.is_session_finished(uuid)
 IS
 'Returns true if the session end time is in the past, indicating the session has finished. Used to gate post-session actions such as coach payouts.';
+
+CREATE OR REPLACE FUNCTION app_fcn.is_session_started(
+    p_session_id uuid
+)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
+    /*
+     * Returns true if the given session has already started.
+     *
+     * A session is considered started when its starts_at timestamp
+     * is less than or equal to the current time.
+     *
+     * This function is used to enforce domain invariants such as:
+     * - preventing cancellation after a session has started
+     */
+    SELECT EXISTS (
+        SELECT 1
+        FROM app.sessions s
+        WHERE s.id = p_session_id
+          AND s.starts_at <= now()
+    );
+$$;
+
+COMMENT ON FUNCTION app_fcn.is_session_started(uuid)
+IS
+'Returns true if the specified session has already started (starts_at <= now()).
+Used to enforce domain invariants such as preventing cancellation after session start.';
