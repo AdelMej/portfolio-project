@@ -307,7 +307,7 @@ AS $$
 	    IF v_expires_at < now() THEN
 	    	RETURN;
 	    END IF;
-	
+
 	    UPDATE app.session_participation
 	    SET paid_at = now()
 	    WHERE session_id = p_session_id

@@ -44,3 +44,32 @@ COMMENT ON FUNCTION app_fcn.stripe_account_is_valid(uuid) IS
 'Returns whether a Stripe Connect account exists for the given coach.
 Performs coach-only authorization and is used to enforce idempotent
 Stripe account creation flows.';
+
+CREATE OR replace FUNCTION app_fcn.stripe_account_exists(
+	p_coach_id uuid
+)
+RETURNS boolean
+LANGUAGE SQL
+stable
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
+	/*
+	 * Checks whether a Stripe account is registered for the given coach.
+	 *
+	 * This function returns true if a Stripe account exists for the provided
+	 * coach identifier, and false otherwise.
+	 *
+	 * It is intended to be used as a lightweight predicate in business logic
+	 * to validate Stripe-related operations (payouts, credits, etc.) without
+	 * exposing Stripe account details.
+	 */
+	SELECT EXISTS(
+		SELECT 1
+		FROM app.coach_stripe_accounts
+		WHERE coach_id = p_coach_id
+	);
+$$;
+
+COMMENT ON FUNCTION app_fcn.stripe_account_exists(uuid)
+IS 'Returns true if a Stripe account exists for the given coach ID; used as a lightweight predicate for validating Stripe-related operations.';
