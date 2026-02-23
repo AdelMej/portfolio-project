@@ -9,10 +9,12 @@ class Permission(str, Enum):
     UPDATE_SELF = "update:self"
     DELETE_SELF = "delete:self"
     NO_SELF_DELETE = "delete:notSelf"
-    READ_USERS = "read:users"
+    ADMIN_READ_USERS = "admin:read:users"
     BAN_USER = "ban:user"
     CREATE_SESSION = "session:create"
     CANCEL_SESSION = "session:cancel"
+    ADMIN_CANCEL_SESSION = "admin:session:cancel"
+    ADMIN_READ_SESSION = "admin:session:read"
     GRANT_ROLE = "role:grant"
     REVOKE_ROLE = "role:revoke"
     DISABLE_USER = "disable:user"
@@ -21,10 +23,13 @@ class Permission(str, Enum):
     READ_PAYMENT = "read:payment"
     UPDATE_SESSION = "update:session"
     READ_ATTENDANCE = "read:attendance"
+    ADMIN_READ_ATTENDANCE = "admin:attendance:read"
     CREATE_ATTENDANCE = "create:attendance"
     SESSION_REGISTRATION = "session:registration"
     CANCEL_REGISTRATION = "cancel:registration"
-    CREATE_STRIPE_ACCOUNT = "creat:stripe"
+    CREATE_STRIPE_ACCOUNT = "create:stripe"
+    ADMIN_READ_PAYMENT = "admin:read:payment",
+    ADMIN_READ_CREDIT = "admin:read:credit"
 
 
 ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
@@ -43,15 +48,17 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.WRITE_SELF,
         Permission.UPDATE_SELF,
         Permission.NO_SELF_DELETE,
-        Permission.READ_USERS,
+        Permission.ADMIN_READ_USERS,
+        Permission.ADMIN_READ_SESSION,
         Permission.CREATE_SESSION,
-        Permission.CANCEL_SESSION,
+        Permission.ADMIN_CANCEL_SESSION,
         Permission.GRANT_ROLE,
         Permission.REVOKE_ROLE,
         Permission.DISABLE_USER,
         Permission.REENEABLE_USER,
-        Permission.READ_CREDIT,
-        Permission.READ_PAYMENT
+        Permission.ADMIN_READ_ATTENDANCE,
+        Permission.ADMIN_READ_PAYMENT,
+        Permission.ADMIN_READ_CREDIT
     },
     Role.COACH: {
         Permission.READ_SELF,

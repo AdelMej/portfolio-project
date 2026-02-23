@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from app.feature.auth.uow.me_uow_port import MeUoWPort
+from app.feature.me.uow.me_uow_port import MeUoWPort
 from app.infrastructure.persistence.sqlalchemy.repositories.auth import (
     SqlAlchemyAuthReadRepo,
 )

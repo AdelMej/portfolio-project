@@ -76,7 +76,6 @@ class StripeService:
 
                 await uow.payment_creation_repo.create_payment(payment)
 
-                print(payment_intent.user_id)
                 if payment_intent.credit_applied_cents > 0:
                     credit = NewCreditEntity(
                         user_id=payment_intent.user_id,
@@ -101,7 +100,6 @@ class StripeService:
 
                 provider_payment_id = intent["id"]
 
-                print(provider_payment_id)
                 if not await uow.payment_intent_read_repo.intent_exists(
                     provider_payment_id
                 ):
@@ -112,7 +110,6 @@ class StripeService:
                         provider_payment_id
                     )
                 )
-                print(intent["status"])
                 await uow.payment_intent_update_repo.mark_payment_intent(
                     provider_payment_id=provider_payment_id,
                     provider_status=intent["status"],
@@ -154,8 +151,6 @@ class StripeService:
                 account = event.data.object
                 if not isinstance(account, stripe.Account):
                     raise AccountIsInvalid()
-
-                print(account)
 
                 await (
                     uow.coach_stripe_account_update_repo.update_by_account_id(

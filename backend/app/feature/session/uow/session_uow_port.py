@@ -1,7 +1,4 @@
 from typing import Protocol
-from app.feature.auth.repositories.auth_read_repository_port import (
-    AuthReadRepoPort
-)
 from app.feature.session.repositories import (
     PaymentIntentCreationRepoPort,
     SessionUpdateRepoPort,
@@ -13,7 +10,9 @@ from app.feature.session.repositories import (
     SessionAttendanceReadRepoPort,
     SessionAttendanceCreationRepoPort,
     SessionParticipationReadRepoPort,
-    SessionParticipationUpdateRepoPort
+    SessionParticipationUpdateRepoPort,
+    CoachStripeAccountReadRepoPort,
+    AuthReadRepoPort
 )
 
 
@@ -30,3 +29,4 @@ class SessionUoWPort(Protocol):
     credit_ledger_read_repo: CreditLedgerReadRepoPort
     credit_ledger_creation_repo: CreditLedgerCreationRepoPort
     auth_read_repo: AuthReadRepoPort
+    coach_stripe_account_read_repo: CoachStripeAccountReadRepoPort

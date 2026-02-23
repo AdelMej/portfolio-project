@@ -5,7 +5,8 @@ from app.domain.auth.auth_exceptions import (
     AdminCantSelfRennableError,
     AdminCantSelfRevokeError,
     AuthUserIsDisabledError,
-    BaseRoleCannotBeRevokedError
+    BaseRoleCannotBeRevokedError,
+    UserNotFoundError
 )
 from app.domain.auth.permission import Permission
 from app.domain.auth.permission_rules import ensure_has_permission
@@ -31,7 +32,10 @@ class AdminUserService:
         limit: int = 50,
         offset: int = 0,
     ) -> PaginatedUsersDTO:
-        ensure_has_permission(actor, Permission.READ_USERS)
+        ensure_has_permission(actor, Permission.ADMIN_READ_USERS)
+
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         users, has_more = await uow.admin_user_read_repo.get_all_users(
             limit=limit,
@@ -62,7 +66,13 @@ class AdminUserService:
         uow: AdminUserUoWPort,
         actor: Actor,
     ) -> UserDTO:
-        ensure_has_permission(actor, Permission.READ_USERS)
+        ensure_has_permission(actor, Permission.ADMIN_READ_USERS)
+
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
+
+        if not await uow.auth_read_repo.exists_user(user_id):
+            raise UserNotFoundError()
 
         user = await uow.admin_user_read_repo.get_user_by_id(user_id)
 
@@ -90,6 +100,9 @@ class AdminUserService:
         if await uow.auth_read_repo.is_user_disabled(user_id):
             raise AuthUserIsDisabledError()
 
+        if not await uow.auth_read_repo.exists_user(user_id):
+            raise UserNotFoundError()
+
         await uow.admin_user_creation_repo.grant_role(
             user_id=user_id,
             role=role.role
@@ -106,6 +119,9 @@ class AdminUserService:
 
         if await uow.auth_read_repo.is_user_disabled(user_id):
             raise AuthUserIsDisabledError()
+
+        if not await uow.auth_read_repo.exists_user(user_id):
+            raise UserNotFoundError()
 
         if role.role == Role.USER:
             raise BaseRoleCannotBeRevokedError()
@@ -129,6 +145,9 @@ class AdminUserService:
         if await uow.auth_read_repo.is_user_disabled(user_id):
             raise AuthUserIsDisabledError()
 
+        if not await uow.auth_read_repo.exists_user(user_id):
+            raise UserNotFoundError()
+
         if actor.id == user_id:
             raise AdminCantSelfDisableError()
 
@@ -144,5 +163,8 @@ class AdminUserService:
 
         if actor.id == user_id:
             raise AdminCantSelfRennableError()
+
+        if not await uow.auth_read_repo.exists_user(user_id):
+            raise UserNotFoundError()
 
         await uow.admin_user_update_repo.reenable_user(user_id)

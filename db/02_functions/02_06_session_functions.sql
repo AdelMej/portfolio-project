@@ -200,7 +200,9 @@ RETURNS TABLE (
     status text,
     starts_at timestamptz,
     ends_at timestamptz,
-    cancelled_at timestamptz
+    cancelled_at timestamptz,
+    created_at timestamptz,
+    updated_at timestamptz
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -243,7 +245,9 @@ AS $$
 	        s.status::text,
 	        s.starts_at,
 	        s.ends_at,
-			s.cancelled_at
+			s.cancelled_at,
+			s.created_at,
+			s.updated_at
 	    FROM app.sessions s
 	    WHERE s.id = p_session_id;
 	END;
@@ -308,6 +312,11 @@ as $$
 		IF NOT app_fcn.session_exists(p_session_id) THEN
 			RAISE EXCEPTION 'session not found'
 				USING ERRCODE = 'AP404';
+		END IF;
+
+		IF app_fcn.is_session_started(p_session_id) THEN
+			RAISE EXCEPTION 'cannot cancel session after it started'
+				USING ERRCODE = 'AP409';
 		END IF;
 
 		IF app_fcn.is_session_cancelled(p_session_id) THEN

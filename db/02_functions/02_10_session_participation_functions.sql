@@ -1,6 +1,7 @@
 CREATE OR REPLACE FUNCTION app_fcn.create_session_participation(
     p_user_id uuid,
-    p_session_id uuid
+    p_session_id uuid,
+    p_expires_at timestamptz
 )
 RETURNS void
 LANGUAGE plpgsql
@@ -68,17 +69,19 @@ BEGIN
 		id,
         session_id,
         user_id,
-        registered_at
+        registered_at,
+        expires_at
     ) VALUES (
 		gen_random_uuid(),
         p_session_id,
         p_user_id,
-        now()
+        now(),
+        p_expires_at
     );
 END;
 $$;
 
-COMMENT ON FUNCTION app_fcn.create_session_participation(uuid, uuid) IS
+COMMENT ON FUNCTION app_fcn.create_session_participation(uuid, uuid, timestamptz) IS
 'Creates a participation entry for a user in a session.
 
 This function enforces all session participation invariants at the
@@ -162,7 +165,53 @@ single active participation, and marks it as cancelled atomically.';
 
 
 create or replace function app_fcn.revoke_all_active_session(
-	p_user_id
+	p_user_id uuid
 )
 returns void
 language plpgsql
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
+	/*
+	 * app_fcn.revoke_all_active_session
+	 *
+	 * Revokes all active session participations for the given user.
+	 *
+	 * Authorization:
+	 *   - A user may only revoke their own participations
+	 *
+	 * Behavior:
+	 *   - Marks all active participations as cancelled by setting cancelled_at
+	 *   - Does not delete records (append-only history preserved)
+	 *
+	 * Definition of "active":
+	 *   - cancelled_at IS NULL
+	 *   - AND (
+	 *       paid_at IS NOT NULL
+	 *       OR expires_at > now()
+	 *     )
+	 *
+	 * Usage:
+	 *   - Cleanup on checkout failure
+	 *   - User-initiated cancellation flows
+	 *   - Safety rollback paths
+	 *
+	 * Notes:
+	 *   - Idempotent (repeated calls have no side effects)
+	 *   - No advisory lock required (single-user scoped mutation)
+	 */
+	BEGIN
+		IF NOT app_fcn.is_self(p_user_id) THEN
+			RAISE EXCEPTION 'permission denied'
+				USING ERRCODE = 'AP401';
+		END IF;
+
+		UPDATE app.session_participation
+		SET cancelled_at = now()
+		WHERE user_id = p_user_id;
+	END;
+$$;
+
+COMMENT ON FUNCTION app_fcn.revoke_all_active_session(uuid)
+IS
+'Revoke all active session participations for the given user. Used to cancel pending or active registrations during checkout failures, user-initiated cancellations, or safety rollback paths. Only affects active participations and preserves historical records.';

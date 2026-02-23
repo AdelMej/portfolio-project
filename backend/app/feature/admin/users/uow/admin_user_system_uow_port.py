@@ -3,9 +3,7 @@ from typing import Protocol
 from app.feature.admin.users.repositories import (
     AdminUserCreationRepoPort,
     AdminUserDeletionRepoPort,
-    AdminUserUpdateRepoPort
-)
-from app.feature.auth.repositories.auth_read_repository_port import (
+    AdminUserUpdateRepoPort,
     AuthReadRepoPort
 )
 

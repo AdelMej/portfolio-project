@@ -8,6 +8,6 @@ from app.domain.payment_intent.payment_intent_entity import (
 class PaymentIntentCreationRepoPort(Protocol):
     async def create_payment_intent(
         self,
-        payment_intent: NewPaymentIntentEntity
+        payment_intent: NewPaymentIntentEntity,
     ) -> None:
         ...

@@ -33,6 +33,10 @@ def get_token_hmac_secret(request: Request) -> str:
     return request.app.state.settings.refresh_token_hmac_secret
 
 
+def get_session_participation_ttl(request: Request) -> int:
+    return request.app.state.settings.session_participation_ttl_seconds
+
+
 def get_web_hook_secret(request: Request) -> str:
     return request.app.state.settings.stripe_webhook_secret
 

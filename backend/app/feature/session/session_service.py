@@ -1,5 +1,5 @@
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timedelta
 import stripe
 from app.domain.credit.credit_cause import CreditCause
 from app.domain.credit.credit_entity import NewCreditEntity
@@ -17,6 +17,7 @@ from app.domain.session.session_creation_rules import (
 from app.domain.session.session_exception import (
     AlreadyActiveParticipationError,
     InvalidAttendanceInputError,
+    InvalidCoachAccountError,
     NoActiveParticipationFoundError,
     NotOwnerOfSessionError,
     OwnerCantRegisterToOwnSessionError,
@@ -26,10 +27,12 @@ from app.domain.session.session_exception import (
     SessionClosedForRegistration,
     SessionIsFullError,
     SessionNotFoundError,
-    SessionOverlappingError
+    SessionOverlappingError,
+    SessionStartedError
 )
 from app.feature.session.session_dto import (
     AttendanceInputDTO,
+    CoachPublicDto,
     GetOutputDto,
     SessionUpdateInputDTO,
     AttendanceOutputDto,
@@ -46,13 +49,13 @@ from app.domain.session.session_entity import (
     NewSessionEntity,
     NewSessionParticipationEntity
 )
-from app.shared.exceptions.commons import NotFoundError
 from app.domain.currency.currency_rules import (
     ensure_currency_is_valid
 )
 from app.domain.auth.auth_exceptions import (
     AuthUserIsDisabledError
 )
+from app.shared.utils.time import utcnow
 
 
 class SessionService:
@@ -61,16 +64,18 @@ class SessionService:
             uow: SessionPulbicUoWPort,
             session_id: UUID
     ) -> GetOutputDto:
-        session = (
-            await uow.session_read_repo.get_session_by_id(session_id)
-        )
+        if not await uow.session_read_repo.public_exists_session(session_id):
+            raise SessionNotFoundError()
 
-        if not session:
-            raise NotFoundError()
+        session = await uow.session_read_repo.get_session_by_id(session_id)
 
         return GetOutputDto(
             id=session.id,
-            coach_id=session.coach_id,
+            coach=CoachPublicDto(
+                id=session.coach.user_id,
+                first_name=session.coach.first_name,
+                last_name=session.coach.last_name
+            ),
             title=session.title,
             starts_at=session.starts_at,
             ends_at=session.ends_at,
@@ -98,6 +103,11 @@ class SessionService:
 
         if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
+
+        if not await uow.coach_stripe_account_read_repo.is_coach_account_valid(
+            actor.id
+        ):
+            raise InvalidCoachAccountError()
 
         if await uow.session_read_repo.is_session_overlapping(
             starts_at=input.starts_at,
@@ -136,20 +146,23 @@ class SessionService:
         return [
             GetOutputDto(
                 id=session.id,
-                coach_id=session.coach_id,
+                coach=CoachPublicDto(
+                    id=session.coach.user_id,
+                    first_name=session.coach.first_name,
+                    last_name=session.coach.last_name
+                ),
                 title=session.title,
                 starts_at=session.starts_at,
                 ends_at=session.ends_at,
                 price_cents=session.price_cents,
                 currency=session.currency,
                 status=session.status
-            )
-            for session in sessions
+            ) for session in sessions
         ], has_more
 
     async def cancel_session(
         self,
-        uow,
+        uow: SessionUoWPort,
         actor: Actor,
         session_id: UUID
     ):
@@ -169,6 +182,11 @@ class SessionService:
             actor.id
         ):
             raise NotOwnerOfSessionError()
+
+        if await uow.session_read_repo.is_session_started(
+            session_id=session_id
+        ):
+            raise SessionStartedError()
 
         await uow.session_update_repo.cancel_session(session_id)
 
@@ -344,7 +362,8 @@ class SessionService:
         self,
         session_id: UUID,
         actor: Actor,
-        uow: SessionUoWPort
+        uow: SessionUoWPort,
+        session_ttl: int
     ) -> tuple[bool, str | None]:
         ensure_has_permission(actor, Permission.SESSION_REGISTRATION)
 
@@ -452,8 +471,9 @@ class SessionService:
         await uow.session_participation_creation_repo.create_participation(
             participation=NewSessionParticipationEntity(
                 session_id=session_id,
-                user_id=actor.id
-            )
+                user_id=actor.id,
+            ),
+            expires_at=utcnow() + timedelta(seconds=session_ttl)
         )
 
         return required_payment, client_secret

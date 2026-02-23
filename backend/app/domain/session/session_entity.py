@@ -3,6 +3,8 @@ from uuid import UUID
 from app.domain.session.session_status import SessionStatus
 from dataclasses import dataclass
 
+from app.domain.user.user_profile_entity import UserProfileEntity
+
 
 @dataclass(frozen=True)
 class SessionEntity:
@@ -15,6 +17,8 @@ class SessionEntity:
     cancelled_at: datetime
     price_cents: int
     currency: str
+    created_at: datetime
+    updated_at: datetime
 
 
 @dataclass(frozen=True)
@@ -31,3 +35,18 @@ class NewSessionEntity:
 class NewSessionParticipationEntity:
     session_id: UUID
     user_id: UUID
+
+
+@dataclass(frozen=True)
+class SessionWithCoachEntity:
+    id: UUID
+    coach: UserProfileEntity
+    title: str
+    starts_at: datetime
+    ends_at: datetime
+    status: SessionStatus
+    cancelled_at: datetime
+    price_cents: int
+    currency: str
+    created_at: datetime
+    updated_at: datetime

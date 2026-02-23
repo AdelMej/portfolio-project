@@ -22,9 +22,15 @@ from app.shared.utils.string_predicate import (
 )
 
 
+class CoachPublicDto(BaseModel):
+    id: UUID
+    first_name: str
+    last_name: str
+
+
 class GetOutputDto(BaseModel):
     id: UUID
-    coach_id: UUID
+    coach: CoachPublicDto
     title: str
     starts_at: datetime
     ends_at: datetime

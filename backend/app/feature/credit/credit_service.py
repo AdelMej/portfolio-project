@@ -1,7 +1,6 @@
-
-
 from datetime import datetime
 from app.domain.auth.actor_entity import Actor
+from app.domain.auth.auth_exceptions import AuthUserIsDisabledError
 from app.domain.auth.permission import Permission
 from app.domain.auth.permission_rules import ensure_has_permission
 from app.feature.credit.credit_dto import GetCreditDTO
@@ -19,6 +18,9 @@ class CreditService():
         actor: Actor,
     ) -> tuple[list[GetCreditDTO], bool]:
         ensure_has_permission(actor, Permission.READ_CREDIT)
+
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
 
         credits, has_more = (
             await uow.credit_read_repo.get_credit_by_user_id(

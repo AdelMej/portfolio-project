@@ -276,13 +276,14 @@ AS $$
 	DECLARE
 	    v_paid_at timestamptz;
 	    v_cancelled_at timestamptz;
+		v_expires_at timestamptz;
 	BEGIN
 	    PERFORM pg_advisory_xact_lock(
 	        hashtext('participation:' || p_session_id::text || ':' || p_user_id::text)
 	    );
 	
-	    SELECT paid_at, cancelled_at
-	    INTO v_paid_at, v_cancelled_at
+	    SELECT paid_at, cancelled_at, expires_at
+	    INTO v_paid_at, v_cancelled_at, v_expires_at
 	    FROM app.session_participation
 	    WHERE session_id = p_session_id
 	      AND user_id = p_user_id;
@@ -301,7 +302,12 @@ AS $$
 	    IF v_paid_at IS NOT NULL THEN
 	        RETURN;
 	    END IF;
-	
+	    
+	    -- Expired
+	    IF v_expires_at < now() THEN
+	    	RETURN;
+	    END IF;
+
 	    UPDATE app.session_participation
 	    SET paid_at = now()
 	    WHERE session_id = p_session_id

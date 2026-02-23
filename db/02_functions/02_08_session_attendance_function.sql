@@ -1,4 +1,3 @@
-create or replace function app_fcn.get_pre_attendance(
 	p_session_id uuid
 )
 returns table(
@@ -156,5 +155,55 @@ COMMENT ON FUNCTION app_fcn.create_attendance(uuid, jsonb) IS
 Enforces authorization, session state, time window, payload integrity,
 and race safety via advisory locking.';
 
+CREATE OR REPLACE FUNCTION app_fcn.fetch_attendance_list(
+    p_session_id uuid
+)
+RETURNS TABLE(
+    user_id uuid,
+    first_name text,
+    last_name text,
+    attended boolean
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
+BEGIN
+    /*
+     * Returns the attendance list for a given session.
+     *
+     * This function is restricted to administrators only.
+     * It returns all users associated with the session along with
+     * their attendance status.
+     *
+     * Columns returned:
+     * - user_id   : UUID of the user
+     * - first_name: User's first name
+     * - last_name : User's last name
+     * - attended  : Whether the user attended the session
+     *
+     * Used for administrative oversight and reporting.
+     */
+    IF NOT app_fcn.is_admin() THEN
+        RAISE EXCEPTION 'permission denied'
+            USING ERRCODE = 'AP401';
+    END IF;
 
+    RETURN QUERY
+        SELECT
+            up.user_id,
+            up.first_name::text,
+            up.last_name::text,
+            sa.attended
+        FROM app.user_profiles up
+        JOIN app.session_attendance sa
+            ON up.user_id = sa.user_id
+        WHERE sa.session_id = p_session_id;
+END;
+$$;
 
+COMMENT ON FUNCTION app_fcn.fetch_attendance_list(uuid)
+IS
+'Admin-only function that returns the attendance list for a session.
+Includes user identity information and attendance status.
+Used for administrative reporting and oversight.';

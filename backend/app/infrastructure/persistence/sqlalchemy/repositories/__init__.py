@@ -7,7 +7,12 @@ from .admin import (
     SqlalchemyAdminUserReadRepo,
     SqlAlchemyAdminUserUpdateRepo,
     SqlAlchemyAdminUserCreationRepo,
-    SqlAlchemyAdminUserDeletionRepo
+    SqlAlchemyAdminUserDeletionRepo,
+    SqlAlchemyAdminSessionReadRepo,
+    SqlAlchemyAdminSessionUpdateRepo,
+    SqlAlchemyAdminSessionAttendanceReadRepo,
+    SqlAlchemyAdminPaymentReadRepo,
+    SqlAlchemyAdminCreditLedgerReadRepo
 )
 from .auth import (
     SqlAlchemyAuthReadRepo,
@@ -47,6 +52,7 @@ from .coach_stripe_account import (
     SqlAlchemyCoachStripeAccountUpdateRepo
 )
 
+
 __all__ = [
     "SqlAlchemyAuthReadRepo",
     "SqlAlchemyAuthUpdateRepo",
@@ -75,5 +81,10 @@ __all__ = [
     "SqlAlchemyPaymentIntentUpdateRepo",
     "SqlAlchemyCoachStripeAccountReadRepo",
     "SqlAlchemyCoachStripeAccountUpdateRepo",
-    "SqlAlchemyCoachStripeAccountCreationRepo"
+    "SqlAlchemyCoachStripeAccountCreationRepo",
+    "SqlAlchemyAdminSessionReadRepo",
+    "SqlAlchemyAdminSessionUpdateRepo",
+    "SqlAlchemyAdminSessionAttendanceReadRepo",
+    "SqlAlchemyAdminPaymentReadRepo",
+    "SqlAlchemyAdminCreditLedgerReadRepo"
 ]
