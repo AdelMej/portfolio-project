@@ -19,8 +19,8 @@ from app.feature.admin.users.uow.admin_user_system_uow_port import (
 )
 from app.feature.admin.users.uow.admin_user_uow_port import AdminUserUoWPort
 from app.feature.auth.uow.auth_uow_port import AuthUoWPort
-from app.feature.auth.uow.me_system_uow_port import MeSystemUoWPort
-from app.feature.auth.uow.me_uow_port import MeUoWPort
+from app.feature.me.uow.me_system_uow_port import MeSystemUoWPort
+from app.feature.me.uow.me_uow_port import MeUoWPort
 from app.feature.coach.uow.coach_uow_port import CoachUoWPort
 from app.feature.credit.uow.credit_uow_port import CreditUoWPort
 from app.feature.payment.uow.payment_uow_port import PaymentUoWPort
@@ -35,14 +35,12 @@ from app.infrastructure.persistence.sqlalchemy.uow.admin import (
     SqlAlchemyAdminPaymentUoW,
     SqlAlchemyAdminCreditUoW
 )
-from app.infrastructure.persistence.sqlalchemy.uow.auth import (
+from app.infrastructure.persistence.sqlalchemy.uow.me import (
     SqlAlchemyMeUoW,
+    SqlAlchemyMeSystemUoW
 )
 from app.infrastructure.persistence.sqlalchemy.uow.auth.auth_uow import (
     SqlAlchemyAuthUoW
-)
-from app.infrastructure.persistence.sqlalchemy.uow.auth.me_system_uow import (
-    SqlAlchemyMeSystemUoW
 )
 from app.infrastructure.persistence.sqlalchemy.uow.coach.coach_uow import (
     SqlAlchemyCoachUoW

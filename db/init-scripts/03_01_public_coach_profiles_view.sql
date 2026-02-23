@@ -26,4 +26,4 @@ JOIN app.roles r ON r.id = ur.role_id
 WHERE r.role_name = 'coach';
 
 COMMENT ON VIEW app.v_coach_public IS
-'Public read-only view exposing basic profile information for users with the coach role. Used by the API to safely list coaches without granting access to underlying tables.';
+'Public read-only view exposing basic profile information for users referenced as coach_id by existing sessions. Role membership is intentionally ignored to preserve historical integrity.';

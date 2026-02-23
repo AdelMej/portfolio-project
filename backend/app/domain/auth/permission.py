@@ -28,7 +28,6 @@ class Permission(str, Enum):
     SESSION_REGISTRATION = "session:registration"
     CANCEL_REGISTRATION = "cancel:registration"
     CREATE_STRIPE_ACCOUNT = "create:stripe"
-    COACH_PAYOUT = "coach:payout",
     ADMIN_READ_PAYMENT = "admin:read:payment",
     ADMIN_READ_CREDIT = "admin:read:credit"
 
@@ -71,7 +70,6 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.UPDATE_SESSION,
         Permission.READ_ATTENDANCE,
         Permission.CREATE_ATTENDANCE,
-        Permission.CREATE_STRIPE_ACCOUNT,
-        Permission.COACH_PAYOUT
+        Permission.CREATE_STRIPE_ACCOUNT
     }
 }

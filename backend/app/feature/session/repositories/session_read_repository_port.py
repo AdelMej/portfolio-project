@@ -2,14 +2,17 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from app.domain.session.session_entity import SessionEntity
+from app.domain.session.session_entity import (
+    SessionEntity,
+    SessionWithCoachEntity
+)
 
 
 class SessionReadRepoPort(Protocol):
     async def get_session_by_id(
         self,
         session_id: UUID
-    ) -> SessionEntity:
+    ) -> SessionWithCoachEntity:
         ...
 
     async def get_all_sessions(
@@ -18,7 +21,7 @@ class SessionReadRepoPort(Protocol):
         limit: int,
         _from: datetime | None,
         to: datetime | None
-    ) -> tuple[list[SessionEntity], bool]:
+    ) -> tuple[list[SessionWithCoachEntity], bool]:
         ...
 
     async def is_session_overlapping(

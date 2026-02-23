@@ -33,6 +33,7 @@ from app.feature.credit.credit_router import router as credit_router
 from app.feature.payment.payment_router import router as payment_router
 from app.feature.stripe.stripe_router import router as stripe_router
 from app.feature.coach.coach_router import router as coach_router
+from app.feature.me.me_router import router as me_router
 
 
 logging.basicConfig(
@@ -91,6 +92,7 @@ app = FastAPI(lifespan=lifespan)
 register_exception_handlers(app)
 
 app.include_router(auth_router)
+app.include_router(me_router)
 app.include_router(session_router)
 app.include_router(credit_router)
 app.include_router(payment_router)

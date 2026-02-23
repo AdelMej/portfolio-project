@@ -32,6 +32,7 @@ from app.domain.session.session_exception import (
 )
 from app.feature.session.session_dto import (
     AttendanceInputDTO,
+    CoachPublicDto,
     GetOutputDto,
     SessionUpdateInputDTO,
     AttendanceOutputDto,
@@ -70,7 +71,11 @@ class SessionService:
 
         return GetOutputDto(
             id=session.id,
-            coach_id=session.coach_id,
+            coach=CoachPublicDto(
+                id=session.coach.user_id,
+                first_name=session.coach.first_name,
+                last_name=session.coach.last_name
+            ),
             title=session.title,
             starts_at=session.starts_at,
             ends_at=session.ends_at,
@@ -141,15 +146,18 @@ class SessionService:
         return [
             GetOutputDto(
                 id=session.id,
-                coach_id=session.coach_id,
+                coach=CoachPublicDto(
+                    id=session.coach.user_id,
+                    first_name=session.coach.first_name,
+                    last_name=session.coach.last_name
+                ),
                 title=session.title,
                 starts_at=session.starts_at,
                 ends_at=session.ends_at,
                 price_cents=session.price_cents,
                 currency=session.currency,
                 status=session.status
-            )
-            for session in sessions
+            ) for session in sessions
         ], has_more
 
     async def cancel_session(

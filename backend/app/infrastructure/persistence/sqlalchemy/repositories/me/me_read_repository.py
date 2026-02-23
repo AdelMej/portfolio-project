@@ -4,7 +4,7 @@ from sqlalchemy.sql import text
 from app.domain.auth.role import Role
 from app.domain.user.user_entity import UserEntity
 from app.domain.user.user_profile_entity import UserProfileEntity
-from app.feature.auth.repositories.me_read_repository_port import (
+from app.feature.me.repositories.me_read_repository_port import (
     MeReadRepoPort
 )
 

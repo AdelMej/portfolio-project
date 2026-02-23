@@ -7,7 +7,7 @@ from app.domain.auth.auth_exceptions import (
     PasswordIsBlankError,
     PermissionDeniedError
 )
-from app.feature.auth.repositories.me_update_repository_port import (
+from app.feature.me.repositories.me_update_repository_port import (
     MeUpdateRepoPort
 )
 from app.shared.database.sqlstate_extractor import get_sqlstate

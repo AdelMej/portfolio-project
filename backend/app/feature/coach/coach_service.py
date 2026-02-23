@@ -76,8 +76,6 @@ class CoachService():
         actor: Actor,
         client: stripe.StripeClient,
     ) -> None:
-        ensure_has_permission(actor, Permission.COACH_PAYOUT)
-
         if await uow.auth_read_repo.is_user_disabled(actor.id):
             raise AuthUserIsDisabledError()
 

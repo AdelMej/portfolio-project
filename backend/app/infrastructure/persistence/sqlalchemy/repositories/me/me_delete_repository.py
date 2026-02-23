@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from app.feature.auth.repositories.me_delete_repository_port import (
+from app.feature.me.repositories.me_delete_repository_port import (
     MeDeleteRepoPort
 )
 from app.shared.database.sqlstate_extractor import get_sqlstate
