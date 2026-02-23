@@ -13,3 +13,9 @@ class AuthReadRepoPort(Protocol):
         coach_id
     ) -> bool:
         ...
+
+    async def exists_user(
+        self,
+        user_id
+    ) -> bool:
+        ...

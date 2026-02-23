@@ -17,7 +17,12 @@ from .session.admin_session_update_repository import (
 from .session_attendance.admin_session_attendance_repository import (
     SqlAlchemyAdminSessionAttendanceReadRepo
 )
-
+from .payment.admin_payment_read_repository import (
+    SqlAlchemyAdminPaymentReadRepo
+)
+from .credit.admin_credit_read_repository import (
+    SqlAlchemyAdminCreditLedgerReadRepo
+)
 
 __all__ = [
     "SqlalchemyAdminUserReadRepo",
@@ -26,5 +31,7 @@ __all__ = [
     "SqlAlchemyAdminUserDeletionRepo",
     "SqlAlchemyAdminSessionReadRepo",
     "SqlAlchemyAdminSessionUpdateRepo",
-    "SqlAlchemyAdminSessionAttendanceReadRepo"
+    "SqlAlchemyAdminSessionAttendanceReadRepo",
+    "SqlAlchemyAdminPaymentReadRepo",
+    "SqlAlchemyAdminCreditLedgerReadRepo"
 ]

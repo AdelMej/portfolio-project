@@ -3,7 +3,10 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import text
 from app.domain.auth.auth_exceptions import PermissionDeniedError
-from app.domain.session.session_exception import SessionNotFoundError
+from app.domain.session.session_exception import (
+    SessionNotFoundError,
+    SessionStartedError
+)
 from app.feature.admin.session.repositories import (
     AdminSessionUpdateRepoPort
 )
@@ -35,7 +38,10 @@ class SqlAlchemyAdminSessionUpdateRepo(
             if code == "AP401":
                 raise PermissionDeniedError()
 
-            if code == "404":
+            if code == "AP404":
                 raise SessionNotFoundError()
+
+            if code == "AP409":
+                raise SessionStartedError()
 
             raise

@@ -63,12 +63,10 @@ class SessionService:
             uow: SessionPulbicUoWPort,
             session_id: UUID
     ) -> GetOutputDto:
-        session = (
-            await uow.session_read_repo.get_session_by_id(session_id)
-        )
-
-        if not session:
+        if not await uow.session_read_repo.public_exists_session(session_id):
             raise SessionNotFoundError()
+
+        session = await uow.session_read_repo.get_session_by_id(session_id)
 
         return GetOutputDto(
             id=session.id,

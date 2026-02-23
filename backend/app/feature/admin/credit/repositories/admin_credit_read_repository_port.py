@@ -15,3 +15,12 @@ class AdminCreditLedgerReadRepoPort(Protocol):
         user_id: UUID
     ) -> tuple[list[CreditEntity], bool]:
         ...
+
+    async def get_all_credits(
+        self,
+        limit: int,
+        offset: int,
+        _from: datetime | None,
+        to: datetime | None,
+    ) -> tuple[list[CreditEntity], bool]:
+        ...

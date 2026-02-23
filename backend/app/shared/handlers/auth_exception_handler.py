@@ -41,7 +41,9 @@ from app.domain.auth.auth_exceptions import (
     BaseRoleCannotBeRevokedError,
     AdminCantSelfDisableError,
     AdminCantSelfRennableError,
-    AuthUserIsDisabledError
+    AuthUserIsDisabledError,
+    CoachNotFoundError,
+    UserNotFoundError
 )
 from app.shared.rules.password_rules import (
     MIN_PASSWORD_LENGTH,
@@ -850,4 +852,46 @@ def register_exception_handler(app: FastAPI):
                 "error": "user is disabled"
             },
             status_code=403
+        )
+
+    @app.exception_handler(CoachNotFoundError)
+    async def coach_not_found_handler(
+        request: Request,
+        exc: CoachNotFoundError
+    ) -> JSONResponse:
+        logger.info(
+            "coach not found",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={
+                "error": "coach not found"
+            },
+            status_code=404
+        )
+
+    @app.exception_handler(UserNotFoundError)
+    async def user_not_found_handler(
+        request: Request,
+        exc: UserNotFoundError
+    ) -> JSONResponse:
+        logger.info(
+            "user not found",
+            extra={
+                "error": exc.__class__.__name__,
+                "path": str(request.url.path),
+                "client": request.client.host if request.client else None,
+            }
+        )
+
+        return JSONResponse(
+            content={
+                "error": "user not found"
+            },
+            status_code=404
         )

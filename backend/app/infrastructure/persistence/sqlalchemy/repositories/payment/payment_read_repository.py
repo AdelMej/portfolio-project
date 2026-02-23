@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import text
-from app.domain.payment.payment_entity import PaymentEnity
+from app.domain.payment.payment_entity import PaymentEntity
 from app.feature.payment.repostories.payment_read_repository import (
     PaymentReadRepoPort
 )
@@ -19,7 +19,7 @@ class SqlAlchemyPaymentReadRepo(PaymentReadRepoPort):
         _from: datetime | None,
         to: datetime | None,
         user_id: UUID
-    ) -> tuple[list[PaymentEnity], bool]:
+    ) -> tuple[list[PaymentEntity], bool]:
         res = await self._session.execute(
             text("""
                 SELECT
@@ -63,7 +63,7 @@ class SqlAlchemyPaymentReadRepo(PaymentReadRepoPort):
         rows = rows[:limit]
 
         return [
-            PaymentEnity(
+            PaymentEntity(
                 id=row["id"],
                 session_id=row["session_id"],
                 user_id=row["user_id"],

@@ -117,7 +117,7 @@ async def admin_cancel_session(
 async def get_attendance_list(
     session_id: UUID,
     actor: Actor = Depends(get_current_actor),
-    uow: AdminSessionUoWPort = Depends(get_admin_session_service),
+    uow: AdminSessionSystemUoWPort = Depends(get_admin_session_system_uow),
     service: AdminSessionService = Depends(get_admin_session_service)
 ) -> list[UserProfileOutputDTO]:
 

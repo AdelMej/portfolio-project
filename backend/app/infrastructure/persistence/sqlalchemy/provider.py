@@ -226,7 +226,7 @@ async def get_admin_session_system_uow(
 
 
 async def get_admin_payment_uow(
-    session: AsyncSession = Depends(get_app_system_session),
+    session: AsyncSession = Depends(get_app_user_session),
     actor: Actor = Depends(get_current_actor)
 ) -> AdminPaymentUoWPort:
     await session.execute(
@@ -239,7 +239,7 @@ async def get_admin_payment_uow(
 
 
 async def get_admin_credit_uow(
-    session: AsyncSession = Depends(get_app_system_session),
+    session: AsyncSession = Depends(get_app_user_session),
     actor: Actor = Depends(get_current_actor)
 ) -> AdminCreditUoWPort:
     await session.execute(

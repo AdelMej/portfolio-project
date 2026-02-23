@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from app.domain.payment.payment_entity import PaymentEnity
+from app.domain.payment.payment_entity import PaymentEntity
 
 
 class PaymentReadRepoPort(Protocol):
@@ -13,5 +13,5 @@ class PaymentReadRepoPort(Protocol):
         _from: datetime | None,
         to: datetime | None,
         user_id: UUID
-    ) -> tuple[list[PaymentEnity], bool]:
+    ) -> tuple[list[PaymentEntity], bool]:
         ...

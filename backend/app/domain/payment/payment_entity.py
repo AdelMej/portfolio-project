@@ -4,7 +4,7 @@ from uuid import UUID
 
 
 @dataclass(frozen=True)
-class PaymentEnity:
+class PaymentEntity:
     id: UUID
     session_id: UUID
     user_id: UUID

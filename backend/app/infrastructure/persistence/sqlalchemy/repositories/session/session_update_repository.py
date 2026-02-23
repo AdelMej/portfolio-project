@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.domain.auth.auth_exceptions import PermissionDeniedError
 from app.domain.session.session_exception import (
     SessionNotFoundError,
-    SessionOverlappingError
+    SessionOverlappingError,
+    SessionStartedError
 )
 from app.feature.session.repositories.session_update_repository_port import (
     SessionUpdateRepoPort
@@ -73,7 +74,10 @@ class SqlAlchemySessionUpdateRepo(SessionUpdateRepoPort):
             if code == "AP401":
                 raise PermissionDeniedError()
 
-            if code == "404":
+            if code == "AP404":
                 raise SessionNotFoundError()
+
+            if code == "AP409":
+                raise SessionStartedError()
 
             raise

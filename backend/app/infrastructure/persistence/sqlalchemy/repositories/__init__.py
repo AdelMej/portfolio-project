@@ -10,7 +10,9 @@ from .admin import (
     SqlAlchemyAdminUserDeletionRepo,
     SqlAlchemyAdminSessionReadRepo,
     SqlAlchemyAdminSessionUpdateRepo,
-    SqlAlchemyAdminSessionAttendanceReadRepo
+    SqlAlchemyAdminSessionAttendanceReadRepo,
+    SqlAlchemyAdminPaymentReadRepo,
+    SqlAlchemyAdminCreditLedgerReadRepo
 )
 from .auth import (
     SqlAlchemyAuthReadRepo,
@@ -82,5 +84,7 @@ __all__ = [
     "SqlAlchemyCoachStripeAccountCreationRepo",
     "SqlAlchemyAdminSessionReadRepo",
     "SqlAlchemyAdminSessionUpdateRepo",
-    "SqlAlchemyAdminSessionAttendanceReadRepo"
+    "SqlAlchemyAdminSessionAttendanceReadRepo",
+    "SqlAlchemyAdminPaymentReadRepo",
+    "SqlAlchemyAdminCreditLedgerReadRepo"
 ]

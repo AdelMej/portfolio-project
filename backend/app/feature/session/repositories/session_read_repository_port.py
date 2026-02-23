@@ -66,3 +66,9 @@ class SessionReadRepoPort(Protocol):
         session_id: UUID
     ) -> SessionEntity:
         ...
+
+    async def public_exists_session(
+        self,
+        session_id: UUID
+    ) -> bool:
+        ...

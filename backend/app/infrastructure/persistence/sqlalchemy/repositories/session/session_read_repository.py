@@ -226,6 +226,24 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
 
         return result.scalar_one()
 
+    async def public_exists_session(
+        self,
+        session_id: UUID
+    ) -> bool:
+        stmt = text("""
+            SELECT EXISTS(
+                SELECT 1
+                FROM app.sessions
+                WHERE id = :session_id
+            )
+        """)
+
+        res = await self._session.execute(stmt,  {
+            "session_id": session_id
+        })
+
+        return res.scalar_one()
+
     async def exist_session(
         self,
         session_id: UUID

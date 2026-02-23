@@ -36,11 +36,8 @@ class SqlAlchemyAdminSessionAttendanceReadRepo(
         session_id: UUID
     ) -> list[AdminUserAttendanceRead]:
         stmt = text("""
-            SELECT up.user_id, up.first_name, up.last_name, sa.attended
-            FROM app.user_profiles up
-            JOIN app.session_attendance sa
-                ON up.user_id = sa.user_id
-            WHERE sa.session_id = :session_id
+            SELECT *
+            FROM app_fcn.fetch_attendance_list(:session_id)
         """)
 
         res = await self._session.execute(stmt, {

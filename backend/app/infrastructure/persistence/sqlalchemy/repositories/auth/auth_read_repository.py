@@ -122,3 +122,41 @@ class SqlAlchemyAuthReadRepo(AuthReadRepoPort):
         )
 
         return res.scalar_one()
+
+    async def exists_coach(
+        self,
+        coach_id: UUID
+    ) -> bool:
+        stmt = text("""
+            SELECT EXISTS(
+                SELECT 1
+                FROM app.user_roles ur
+                JOIN app.roles r ON r.id = ur.role_id
+                WHERE ur.user_id = :coach_id
+                AND r.role_name = 'coach'
+            )
+        """)
+
+        res = await self._session.execute(stmt, {
+            "coach_id": coach_id
+        })
+
+        return res.scalar_one()
+
+    async def exists_user(
+        self,
+        user_id
+    ) -> bool:
+        stmt = text("""
+            SELECT EXISTS(
+                SELECT 1
+                FROM app.users
+                WHERE id = :user_id
+            )
+        """)
+
+        res = await self._session.execute(stmt, {
+            "user_id": user_id
+        })
+
+        return res.scalar_one()
