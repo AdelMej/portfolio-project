@@ -21,7 +21,7 @@ SELECT
     u.first_name,
     u.last_name
 FROM app.user_profiles u
-JOIN app.sessions s ON s.coach_id = u.user_id
+JOIN app.sessions s ON s.coach_id = u.user_id;
 
 COMMENT ON VIEW app.v_coach_public IS
 'Public read-only view exposing basic profile information for users referenced as coach_id by existing sessions. Role membership is intentionally ignored to preserve historical integrity.';
