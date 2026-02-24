@@ -274,11 +274,7 @@ class AuthService:
 
         ensure_has_permission(actor, Permission.READ_SELF)
 
-<<<<<<< HEAD
         if await uow.auth_read_repo.is_user_disabled(actor.id): #changed it , FrontEnd issue
-=======
-        if await uow.auth_read_repo.is_user_disabled(actor.id):
->>>>>>> e05ed30d49b006d7097fd3aedba58dabc862e661
             raise AuthUserIsDisabledError()
 
         return await uow.me_read_repo.get(actor.id)
