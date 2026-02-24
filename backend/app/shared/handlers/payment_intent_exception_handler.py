@@ -26,6 +26,8 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "payment intent already exists"},
+            content={
+                "code": "payment_intent_found",
+                "error": "payment intent already exists"},
             status_code=404
         )
