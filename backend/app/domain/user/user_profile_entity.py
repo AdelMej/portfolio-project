@@ -13,3 +13,11 @@ class UserProfileEntity:
 class NewUserProfileEntity:
     first_name: str
     last_name: str
+
+
+@dataclass(frozen=True)
+class AdminUserAttendanceRead:
+    user_id: UUID
+    first_name: str
+    last_name: str
+    attended: bool

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Protocol
 
 from app.domain.session.session_entity import (
@@ -8,6 +9,7 @@ from app.domain.session.session_entity import (
 class SessionParticipationCreationRepoPort(Protocol):
     async def create_participation(
         self,
-        participation: NewSessionParticipationEntity
+        participation: NewSessionParticipationEntity,
+        expires_at: datetime
     ) -> None:
         ...

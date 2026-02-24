@@ -1,147 +1,63 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { apiFetch } from '$lib/api/client';
+import { onMount } from 'svelte';
+import { apiFetch } from '$lib/api/client';
 
-  type Session = {
-    id: string;
-    title: string;
-    starts_at: string;
-    ends_at: string;
-    coach_name?: string;
-    coach_id: string;
-    max_participants?: number;
-    participants_count?: number;
-    status: 'scheduled' | 'cancelled';
-  };
+type User = {
+  id: string;
+  email: string;
+  roles?: string[];
+};
 
-  let sessions: Session[] = [];
-  let loading = true;
-  let error = '';
+let users: User[] = [];
+let loading = true;
+let error = '';
 
-  async function loadSessions() {
-    loading = true;
-    error = '';
+async function loadUsers() {
+  loading = true;
+  error = '';
 
-    try {
-      const data = await apiFetch('/sessions');
-      sessions = data?.items ? data.items : [];
-    } catch (e) {
-      console.error(e);
-      error = 'Impossible de charger les séances';
-    } finally {
-      loading = false;
-    }
+  try {
+    const data = await apiFetch('/users');
+    users = data.items ?? data ?? [];
+  } catch (e) {
+    console.error(e);
+    error = 'Erreur lors du chargement des utilisateurs';
+  } finally {
+    loading = false;
   }
+}
 
-  async function rejoindreSeance(id: string) {
-    try {
-      await apiFetch(`/sessions/${id}/join`, {
-        method: 'POST'
-      });
-
-      await loadSessions(); // reload to update count
-    } catch (e) {
-      alert('Impossible de rejoindre cette séance');
-    }
-  }
-
-  onMount(loadSessions);
+onMount(loadUsers);
 </script>
 
-<div class="container">
-  <h1>Sessions disponibles</h1>
+<h1>Gestion des utilisateurs</h1>
 
-  {#if loading}
-    <p>Chargement...</p>
+{#if loading}
+<p>Chargement...</p>
 
-  {:else if error}
-    <p style="color:red">{error}</p>
+{:else if error}
+<p style="color:red">{error}</p>
 
-  {:else if sessions.length === 0}
-    <p>Aucune séance disponible.</p>
+{:else}
 
-  {:else}
-    <table>
-      <thead>
-        <tr>
-          <th>Titre</th>
-          <th>Début</th>
-          <th>Fin</th>
-          <th>Coach</th>
-          <th>Places</th>
-          <th></th>
-        </tr>
-      </thead>
+<table>
+<thead>
+<tr>
+<th>Email</th>
+<th>ID</th>
+<th>Rôles</th>
+</tr>
+</thead>
 
-      <tbody>
-        {#each sessions as s}
-          {#if s.status === 'scheduled'}
-            <tr>
-              <td>{s.title}</td>
+<tbody>
+{#each users as user}
+<tr>
+<td>{user.email}</td>
+<td>{user.id}</td>
+<td>{user.roles?.join(', ') ?? 'user'}</td>
+</tr>
+{/each}
+</tbody>
+</table>
 
-              <td>
-                {new Date(s.starts_at).toLocaleString('fr-FR')}
-              </td>
-
-              <td>
-                {new Date(s.ends_at).toLocaleString('fr-FR')}
-              </td>
-
-              <td>
-                {s.coach_name || s.coach_id}
-              </td>
-
-              <td>
-                {s.participants_count ?? 0}
-                /
-                {s.max_participants ?? '-'}
-              </td>
-
-              <td>
-                <button
-                  disabled={s.participants_count === s.max_participants}
-                  on:click={() => rejoindreSeance(s.id)}
-                >
-                  Rejoindre
-                </button>
-              </td>
-            </tr>
-          {/if}
-        {/each}
-      </tbody>
-    </table>
-  {/if}
-</div>
-
-<style>
-  .container { padding: 40px; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-  }
-
-  th, td {
-    padding: 10px;
-    border: 1px solid #ddd;
-  }
-
-  th {
-    background: #f3f4f6;
-  }
-
-  button {
-    padding: 6px 12px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    background-color: #16a34a;
-    color: white;
-  }
-
-  button:disabled {
-    background-color: #9ca3af;
-    cursor: not-allowed;
-  }
-</style>
+{/if}

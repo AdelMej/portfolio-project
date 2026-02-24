@@ -1,3 +1,4 @@
+from uuid import UUID
 from fastapi import APIRouter, Depends
 import stripe
 
@@ -31,4 +32,23 @@ async def coach_account(
 
     return CoachStripeAccountCreationOutputDTO(
         onboarding_url=link
+    )
+
+
+@router.post(
+    path='/{session_id}/payout',
+    status_code=204
+)
+async def coach_payout(
+    session_id: UUID,
+    uow: CoachUoWPort = Depends(get_coach_uow),
+    actor: Actor = Depends(get_current_actor),
+    client: stripe.StripeClient = Depends(get_stripe_client),
+    service: CoachService = Depends(get_coach_service)
+) -> None:
+    await service.coach_payout(
+        session_id=session_id,
+        uow=uow,
+        actor=actor,
+        client=client,
     )

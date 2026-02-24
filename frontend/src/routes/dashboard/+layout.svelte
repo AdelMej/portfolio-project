@@ -1,81 +1,50 @@
 <script lang="ts">
-  import { page } from '$app/stores';
-  import { auth } from '$lib/stores/auth.store';
-  import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
-  import { get } from 'svelte/store';
+import { page } from '$app/stores';
+import { auth } from '$lib/stores/auth.store';
+import { goto } from '$app/navigation';
+import { onMount } from 'svelte';
+import { get } from 'svelte/store';
 
-  function hasRole(required: string) {
-    const roles = get(auth).roles || [];
-    return roles.includes(required);
-  }
-
-  function logout() {
-    auth.logout();
-    goto('/login');
-  }
-
-  onMount(() => {
-    const { accessToken, roles } = get(auth);
-    const path = get(page).url.pathname;
-
-    if (!accessToken) {
-      goto('/login');
-      return;
-    }
-
-    if (!roles || roles.length === 0) {
-  // wait until roles are loaded, don't redirect yet
-  return;
+function hasRole(role: string) {
+  return get(auth).roles?.includes(role);
 }
 
-    if (path.startsWith('/dashboard/admin') && !hasRole('admin')) {
-      goto('/dashboard');
-      return;
-    }
+function logout() {
+  auth.logout();
+  goto('/login');
+}
 
-    if (path.startsWith('/dashboard/coach') && !hasRole('coach')) {
-      goto('/dashboard');
-      return;
-    }
+onMount(() => {
+  const { accessToken } = get(auth);
 
-    if (path.startsWith('/dashboard/user') && !hasRole('user')) {
-      goto('/dashboard');
-      return;
-    }
-  });
+  if (!accessToken) {
+    goto('/login');
+  }
+});
 </script>
 
 <header>
-  <nav>
-    <a href="/dashboard">Tableau de bord</a>
+<nav>
 
-    {#if hasRole('admin')}
-      <a href="/dashboard/admin">Administration</a>
-    {/if}
+{#if hasRole('admin')}
+<a href="/dashboard/admin">Administration</a>
+{/if}
 
-    {#if hasRole('coach')}
-      <a href="/dashboard/coach">Coach</a>
-    {/if}
+{#if hasRole('coach')}
+<a href="/dashboard/coach">Coach</a>
+{/if}
 
-   {#if hasRole('user')}
-  <a href="/dashboard/user">Sessions disponibles</a>
-  <a href="/dashboard/user/my-sessions">Mes séances</a>
-   {/if}
+{#if hasRole('user')}
+<a href="/dashboard/user">Mes séances</a>
+{/if}
 
-    <button on:click={logout}>Se déconnecter</button>
-  </nav>
+<button on:click={logout}>
+Se déconnecter
+</button>
+
+</nav>
 </header>
 
 <main>
-  <slot />
+<slot />
 </main>
-
-<style>
-  header { background: #f2f2f2; padding: 1rem; }
-  nav { display: flex; gap: 1rem; align-items: center; }
-  a { text-decoration: none; color: #333; }
-  a:hover { text-decoration: underline; }
-  button { margin-left: auto; cursor: pointer; }
-  main { padding: 2rem; }
-</style>

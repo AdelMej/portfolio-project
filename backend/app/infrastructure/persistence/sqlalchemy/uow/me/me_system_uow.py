@@ -1,13 +1,12 @@
 from sqlalchemy.ext.asyncio.session import AsyncSession
-from app.feature.auth.uow.me_system_uow_port import (
+from app.feature.me.uow.me_system_uow_port import (
     MeSystemUoWPort
 )
-from app.infrastructure.persistence.sqlalchemy.repositories.auth import (
-    SqlAlchemyAuthReadRepo,
-)
-from app.infrastructure.persistence.sqlalchemy.repositories.me import (
+from app.infrastructure.persistence.sqlalchemy.repositories import (
     SqlAlchemyMeDeleteRepo,
-    SqlAlchemyMeUpdateRepo
+    SqlAlchemyMeUpdateRepo,
+    SqlAlchemyAuthUpdateRepo,
+    SqlAlchemyAuthReadRepo
 )
 
 
@@ -18,3 +17,4 @@ class SqlAlchemyMeSystemUoW(MeSystemUoWPort):
         self.me_update_repo = SqlAlchemyMeUpdateRepo(session)
         self.me_delete_repo = SqlAlchemyMeDeleteRepo(session)
         self.auth_read_repo = SqlAlchemyAuthReadRepo(session)
+        self.auth_update_repo = SqlAlchemyAuthUpdateRepo(session)

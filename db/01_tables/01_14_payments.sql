@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS app.payments (
   
 	-- Payment fee amount must be strictly positive
     CONSTRAINT chk_provider_fee_cents_positive
-    	CHECK (provider_fee_cents > 0),
+    	CHECK (provider_fee_cents >= 0),
     	
     -- Payment net amount must be strictly positive
     CONSTRAINT chk_net_amount_cents_positive

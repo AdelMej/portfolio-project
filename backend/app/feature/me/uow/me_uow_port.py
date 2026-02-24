@@ -1,11 +1,11 @@
 from typing import Protocol
-from app.feature.auth.repositories.auth_read_repository_port import (
+from app.feature.me.repositories.auth_read_repository_port import (
     AuthReadRepoPort
 )
-from app.feature.auth.repositories.me_read_repository_port import (
+from app.feature.me.repositories.me_read_repository_port import (
     MeReadRepoPort
 )
-from app.feature.auth.repositories.me_update_repository_port import (
+from app.feature.me.repositories.me_update_repository_port import (
     MeUpdateRepoPort
 )
 

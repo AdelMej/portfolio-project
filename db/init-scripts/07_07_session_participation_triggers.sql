@@ -1,6 +1,7 @@
 \c app
 
 
+
 -- ------------------------------------------------------------------
 -- Triggers: app.session_participation
 --
@@ -58,7 +59,7 @@ BEGIN
                 RAISE EXCEPTION 'Cannot pay a cancelled participation';
             END IF;
 
-            IF now() >= v_session_start THEN
+            IF OLD.registered_at >= v_session_start THEN
                 RAISE EXCEPTION 'Cannot pay after session start';
             END IF;
         END IF;

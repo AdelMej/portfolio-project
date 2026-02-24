@@ -1,5 +1,6 @@
 from datetime import datetime
 from app.domain.auth.actor_entity import Actor
+from app.domain.auth.auth_exceptions import AuthUserIsDisabledError
 from app.domain.auth.permission import Permission
 from app.feature.payment.payment_dto import GetPaymentOutputDTO
 from app.feature.payment.uow.payment_uow_port import PaymentUoWPort
@@ -17,6 +18,10 @@ class PaymentService():
         actor: Actor,
     ) -> tuple[list[GetPaymentOutputDTO], bool]:
         ensure_has_permission(actor, Permission.READ_PAYMENT)
+
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
+
         payments, has_more = (
             await uow.payment_read_repo.get_payment_by_user_id(
                 offset=offset,

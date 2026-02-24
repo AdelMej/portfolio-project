@@ -144,3 +144,11 @@ class AdminCantSelfRennableError(AuthDomainError):
 
 class AuthUserIsDisabledError(AuthDomainError):
     pass
+
+
+class CoachNotFoundError(AuthDomainError):
+    pass
+
+
+class UserNotFoundError(AuthDomainError):
+    pass

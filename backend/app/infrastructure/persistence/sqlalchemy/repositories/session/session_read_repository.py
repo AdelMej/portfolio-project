@@ -2,8 +2,12 @@ from datetime import datetime
 from uuid import UUID
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql.expression import text
-from app.domain.session.session_entity import SessionEntity
+from app.domain.session.session_entity import (
+    SessionEntity,
+    SessionWithCoachEntity
+)
 from app.domain.session.session_status import SessionStatus
+from app.domain.user.user_profile_entity import UserProfileEntity
 from app.feature.session.repositories.session_read_repository_port import (
     SessionReadRepoPort
 )
@@ -16,20 +20,25 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
     async def get_session_by_id(
         self,
         session_id: UUID
-    ) -> SessionEntity:
+    ) -> SessionWithCoachEntity:
         result = await self._session.execute(
             text(
                 """SELECT
-                    id,
-                    coach_id,
-                    title,
-                    starts_at,
-                    ends_at,
-                    status::text,
-                    cancelled_at,
-                    price_cents,
-                    currency
-                FROM app.sessions
+                    s.id,
+                    cp.user_id as coach_id,
+                    cp.first_name,
+                    cp.last_name,
+                    s.title,
+                    s.starts_at,
+                    s.ends_at,
+                    s.status::text,
+                    s.cancelled_at,
+                    s.price_cents,
+                    s.currency,
+                    s.created_at,
+                    s.updated_at
+                FROM app.sessions s
+                JOIN app.v_coach_public cp ON cp.user_id = s.coach_id
                 WHERE id=:id
                 """
             ),
@@ -40,16 +49,22 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
 
         row = result.mappings().one()
 
-        return SessionEntity(
+        return SessionWithCoachEntity(
             id=row["id"],
-            coach_id=row["coach_id"],
+            coach=UserProfileEntity(
+                user_id=row["coach_id"],
+                first_name=row["first_name"],
+                last_name=row["last_name"]
+            ),
             title=row["title"],
             starts_at=row["starts_at"],
             ends_at=row["ends_at"],
             status=SessionStatus(row["status"]),
             cancelled_at=row["cancelled_at"],
             price_cents=row["price_cents"],
-            currency=row["currency"]
+            currency=row["currency"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"]
         )
 
     async def get_all_sessions(
@@ -58,22 +73,25 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
         limit: int,
         _from: datetime | None,
         to: datetime | None
-    ) -> tuple[list[SessionEntity], bool]:
+    ) -> tuple[list[SessionWithCoachEntity], bool]:
         res = await self._session.execute(
             text("""
                 SELECT
-                    id,
-                    coach_id,
-                    title,
-                    starts_at,
-                    ends_at,
-                    status::text,
-                    cancelled_at,
-                    price_cents,
-                    currency,
-                    created_at,
-                    updated_at
-                FROM app.sessions
+                    s.id,
+                    cp.user_id as coach_id,
+                    cp.first_name,
+                    cp.last_name,
+                    s.title,
+                    s.starts_at,
+                    s.ends_at,
+                    s.status::text,
+                    s.cancelled_at,
+                    s.price_cents,
+                    s.currency,
+                    s.created_at,
+                    s.updated_at
+                FROM app.sessions s
+                JOIN app.v_coach_public cp ON cp.user_id = s.coach_id
                 WHERE (
                     CAST(:from_ts as timestamptz) IS NULL
                     OR starts_at >= CAST(:from_ts as timestamptz)
@@ -100,16 +118,22 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
         rows[:limit]
 
         return [
-            SessionEntity(
+            SessionWithCoachEntity(
                 id=row["id"],
-                coach_id=row["coach_id"],
+                coach=UserProfileEntity(
+                    user_id=row["coach_id"],
+                    first_name=row["first_name"],
+                    last_name=row["last_name"]
+                ),
                 title=row["title"],
                 starts_at=row["starts_at"],
                 ends_at=row["ends_at"],
                 status=SessionStatus(row["status"]),
                 cancelled_at=row["cancelled_at"],
                 price_cents=row["price_cents"],
-                currency=row["currency"]
+                currency=row["currency"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"]
             ) for row in rows
         ], has_more
 
@@ -172,7 +196,9 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
                 status=SessionStatus(row["status"]),
                 cancelled_at=row["cancelled_at"],
                 price_cents=row["price_cents"],
-                currency=row["currency"]
+                currency=row["currency"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"]
             ) for row in rows
         ], has_more
 
@@ -217,6 +243,24 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
         )
 
         return result.scalar_one()
+
+    async def public_exists_session(
+        self,
+        session_id: UUID
+    ) -> bool:
+        stmt = text("""
+            SELECT EXISTS(
+                SELECT 1
+                FROM app.sessions
+                WHERE id = :session_id
+            )
+        """)
+
+        res = await self._session.execute(stmt,  {
+            "session_id": session_id
+        })
+
+        return res.scalar_one()
 
     async def exist_session(
         self,
@@ -296,5 +340,41 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
             status=row["status"],
             cancelled_at=row["cancelled_at"],
             price_cents=row["price_cents"],
-            currency=row["currency"]
+            currency=row["currency"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"]
         )
+
+    async def is_session_finished(
+        self,
+        session_id: UUID
+    ) -> bool:
+        stmt = text("""
+            SELECT
+                app_fcn.is_session_finished(
+                    :session_id
+                )
+        """)
+
+        res = await self._session.execute(stmt, {
+            "session_id": session_id
+        })
+
+        return res.scalar_one()
+
+    async def is_session_started(
+        self,
+        session_id: UUID
+    ) -> bool:
+        stmt = text("""
+            SELECT
+                app_fcn.is_session_started(
+                    :session_id
+                )
+        """)
+
+        res = await self._session.execute(stmt, {
+            "session_id": session_id
+        })
+
+        return res.scalar_one()

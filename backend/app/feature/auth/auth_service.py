@@ -1,7 +1,5 @@
 from datetime import timedelta
-from app.domain.auth.actor_entity import Actor, TokenActor
-from app.domain.auth.permission import Permission
-from app.domain.auth.permission_rules import ensure_has_permission
+from app.domain.auth.actor_entity import TokenActor
 from app.domain.auth.refresh_token_entity import (
     NewRefreshTokenEntity,
 )
@@ -9,10 +7,9 @@ from app.domain.auth.refresh_tokens_rules import (
     ensure_refresh_token_is_valid
 )
 from app.domain.auth.role import Role
-from app.domain.user.user_entity import NewUserEntity, UserEntity
+from app.domain.user.user_entity import NewUserEntity
 from app.domain.user.user_profile_entity import (
     NewUserProfileEntity,
-    UserProfileEntity
 )
 from app.domain.user.user_profile_rules import (
     ensure_first_name_is_valid,
@@ -20,28 +17,18 @@ from app.domain.user.user_profile_rules import (
 )
 from app.feature.auth.auth_dto import (
     LoginInputDTO,
-    MeEmailChangeInputDTO,
-    MePasswordChangeInputDTO,
     RegistrationInputDTO,
-    UpdateMeProfileInputDTO,
 )
 from app.domain.auth.auth_exceptions import (
-    AdminCantSelfDeleteError,
-    AuthUserIsDisabledError,
     EmailAlreadyExistError,
     ExpiredRefreshTokenError,
     InvalidEmailError,
     InvalidPasswordError,
     InvalidRefreshTokenError,
-    PasswordMissmatchError,
-    PasswordReuseError,
     RevokedRefreshTokenError,
     UserDisabledError
 )
 from app.feature.auth.uow.auth_uow_port import AuthUoWPort
-from app.feature.auth.uow.me_system_uow_port import MeSystemUoWPort
-from app.feature.auth.uow.me_uow_port import MeUoWPort
-from app.shared.exceptions.runtime import InvariantViolationError
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
 from app.shared.security.token_generator_port import (
@@ -265,133 +252,3 @@ class AuthService:
         )
 
         await uow.auth_creation_repo.register(new_user, new_user_profile)
-#
-    async def get_me(
-        self,
-        actor: Actor,
-        uow: MeUoWPort,
-    ) -> UserEntity:
-
-        ensure_has_permission(actor, Permission.READ_SELF)
-
-        if await uow.auth_read_repo.is_user_disabled(actor.id): #changed it , FrontEnd issue
-            raise AuthUserIsDisabledError()
-
-        return await uow.me_read_repo.get(actor.id)
-
-    async def email_change_me(
-        self,
-        actor: Actor,
-        uow: MeSystemUoWPort,
-        input: MeEmailChangeInputDTO,
-    ) -> None:
-        ensure_has_permission(actor, Permission.UPDATE_SELF)
-
-        if await uow.auth_read_repo.is_user_disabled(actor.id):
-            raise AuthUserIsDisabledError()
-
-        # normalization
-        email = input.email.strip().lower()
-
-        if await uow.auth_read_repo.exist_email(email):
-            raise EmailAlreadyExistError()
-
-        await uow.me_update_repo.update_email_by_user_id(
-            email,
-            actor.id
-        )
-
-    async def password_change_me(
-        self,
-        input: MePasswordChangeInputDTO,
-        password_hasher: PasswordHasherPort,
-        actor: Actor,
-        uow: MeSystemUoWPort
-    ) -> None:
-        ensure_has_permission(actor, Permission.UPDATE_SELF)
-
-        if await uow.auth_read_repo.is_user_disabled(actor.id):
-            raise AuthUserIsDisabledError()
-
-        # normalization
-        old_password = input.old_password.strip()
-        new_password = input.new_password.strip()
-
-        ensure_password_is_strong(new_password)
-
-        user = await uow.auth_read_repo.get_user_by_id(actor.id)
-        if not user:
-            raise InvariantViolationError(
-                "Actor doesn't exist"
-            )
-
-        if not password_hasher.verify(old_password, user.password_hash):
-            raise PasswordMissmatchError()
-
-        if password_hasher.verify(new_password, user.password_hash):
-            raise PasswordReuseError()
-
-        new_password_hash = password_hasher.hash(new_password)
-
-        await uow.me_update_repo.update_password_by_id(
-            user_id=actor.id,
-            password_hash=new_password_hash
-        )
-
-    async def get_me_profile(
-        self,
-        actor: Actor,
-        uow: MeUoWPort
-    ) -> UserProfileEntity:
-        ensure_has_permission(actor, Permission.READ_SELF)
-
-        if await uow.auth_read_repo.is_user_disabled(actor.id):
-            raise AuthUserIsDisabledError()
-
-        return await uow.me_read_repo.get_profile_by_id(actor.id)
-
-    async def update_me_profile(
-        self,
-        input: UpdateMeProfileInputDTO,
-        actor: Actor,
-        uow: MeUoWPort
-    ) -> None:
-        ensure_has_permission(actor, Permission.UPDATE_SELF)
-
-        if await uow.auth_read_repo.is_user_disabled(actor.id):
-            raise AuthUserIsDisabledError()
-
-        # normalization
-        first_name = input.first_name.strip()
-        last_name = input.last_name.strip()
-
-        ensure_first_name_is_valid(first_name)
-        ensure_last_name_is_valid(last_name)
-
-        await uow.me_update_repo.update_profile_by_id(
-            user_id=actor.id,
-            first_name=first_name,
-            last_name=last_name
-        )
-
-    async def delete_me(
-        self,
-        actor: Actor,
-        refresh_uow: AuthUoWPort,
-        uow: MeSystemUoWPort,
-    ) -> None:
-        if Permission.NO_SELF_DELETE in actor.permissions:
-            raise AdminCantSelfDeleteError()
-
-        ensure_has_permission(actor, Permission.DELETE_SELF)
-
-        if await uow.auth_read_repo.is_user_disabled(actor.id):
-            raise AuthUserIsDisabledError()
-
-        await uow.me_delete_repo.soft_delete_user(
-            user_id=actor.id,
-        )
-
-        await refresh_uow.auth_update_repo.revoke_all_refresh_token(
-            user_id=actor.id
-        )

@@ -1,25 +1,17 @@
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from app.domain.auth.actor_entity import Actor
-from app.domain.user.user_profile_entity import UserProfileEntity
 from app.feature.auth.auth_dependencies import get_auth_service
 from app.feature.auth.auth_service import AuthService
 from app.feature.auth.auth_dto import (
-    GetMeOutputDTO,
-    GetMeProfileOutputDTO,
     LoginInputDTO,
-    MePasswordChangeInputDTO,
     RegistrationInputDTO,
     TokenOutputDTO,
-    MeEmailChangeInputDTO,
-    UpdateMeProfileInputDTO,
 )
 from app.domain.auth.auth_exceptions import (
     AuthDomainError,
     EmailAlreadyExistError,
     InvalidEmailError,
     InvalidPasswordError,
-    PermissionDeniedError,
 )
 from app.feature.auth.auth_exception import (
     InvalidCredentialsError,
@@ -27,15 +19,10 @@ from app.feature.auth.auth_exception import (
     RegistrationFailed
 )
 from app.feature.auth.uow.auth_uow_port import AuthUoWPort
-from app.feature.auth.uow.me_system_uow_port import MeSystemUoWPort
-from app.feature.auth.uow.me_uow_port import MeUoWPort
 from app.infrastructure.persistence.sqlalchemy.provider import (
     get_auth_uow,
-    get_me_system_uow,
-    get_me_uow
 )
 from app.infrastructure.security.provider import (
-    get_current_actor,
     get_jwt,
     get_password_hasher,
     get_token_generator,
@@ -49,7 +36,6 @@ from app.shared.security.token_generator_port import (
     TokenGeneratorPort
 )
 from app.shared.security.token_hasher_port import TokenHasherPort
-from app.shared.exceptions.commons import ForbiddenError
 import logging
 
 
@@ -269,124 +255,6 @@ async def logout(
         token=refresh_token,
         uow=uow,
         token_hasher=token_hasher
-    )
-
-    response.delete_cookie(
-        key="refresh_token",
-        path="/auth"
-    )
-
-
-@router.get(
-    "/me",
-    response_model=GetMeOutputDTO,
-    status_code=200
-)
-async def get_me(
-    uow: MeUoWPort = Depends(get_me_uow),
-    actor: Actor = Depends(get_current_actor),
-    service: AuthService = Depends(get_auth_service)
-) -> GetMeOutputDTO:
-    try:
-        user = await service.get_me(actor, uow)
-    except PermissionDeniedError:
-        raise ForbiddenError()
-
-    return GetMeOutputDTO(
-        email=user.email,
-        roles=user.roles
-    )
-
-
-@router.patch(
-    "/me/email-change",
-    status_code=204
-)
-async def email_change_me(
-    input: MeEmailChangeInputDTO,
-    uow: MeSystemUoWPort = Depends(get_me_system_uow),
-    actor: Actor = Depends(get_current_actor),
-    service: AuthService = Depends(get_auth_service)
-) -> None:
-    await service.email_change_me(actor, uow, input)
-
-
-@router.patch(
-    "/me/password-change",
-    status_code=204
-)
-async def password_change_me(
-    input: MePasswordChangeInputDTO,
-    password_hasher: PasswordHasherPort = Depends(get_password_hasher),
-    uow: MeSystemUoWPort = Depends(get_me_system_uow),
-    actor: Actor = Depends(get_current_actor),
-    service: AuthService = Depends(get_auth_service)
-) -> None:
-
-    await service.password_change_me(
-        input=input,
-        password_hasher=password_hasher,
-        actor=actor,
-        uow=uow,
-    )
-
-
-@router.get(
-    "/me/profile",
-    status_code=200,
-    response_model=GetMeProfileOutputDTO
-)
-async def get_me_profile(
-    actor: Actor = Depends(get_current_actor),
-    uow: MeUoWPort = Depends(get_me_uow),
-    service: AuthService = Depends(get_auth_service)
-) -> GetMeProfileOutputDTO:
-
-    user_profile: UserProfileEntity = await service.get_me_profile(
-        actor=actor,
-        uow=uow
-    )
-
-    return GetMeProfileOutputDTO(
-        first_name=user_profile.first_name,
-        last_name=user_profile.last_name
-    )
-
-
-@router.put(
-    "/me/profile",
-    status_code=204
-)
-async def update_me_profile(
-    input: UpdateMeProfileInputDTO,
-    actor: Actor = Depends(get_current_actor),
-    uow: MeUoWPort = Depends(get_me_uow),
-    service: AuthService = Depends(get_auth_service)
-) -> None:
-
-    await service.update_me_profile(
-        input=input,
-        actor=actor,
-        uow=uow
-    )
-
-
-@router.delete(
-    "/me",
-    status_code=204
-)
-async def delete_me(
-    response: Response,
-    actor: Actor = Depends(get_current_actor),
-    uow: MeSystemUoWPort = Depends(get_me_system_uow),
-    refresh_uow: AuthUoWPort = Depends(get_auth_uow),
-    service: AuthService = Depends(get_auth_service),
-) -> None:
-
-    await service.delete_me(
-        actor=actor,
-        refresh_uow=refresh_uow,
-        uow=uow,
     )
 
     response.delete_cookie(

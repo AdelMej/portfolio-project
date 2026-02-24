@@ -45,3 +45,20 @@ class SqlAlchemyCoachStripeAccountReadRepo(
         })
 
         return res.scalar_one()
+
+    async def is_coach_account_valid(
+        self,
+        coach_id: UUID
+    ) -> bool:
+        stmt = text("""
+            SELECT
+                app_fcn.stripe_account_is_valid(
+                    :coach_id
+                )
+        """)
+
+        res = await self._session.execute(stmt, {
+            "coach_id": coach_id
+        })
+
+        return res.scalar_one()

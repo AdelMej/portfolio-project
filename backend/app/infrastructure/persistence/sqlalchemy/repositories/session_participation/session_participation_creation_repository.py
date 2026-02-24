@@ -1,3 +1,4 @@
+from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio.session import AsyncSession
@@ -23,20 +24,23 @@ class SqlAlchemySessionParticipationCreationRepo(
 
     async def create_participation(
         self,
-        participation: NewSessionParticipationEntity
+        participation: NewSessionParticipationEntity,
+        expires_at: datetime
     ) -> None:
         stmt = text("""
                 SELECT
                     app_fcn.create_session_participation(
-                        CAST(:user_id AS uuid),
-                        CAST(:session_id AS uuid)
+                        :user_id,
+                        :session_id,
+                        :expires_at
                     )
             """)
 
         try:
             await self._session.execute(stmt, {
                 "user_id": participation.user_id,
-                "session_id": participation.session_id
+                "session_id": participation.session_id,
+                "expires_at": expires_at
             })
         except DBAPIError as exc:
             code = get_sqlstate(exc)
