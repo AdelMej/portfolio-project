@@ -27,7 +27,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "payment provider error"},
+            content={
+                "code": "payment_provider_error",
+                "error": "payment provider error"
+            },
             status_code=503
         )
 
@@ -46,6 +49,9 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "payment is already done"},
+            content={
+                "code": "payment_already_paid",
+                "error": "payment is already done"
+            },
             status_code=409
         )

@@ -32,6 +32,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "currency_invalid_length",
                 "error": "currency must be {} characters long"
                 .format(CURRENCY_LENGTH)
             },
@@ -53,6 +54,9 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "currency fromat is invalid"},
+            content={
+                "code": "currency_invalid_format",
+                "error": "currency fromat is invalid"
+            },
             status_code=400
         )

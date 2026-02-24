@@ -28,7 +28,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "charge is not ready"},
+            content={
+                "code": "charge_not_ready",
+                "error": "charge is not ready"
+            },
             status_code=503
         )
 
@@ -47,7 +50,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "intent is invalid"},
+            content={
+                "code": "invalid_intent",
+                "error": "intent is invalid"
+            },
             status_code=503
         )
 
@@ -66,7 +72,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "balance is not expended"},
+            content={
+                "code": "balance_not_expended",
+                "error": "balance is not expended"
+            },
             status_code=503
         )
 
@@ -85,6 +94,9 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "payout failed"},
+            content={
+                "code": "payout_failed",
+                "error": "payout failed"
+            },
             status_code=400
         )

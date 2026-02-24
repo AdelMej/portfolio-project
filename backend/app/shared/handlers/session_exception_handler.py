@@ -51,6 +51,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "session_attendance_closed",
                 "error": "session attendance is not available"
             },
             status_code=403
@@ -71,7 +72,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "session attendance is already done"},
+            content={
+                "code": "session_already_attended",
+                "error": "session attendance is already done"
+            },
             status_code=409
         )
 
@@ -90,7 +94,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "user is already registered for that session"},
+            content={
+                "code": "user_already_registered",
+                "error": "user is already registered for that session"
+            },
             status_code=409
         )
 
@@ -109,7 +116,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "session is cancelled"},
+            content={
+                "code": "session_cancelled",
+                "error": "session is cancelled"
+            },
             status_code=409
         )
 
@@ -128,7 +138,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "coach doesn't own the session"},
+            content={
+                "code": "not_session_owner",
+                "error": "coach doesn't own the session"
+            },
             status_code=403
         )
 
@@ -147,7 +160,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "session not found"},
+            content={
+                "code": "session_not_found",
+                "error": "session not found"
+            },
             status_code=404
         )
 
@@ -166,7 +182,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "invalid attendance input"},
+            content={
+                "code": "invalid_attendance_input",
+                "error": "invalid attendance input"
+            },
             status_code=400
         )
 
@@ -185,7 +204,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "session is overlapping"},
+            content={
+                "code": "session_overlapping",
+                "error": "session is overlapping"
+            },
             status_code=409
         )
 
@@ -204,7 +226,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "title is blank"},
+            content={
+                "code": "title_is_blank",
+                "error": "title is blank"
+            },
             status_code=400
         )
 
@@ -225,6 +250,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "title_too_short",
                 "error": "title must be at least {} characters long"
                 .format(MIN_TITLE_LENGTH)
             },
@@ -248,6 +274,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "title_too_long",
                 "error": "title must be less than {} characters long"
                 .format(MAX_TITLE_LENGTH)
             },
@@ -269,7 +296,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "session is full"},
+            content={
+                "code": "session_full",
+                "error": "session is full"
+            },
             status_code=409
         )
 
@@ -288,7 +318,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "session registration is closed"},
+            content={
+                "code": "registration_closed",
+                "error": "session registration is closed"
+            },
             status_code=403
         )
 
@@ -307,7 +340,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "session owner"},
+            content={
+                "code": "self_registration_forbidden",
+                "error": "session owner"
+            },
             status_code=409
         )
 
@@ -326,7 +362,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "invalid session time"},
+            content={
+                "code": "invalid_session_time",
+                "error": "invalid session time"
+            },
             status_code=400
         )
 
@@ -345,7 +384,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "credit cannot be negative"},
+            content={
+                "code": "credit_negative",
+                "error": "credit cannot be negative"
+            },
             status_code=400
         )
 
@@ -364,7 +406,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "price cannot be negative"},
+            content={
+                "code": "session_negative_price",
+                "error": "price cannot be negative"
+            },
             status_code=400
         )
 
@@ -383,7 +428,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "no active participation found"},
+            content={
+                "code": "participation_not_found",
+                "error": "no active participation found"
+            },
             status_code=404
         )
 
@@ -402,7 +450,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "stripe account is invalid"},
+            content={
+                "code": "invalid_stripe_account",
+                "error": "stripe account is invalid"
+            },
             status_code=400
         )
 
@@ -421,7 +472,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "session is not finished"},
+            content={
+                "code": "session_not_finished",
+                "error": "session is not finished"
+            },
             status_code=409
         )
 
@@ -440,7 +494,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "session was not attended"},
+            content={
+                "code": "session_not_attended",
+                "error": "session was not attended"
+            },
             status_code=404
         )
 
@@ -459,6 +516,9 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "cannot cancel after a session started"},
+            content={
+                "code": "session_started",
+                "error": "cannot cancel after a session started"
+            },
             status_code=409
         )

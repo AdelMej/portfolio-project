@@ -79,7 +79,8 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
-                "error": "User disabled"
+                "code": "user_is_disabled",
+                "error": "User is disabled"
             },
             status_code=401
         )
@@ -99,7 +100,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "Permission denied"},
+            content={
+                "code": "permission_denied",
+                "error": "Permission denied"
+            },
             status_code=403
         )
 
@@ -118,7 +122,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "Invalid token"},
+            content={
+                "code": "invalid_token",
+                "error": "Invalid token"
+            },
             status_code=401
         )
 
@@ -137,7 +144,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "Invalid credentials"},
+            content={
+                "code": "invalid_credentials",
+                "error": "Invalid credentials"
+            },
             status_code=401
         )
 
@@ -156,7 +166,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "Registration Failed"},
+            content={
+                "code": "registration_failed",
+                "error": "Registration Failed"
+            },
             status_code=400
         )
     # ---------------------------
@@ -178,7 +191,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "password cannot be blank"},
+            content={
+                "code": "password_is_blank",
+                "error": "password cannot be blank"
+            },
             status_code=400
         )
 
@@ -198,6 +214,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "password_too_short",
                 "error": "password must be at least {} character long"
                 .format(MIN_PASSWORD_LENGTH)
             },
@@ -220,6 +237,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "password_too_long",
                 "error": "password must be less than {} character long"
                 .format(MAX_PASSWORD_LENGTH)
             },
@@ -242,6 +260,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "password_missing_lowercase",
                 "error": "password must contain a lowercase character"
             },
             status_code=400
@@ -263,6 +282,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "password_missing_uppercase",
                 "error": "password must contain an uppercase character"
             },
             status_code=400
@@ -284,6 +304,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "password_missing_digit",
                 "error": "password must contain a digit"
             },
             status_code=400
@@ -305,6 +326,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "password_missing_special_character",
                 "error": "password must contain a special character"
             },
             status_code=400
@@ -326,6 +348,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "password_too_weak",
                 "error": "password doesn't meet strength requirements"
             },
             status_code=400
@@ -347,6 +370,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "password_missmatch",
                 "error": "old password does not match the current password"
             },
             status_code=400
@@ -368,6 +392,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "password_reuse",
                 "error": "password must not be reused"
             },
             status_code=400
@@ -391,8 +416,11 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "Email is unavailable"},
-            status_code=400
+            content={
+                "code": "email_already_exist",
+                "error": "Email is unavailable"
+            },
+            status_code=409
         )
 
     @app.exception_handler(EmailSpaceError)
@@ -410,7 +438,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "Email cannot contain a space"},
+            content={
+                "code": "email_has_space",
+                "error": "Email cannot contain a space"
+            },
             status_code=400
         )
 
@@ -430,6 +461,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "email_too_short",
                 "error": "Email must be at least {} character long"
                 .format(MIN_EMAIL_LENGTH)
             },
@@ -452,6 +484,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "email_too_long",
                 "error": "Email must be less than {} character long"
                 .format(MAX_EMAIL_LENGTH)
             },
@@ -474,6 +507,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "email_is_blank",
                 "error": "Email must not be blank"
             },
             status_code=400
@@ -495,6 +529,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "email_invalid_domain",
                 "error": "Email domain is invalid"
             },
             status_code=400
@@ -516,6 +551,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "email_invalid_local_part",
                 "error": "Email local part is invalid"
             },
             status_code=400
@@ -537,6 +573,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "email_local_part_too_long",
                 "error": "Email local part must be less then {} character"
                 .format(MAX_LOCAL_PART)
             },
@@ -559,6 +596,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "email_invalid_at_counter",
                 "error": "Email must contain exacly one @"
             },
             status_code=400
@@ -584,6 +622,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "refresh_token_missing",
                 "error": "Refresh token not found"
             },
             status_code=404
@@ -605,6 +644,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "refresh_token_is_blank",
                 "error": "Refresh token must not be blank"
             },
             status_code=400
@@ -626,6 +666,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "refresh_token_too_short",
                 "error": "Refresh token must be at least {} character long"
                 .format(REFRESH_TOKEN_MIN_SIZE)
             },
@@ -648,6 +689,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "refresh_token_too_long",
                 "error": "Refresh token must be less than {} character"
                 .format(REFRESH_TOKEN_MAX_SIZE)
             },
@@ -670,6 +712,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "refresh_token_revoked",
                 "error": "Refresh token is revoked"
             },
             status_code=401
@@ -691,6 +734,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "invalid_refresh_token",
                 "error": "Refresh token is invalid"
             },
             status_code=400
@@ -712,6 +756,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "refresh_token_expired",
                 "error": "Refresh token is expired"
             },
             status_code=401
@@ -737,6 +782,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "admin_no_self_delete",
                 "error": "Admin can't self delete"
             },
             status_code=403
@@ -762,6 +808,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "admin_no_self_revoke",
                 "error": "Admin can't self revoke"
             },
             status_code=403
@@ -783,6 +830,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "base_role_not_revoked",
                 "error": "Base role cannot be revoked"
             },
             status_code=403
@@ -807,6 +855,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "admin_no_self_disable",
                 "error": "Admin can't disable themselves"
             },
             status_code=403
@@ -828,7 +877,8 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
-                "error": "Admin can't rennable themselves"
+                "code": "admin_no_self_reenable",
+                "error": "Admin can't reenable themselves"
             },
             status_code=403
         )
@@ -849,6 +899,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "user_disabled",
                 "error": "user is disabled"
             },
             status_code=403
@@ -870,6 +921,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "coach_not_found",
                 "error": "coach not found"
             },
             status_code=404
@@ -891,6 +943,7 @@ def register_exception_handler(app: FastAPI):
 
         return JSONResponse(
             content={
+                "code": "user_not_found",
                 "error": "user not found"
             },
             status_code=404
