@@ -27,7 +27,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "Unauthorized"},
+            content={
+                "code": "unauthorized",
+                "error": "Unauthorized"
+            },
             status_code=401
         )
 
@@ -46,7 +49,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "Forbidden"},
+            content={
+                "code": "forbidden",
+                "error": "Forbidden"
+            },
             status_code=403
         )
 
@@ -65,6 +71,9 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "Not Found"},
+            content={
+                "code": "not_found",
+                "error": "Not Found"
+            },
             status_code=404
         )

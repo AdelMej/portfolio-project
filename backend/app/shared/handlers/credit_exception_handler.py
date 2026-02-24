@@ -27,7 +27,10 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "credit amount cannot be 0"},
+            content={
+                "code": "invalid_credit_amount",
+                "error": "credit amount cannot be 0"
+            },
             status_code=400
         )
 
@@ -46,6 +49,9 @@ def register_exception_handler(app: FastAPI):
         )
 
         return JSONResponse(
-            content={"error": "credit cannot be negative"},
+            content={
+                "code": "credit_is_negative",
+                "error": "credit cannot be negative"
+            },
             status_code=400
         )
