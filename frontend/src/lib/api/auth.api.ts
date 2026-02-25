@@ -25,3 +25,11 @@ export async function getMe(): Promise<MeResponse> {
 export function logout() {
   return apiFetch<void>('/auth/logout', { method: 'POST' });
 }
+
+// register function
+export async function createUser(email: string, password: string): Promise<void> {
+  return apiFetch<void>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+}

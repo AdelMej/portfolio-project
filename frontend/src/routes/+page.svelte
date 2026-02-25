@@ -88,27 +88,26 @@ a:hover, .main-btn:hover {
 
 <div class="home-container">
   <h1>Bienvenue à Actual Digital Gym</h1>
-  <div class="home-links">
+    <div class="home-links">
     {#if $auth.accessToken}
-      <a href="/dashboard" class="main-btn">Tableau de bord</a>
+        <a href="/dashboard" class="main-btn">Tableau de bord</a>
     {:else}
-      <a href="/login" class="main-btn">Connexion</a>
+        <a href="/login" class="main-btn">Connexion</a>
+        <a href="/registration" class="main-btn">Inscription</a>
     {/if}
-  </div>
+    </div>
 </div>
 
-{#if !$auth.accessToken}
-  <h2>Les séances disponibles</h2>
-  {#if sessions.length === 0}
-    <div style="color: #888; margin-bottom: 18px;">Aucune séance disponible.</div>
-  {:else}
-    <ul class="session-list">
-      {#each sessions as s}
-        <li class="session-item">
-          <span class="session-title">{s.title}</span>
-          <span class="session-date">{new Date(s.starts_at).toLocaleString('fr-FR')}</span>
-        </li>
-      {/each}
-    </ul>
-  {/if}
+<h2>Les séances disponibles</h2>
+{#if sessions.length === 0}
+  <div style="color: #888; margin-bottom: 18px;">Aucune séance disponible.</div>
+{:else}
+  <ul class="session-list">
+    {#each sessions as s}
+      <li class="session-item">
+        <span class="session-title">{s.title}</span>
+        <span class="session-date">{new Date(s.starts_at).toLocaleString('fr-FR')}</span>
+      </li>
+    {/each}
+  </ul>
 {/if}

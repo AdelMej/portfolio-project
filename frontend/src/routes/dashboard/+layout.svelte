@@ -45,11 +45,6 @@ onMount(() => {
           <a href="/dashboard/user" class:active={$page.url.pathname === '/dashboard/user'}>Mes séances</a>
         </li>
       {/if}
-      <li>
-        <button on:click={logout} disabled={loggingOut}>
-          {loggingOut ? 'Déconnexion...' : 'Se déconnecter'}
-        </button>
-      </li>
     </ul>
   </nav>
 </header>
