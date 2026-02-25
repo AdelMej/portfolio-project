@@ -5,6 +5,19 @@ import { get } from 'svelte/store';
 const roles = get(auth).roles || [];
 </script>
 
+{#if roles.includes('admin')}
+  <!-- Admin dashboard window -->
+  <h1>Admin Dashboard</h1>
+{:else if roles.includes('coach')}
+  <!-- Coach dashboard window -->
+  <h1>Coach Dashboard</h1>
+  <!-- Coach-specific content here -->
+{:else}
+  <!-- User dashboard window -->
+  <h1>Tableau de bord utilisateur</h1>
+  <!-- User-specific content here -->
+{/if}
+
 <style>
 .dashboard-landing-container {
   max-width: 700px;
@@ -48,7 +61,14 @@ a:hover, .dashboard-btn:hover {
 <div class="dashboard-landing-container">
   <h1>Tableau de bord</h1>
   <h2>Accédez à votre espace selon votre rôle</h2>
-  <a href="/dashboard/admin" class="dashboard-btn">Espace Administrateur</a>
-  <a href="/dashboard/coach" class="dashboard-btn">Espace Coach</a>
-  <a href="/dashboard/user" class="dashboard-btn">Espace Utilisateur</a>
+  {#if roles.includes('admin')}
+    <a href="/dashboard/admin" class="dashboard-btn">Espace Administrateur</a>
+    <!-- Add more admin-only buttons here -->
+  {:else if roles.includes('coach')}
+    <a href="/dashboard/coach" class="dashboard-btn">Espace Coach</a>
+    <!-- Add more coach-only buttons here -->
+  {:else}
+    <a href="/dashboard/user" class="dashboard-btn">Espace Utilisateur</a>
+    <!-- Add more user-only buttons here -->
+  {/if}
 </div>

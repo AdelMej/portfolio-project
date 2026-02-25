@@ -19,7 +19,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
 
 // getMe function
 export async function getMe(): Promise<MeResponse> {
-  return apiFetch<MeResponse>('/auth/me');
+  return apiFetch<MeResponse>('/me/');
 }
 
 export function logout() {

@@ -151,35 +151,26 @@ tr:last-child td {
     <div class="error-message">{error}</div>
   {:else}
     <table>
-      <thead>
+    <thead>
         <tr>
-          <th>Titre</th>
-          <th>Date début</th>
-          <th>Date fin</th>
-          <th>Coach</th>
-          <th>Max</th>
-          <th>Actions</th>
+        <th>Titre</th>
+        <th>Date</th>
+        <th>Coach</th>
+        <th>Action</th>
         </tr>
-      </thead>
-      <tbody>
-        {#each sessions as session}
-          <tr>
-            <td>{session.title}</td>
-            <td>{new Date(session.starts_at).toLocaleString('fr-FR')}</td>
-            <td>{new Date(session.ends_at).toLocaleString('fr-FR')}</td>
-            <td>{session.coach_name ?? '-'}</td>
-            <td>{session.max_participants ?? '-'}</td>
+    </thead>
+    <tbody>
+        {#each sessions as s}
+        <tr>
+            <td>{s.title}</td>
+            <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
+            <td>{s.coach_name ?? 'Non défini'}</td>
             <td>
-              <button class="coach-action-btn" on:click={() => goto(`/sessions/${session.id}/participants`)}>
-                Participants
-              </button>
-              <button class="coach-action-btn cancel" on:click={() => cancelSession(session.id)}>
-                Annuler
-              </button>
+            <a href={`/dashboard/coach/sessions/${s.id}/edit`} class="dashboard-btn">Modifier</a>
             </td>
-          </tr>
+        </tr>
         {/each}
-      </tbody>
+    </tbody>
     </table>
   {/if}
 </div>

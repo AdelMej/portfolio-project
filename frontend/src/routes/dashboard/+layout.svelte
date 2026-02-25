@@ -6,17 +6,21 @@ import { onMount } from 'svelte';
 import { get } from 'svelte/store';
 
 function hasRole(role: string) {
-  return get(auth).roles?.includes(role);
+  const roles = get(auth).roles;
+  return Array.isArray(roles) && roles.includes(role);
 }
 
-function logout() {
-  auth.logout();
+let loggingOut = false;
+
+async function logout() {
+  loggingOut = true;
+  await auth.logout();
   goto('/login');
+  loggingOut = false;
 }
 
 onMount(() => {
   const { accessToken } = get(auth);
-
   if (!accessToken) {
     goto('/login');
   }
@@ -24,27 +28,39 @@ onMount(() => {
 </script>
 
 <header>
-<nav>
-
-{#if hasRole('admin')}
-<a href="/dashboard/admin">Administration</a>
-{/if}
-
-{#if hasRole('coach')}
-<a href="/dashboard/coach">Coach</a>
-{/if}
-
-{#if hasRole('user')}
-<a href="/dashboard/user">Mes séances</a>
-{/if}
-
-<button on:click={logout}>
-Se déconnecter
-</button>
-
-</nav>
+  <nav aria-label="Main navigation">
+    <ul style="display: flex; gap: 1rem; list-style: none; padding: 0; margin: 0;">
+      {#if hasRole('admin')}
+        <li>
+          <a href="/dashboard/admin" class:active={$page.url.pathname === '/dashboard/admin'}>Administration</a>
+        </li>
+      {/if}
+      {#if hasRole('coach')}
+        <li>
+          <a href="/dashboard/coach" class:active={$page.url.pathname === '/dashboard/coach'}>Coach</a>
+        </li>
+      {/if}
+      {#if hasRole('user')}
+        <li>
+          <a href="/dashboard/user" class:active={$page.url.pathname === '/dashboard/user'}>Mes séances</a>
+        </li>
+      {/if}
+      <li>
+        <button on:click={logout} disabled={loggingOut}>
+          {loggingOut ? 'Déconnexion...' : 'Se déconnecter'}
+        </button>
+      </li>
+    </ul>
+  </nav>
 </header>
 
 <main>
-<slot />
+  <slot />
 </main>
+
+<style>
+a.active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+</style>

@@ -1,6 +1,20 @@
 
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import type { Session } from '$lib/api/sessions.api';
+  import { listSessions } from '$lib/api/sessions.api';
   import { auth } from '$lib/stores/auth.store';
+
+  let sessions: Session[] = [];
+
+  onMount(async () => {
+    try {
+      const res: Session[] = await listSessions();
+      sessions = res;
+    } catch (err) {
+      console.error('Failed to fetch sessions', err);
+    }
+  });
 </script>
 
 <style>
@@ -44,17 +58,57 @@ a:hover, .main-btn:hover {
 .home-links {
   margin-top: 32px;
 }
+
+.session-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.session-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fafb;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px #f3f4f6;
+  margin-bottom: 16px;
+  padding: 18px 22px;
+  font-size: 1.1rem;
+}
+.session-title {
+  font-weight: 600;
+  color: #374151;
+}
+.session-date {
+  color: #2563eb;
+  font-size: 1rem;
+  font-weight: 500;
+}
 </style>
 
 <div class="home-container">
   <h1>Bienvenue à Actual Digital Gym</h1>
-  <h2>Votre espace pour gérer vos séances, coachs et participants</h2>
   <div class="home-links">
     {#if $auth.accessToken}
       <a href="/dashboard" class="main-btn">Tableau de bord</a>
     {:else}
       <a href="/login" class="main-btn">Connexion</a>
-      <a href="/sessions" class="main-btn">Voir les séances</a>
     {/if}
   </div>
 </div>
+
+{#if !$auth.accessToken}
+  <h2>Les séances disponibles</h2>
+  {#if sessions.length === 0}
+    <div style="color: #888; margin-bottom: 18px;">Aucune séance disponible.</div>
+  {:else}
+    <ul class="session-list">
+      {#each sessions as s}
+        <li class="session-item">
+          <span class="session-title">{s.title}</span>
+          <span class="session-date">{new Date(s.starts_at).toLocaleString('fr-FR')}</span>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+{/if}

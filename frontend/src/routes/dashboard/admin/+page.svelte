@@ -1,81 +1,32 @@
-<!-- SESSIONS LIST: /frontend/src/routes/sessions/+page.svelte -->
+<!-- frontend/src/routes/dashboard/admin/+page.svelte -->
 <script lang="ts">
-import { onMount } from 'svelte';
-import { apiFetch } from '$lib/api/client';
+  import { onMount } from 'svelte';
+  import { getAdminUsers, type AdminUser } from '$lib/api/admin.api';
+  import { listSessions, type Session } from '$lib/api/sessions.api';
 
-type Session = {
-  id: string;
-  title: string;
-  starts_at: string;
-  ends_at: string;
-  coach_name?: string;
-};
+  let users: AdminUser[] = [];
+  let sessions: Session[] = [];
+  let loading = true;
+  let error = '';
 
-let mySessions: Session[] = [];
-let availableSessions: Session[] = [];
-
-let loading = true;
-let error = '';
-
-const LOCAL_KEY = 'user_sessions';
-
-function getLocalSessions(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function setLocalSessions(ids: string[]) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(ids));
-}
-
-async function loadSessions(): Promise<Session[]> {
-  const res = await apiFetch('/sessions');
-  return res.items ?? res ?? [];
-}
-
-async function joinSession(sessionId: string) {
-  try {
-    await apiFetch(`/sessions/${sessionId}/attendance`, {
-      method: 'POST'
-    });
-    const session = availableSessions.find(s => s.id === sessionId);
-    if (session) {
-      mySessions = [...mySessions, session];
-      availableSessions = availableSessions.filter(s => s.id !== sessionId);
-      const ids = getLocalSessions();
-      setLocalSessions([...ids, sessionId]);
+  onMount(async () => {
+    loading = true;
+    try {
+      const usersRes = await getAdminUsers();
+      users = usersRes?.items ?? [];
+      const sessionRes = await listSessions();
+      sessions = sessionRes ?? [];
+    } catch (e) {
+      error = "Erreur lors du chargement des données.";
+    } finally {
+      loading = false;
     }
-  } catch (e) {
-    console.error(e);
-    alert("Impossible de s'inscrire");
-  }
-}
-
-async function loadDashboard() {
-  loading = true;
-  error = '';
-  try {
-    const sessions = await loadSessions();
-    const localIds = getLocalSessions();
-    mySessions = sessions.filter(s => localIds.includes(s.id));
-    availableSessions = sessions.filter(s => !localIds.includes(s.id));
-  } catch (e) {
-    console.error(e);
-    error = 'Erreur lors du chargement';
-  } finally {
-    loading = false;
-  }
-}
-
-onMount(loadDashboard);
+  });
 </script>
 
 <style>
-.gym-user-container {
-  max-width: 900px;
+.admin-dashboard-container {
+  max-width: 1100px;
   margin: 40px auto;
   background: #fff;
   border-radius: 12px;
@@ -116,95 +67,57 @@ th {
 tr:last-child td {
   border-bottom: none;
 }
-button {
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-button:hover {
-  background: #1d4ed8;
-}
-.error-message {
-  color: #991b1b;
-  background: #fee2e2;
-  padding: 10px 16px;
-  border-radius: 6px;
-  margin-bottom: 18px;
-  text-align: center;
-}
-.loading-message {
-  color: #888;
-  font-size: 18px;
-  text-align: center;
-  margin: 32px 0;
-}
 </style>
 
-<div class="gym-user-container">
-  <h1>Tableau de bord utilisateur</h1>
-
+<div class="admin-dashboard-container">
+  <h1>Admin Dashboard</h1>
   {#if loading}
-    <div class="loading-message">Chargement...</div>
+    <div>Chargement...</div>
   {:else if error}
-    <div class="error-message">{error}</div>
+    <div style="color: red;">{error}</div>
   {:else}
-    <h2>Mes séances inscrites</h2>
-    {#if mySessions.length === 0}
-      <div style="color: #888; margin-bottom: 18px;">Aucune séance inscrite.</div>
-    {:else}
-      <table>
-        <thead>
+    <h2>Gestion des utilisateurs</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Rôles</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each users as user}
           <tr>
-            <th>Titre</th>
-            <th>Date</th>
-            <th>Coach</th>
+            <td>{user.email}</td>
+            <td>{user.roles ? user.roles.join(', ') : ''}</td>
+            <td>{user.disabled_at ? 'Désactivé' : 'Actif'}</td>
+            <td><a href={`/dashboard/admin/users/${user.id}/edit`} class="dashboard-btn">Modifier</a></td>
           </tr>
-        </thead>
-        <tbody>
-          {#each mySessions as s}
-            <tr>
-              <td>{s.title}</td>
-              <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
-              <td>{s.coach_name ?? 'Non défini'}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    {/if}
+        {/each}
+      </tbody>
+    </table>
 
-    <h2>Mes séances disponibles</h2>
-    {#if availableSessions.length === 0}
-      <div style="color: #888; margin-bottom: 18px;">Aucune séance disponible.</div>
-    {:else}
-      <table>
-        <thead>
+    <a href="/dashboard/admin/new-session" class="dashboard-btn">Ajouter une séance</a>
+
+    <h2>Gestion des séances</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Date</th>
+          <th>Coach</th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each sessions as s}
           <tr>
-            <th>Titre</th>
-            <th>Date</th>
-            <th>Coach</th>
-            <th></th>
+            <td>{s.title}</td>
+            <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
+            <td>{s.coach_name ?? 'Non défini'}</td>
+            <td><a href={`/dashboard/admin/sessions/${s.id}/edit`} class="dashboard-btn">Modifier</a></td>
           </tr>
-        </thead>
-        <tbody>
-          {#each availableSessions as s}
-            <tr>
-              <td>{s.title}</td>
-              <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
-              <td>{s.coach_name ?? 'Non défini'}</td>
-              <td>
-                <button on:click={() => joinSession(s.id)}>
-                  S'inscrire
-                </button>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    {/if}
+        {/each}
+      </tbody>
+    </table>
   {/if}
 </div>

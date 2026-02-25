@@ -31,8 +31,10 @@ function setLocalSessions(ids: string[]) {
 }
 
 async function loadSessions(): Promise<Session[]> {
-  const res = await apiFetch('/sessions');
-  return res.items ?? res ?? [];
+    const res = await apiFetch('/sessions');
+    if (Array.isArray(res.items)) return res.items;
+    if (Array.isArray(res)) return res;
+return [];
 }
 
 async function joinSession(sessionId: string) {
@@ -48,8 +50,8 @@ async function joinSession(sessionId: string) {
       setLocalSessions([...ids, sessionId]);
     }
   } catch (e) {
+    error = "Impossible de s'inscrire";
     console.error(e);
-    alert("Impossible de s'inscrire");
   }
 }
 
@@ -174,6 +176,10 @@ button:hover {
           {/each}
         </tbody>
       </table>
+    {/if}
+
+    {#if error}
+      <div class="error-message">{error}</div>
     {/if}
 
     <h2>Mes séances disponibles</h2>

@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { get } from 'svelte/store';
+  import { auth } from '$lib/stores/auth.store';
 
   type Participant = {
     id: string;
@@ -48,6 +49,18 @@
   }
 
   onMount(loadSession);
+
+  function handleReturn() {
+    const roles = get(auth).roles || [];
+    if (roles.includes('admin')) {
+      goto('/dashboard/admin');
+    } else if (roles.includes('coach')) {
+      goto('/dashboard/coach');
+    } else {
+      goto('/dashboard/user');
+    }
+  }
+
 </script>
 
 <div class="container">
@@ -116,11 +129,12 @@
       </table>
     {/if}
 
-    <button on:click={() => goto('/dashboard/admin')}>
+    <button on:click={handleReturn}>
       Retour
     </button>
   {/if}
 </div>
+
 
 <style>
   .container { padding: 40px; }
