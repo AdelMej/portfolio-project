@@ -81,12 +81,14 @@ as $$
 	 */
 	SELECT EXISTS(
 		SELECT 1
-		FROM app.session_participation
-		WHERE session_id = p_session_id
-			AND user_id = p_user_id
-			AND cancelled_at IS NULL
+		FROM app.session_participation sp
+		join app.sessions s on s.id = sp.session_id
+		WHERE sp.session_id = p_session_id
+			AND sp.user_id = p_user_id
+			AND sp.cancelled_at IS NULL
 			AND (
-				paid_at IS NOT NULL
+				s.price_cents = 0
+				or paid_at IS NOT NULL
 				OR expires_at > now()
 			)
 	);
