@@ -57,7 +57,7 @@ BEGIN
             USING ERRCODE = 'AP410';
     END IF;
 
-    IF app_fcn.has_active_participation(p_session_id, p_user_id) THEN
+    IF app_fcn.has_active_participation(p_user_id, p_session_id) THEN
         RAISE EXCEPTION 'already participating'
             USING ERRCODE = 'AB409';
     END IF;
