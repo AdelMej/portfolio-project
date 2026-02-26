@@ -1,3 +1,4 @@
+from datetime import datetime
 from app.domain.auth.actor_entity import Actor
 from app.domain.auth.auth_exceptions import (
     AdminCantSelfDeleteError,
@@ -15,9 +16,12 @@ from app.domain.user.user_profile_rules import (
 )
 from app.feature.auth.auth_dto import GetMeOutputDTO
 from app.feature.me.me_dto import (
+    CoachDto,
     GetMeProfileOutputDTO,
+    GetSessionOutputDto,
     MeEmailChangeInputDTO,
     MePasswordChangeInputDTO,
+    ParticipationOutputDTO,
     UpdateMeProfileInputDTO
 )
 from app.feature.me.uow.me_system_uow_port import MeSystemUoWPort
@@ -160,3 +164,49 @@ class MeService:
         await uow.auth_update_repo.revoke_all_refresh_token(
             user_id=actor.id
         )
+
+    async def get_own_sessions(
+        self,
+        actor: Actor,
+        uow: MeUoWPort,
+        limit: int,
+        offset: int,
+        _from: datetime | None,
+        to: datetime | None,
+    ) -> tuple[list[GetSessionOutputDto], bool]:
+        ensure_has_permission(actor, Permission.READ_SESSION)
+
+        if await uow.auth_read_repo.is_user_disabled(actor.id):
+            raise AuthUserIsDisabledError()
+
+        sessions, has_more = await (
+            uow.session_read_repo.get_own_sessions(
+                user_id=actor.id,
+                limit=limit,
+                offset=offset,
+                _from=_from,
+                to=to
+            )
+        )
+
+        return [
+            GetSessionOutputDto(
+                id=session.id,
+                coach=CoachDto(
+                    first_name=session.coach.first_name,
+                    last_name=session.coach.last_name
+                ),
+                title=session.title,
+                starts_at=session.starts_at,
+                ends_at=session.ends_at,
+                price_cents=session.price_cents,
+                currency=session.currency,
+                status=session.status,
+                participants=[
+                   ParticipationOutputDTO(
+                        first_name=participant.first_name,
+                        last_name=participant.last_name
+                    )for participant in session.participants
+                ]
+            ) for session in sessions
+        ], has_more

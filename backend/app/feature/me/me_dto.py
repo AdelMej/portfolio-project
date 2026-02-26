@@ -1,7 +1,7 @@
-
-
+from datetime import datetime
 from pydantic import BaseModel, EmailStr, field_validator
 from pydantic.fields import Field
+from uuid import UUID
 
 from app.shared.rules.email_rules import (
     MAX_EMAIL_LENGTH,
@@ -145,3 +145,32 @@ class MePasswordChangeInputDTO(BaseModel):
             raise ValueError("password must contain a special character")
 
         return password
+
+
+class CoachDto(BaseModel):
+    first_name: str
+    last_name: str
+
+
+class ParticipationOutputDTO(BaseModel):
+    first_name: str
+    last_name: str
+
+
+class GetSessionOutputDto(BaseModel):
+    id: UUID
+    coach: CoachDto
+    title: str
+    starts_at: datetime
+    ends_at: datetime
+    price_cents: int
+    currency: str
+    status: str
+    participants: list[ParticipationOutputDTO]
+
+
+class PaginatedSessionsOutputDTO(BaseModel):
+    items: list[GetSessionOutputDto]
+    limit: int
+    offset: int
+    has_more: bool
