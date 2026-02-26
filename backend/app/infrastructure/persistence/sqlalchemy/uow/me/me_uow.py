@@ -4,7 +4,6 @@ from app.infrastructure.persistence.sqlalchemy.repositories import (
     SqlAlchemyMeReadRepo,
     SqlAlchemyMeUpdateRepo,
     SqlAlchemyAuthReadRepo,
-    SqlAlchemySessionParticipationReadRepo,
     SqlAlchemySessionReadRepo
 )
 
@@ -16,7 +15,4 @@ class SqlAlchemyMeUoW(MeUoWPort):
         self.me_read_repo = SqlAlchemyMeReadRepo(session)
         self.me_update_repo = SqlAlchemyMeUpdateRepo(session)
         self.auth_read_repo = SqlAlchemyAuthReadRepo(session)
-        self.session_participation_read_repo = (
-            SqlAlchemySessionParticipationReadRepo(session)
-        )
         self.session_read_repo = SqlAlchemySessionReadRepo(session)

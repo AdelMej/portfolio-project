@@ -15,3 +15,9 @@ class SessionReadRepoPort(Protocol):
         to: datetime | None
     ) -> tuple[list[SessionCompleteEntity], bool]:
         ...
+
+    async def get_complete_session_by_id(
+        self,
+        session_id: UUID
+    ) -> SessionCompleteEntity:
+        ...

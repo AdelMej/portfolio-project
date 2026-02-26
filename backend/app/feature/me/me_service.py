@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 from app.domain.auth.actor_entity import Actor
 from app.domain.auth.auth_exceptions import (
     AdminCantSelfDeleteError,
@@ -10,6 +11,7 @@ from app.domain.auth.auth_exceptions import (
 from app.domain.auth.auth_password_rules import ensure_password_is_strong
 from app.domain.auth.permission import Permission
 from app.domain.auth.permission_rules import ensure_has_permission
+from app.domain.session.session_exception import SessionNotFoundError
 from app.domain.user.user_profile_rules import (
     ensure_first_name_is_valid,
     ensure_last_name_is_valid
@@ -210,3 +212,43 @@ class MeService:
                 ]
             ) for session in sessions
         ], has_more
+
+    async def get_session_by_id(
+        self,
+        session_id: UUID,
+        uow: MeSystemUoWPort,
+        actor: Actor
+    ) -> GetSessionOutputDto:
+        ensure_has_permission(actor, Permission.READ_SESSION)
+
+        if not (
+            await uow.session_participation_read_repo.has_active_participation(
+                session_id=session_id,
+                user_id=actor.id
+            )
+        ):
+            raise SessionNotFoundError()
+
+        session = await uow.session_read_repo.get_complete_session_by_id(
+            session_id
+        )
+
+        return GetSessionOutputDto(
+            id=session.id,
+            coach=CoachDto(
+                first_name=session.coach.first_name,
+                last_name=session.coach.last_name
+            ),
+            title=session.title,
+            starts_at=session.starts_at,
+            ends_at=session.ends_at,
+            price_cents=session.price_cents,
+            currency=session.currency,
+            status=session.status,
+            participants=[
+                ParticipationOutputDTO(
+                    first_name=participant.first_name,
+                    last_name=participant.last_name
+                ) for participant in session.participants
+            ]
+        )

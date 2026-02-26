@@ -457,7 +457,6 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
 
         rows = rows[:limit]
 
-        print(rows)
         return [
             SessionCompleteEntity(
                 id=row["id"],
@@ -483,3 +482,45 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
                 ]
             ) for row in rows
         ], has_more
+
+    async def get_complete_session_by_id(
+        self,
+        session_id: UUID
+    ) -> SessionCompleteEntity:
+        stmt = text("""
+                SELECT *
+                FROM app_fcn.get_complete_session(
+                    :session_id
+                )
+        """)
+
+        row = await self._session.execute(stmt, {
+            "session_id": session_id
+        })
+
+        row = row.mappings().one()
+
+        return SessionCompleteEntity(
+            id=row["id"],
+            coach=UserProfileEntity(
+                user_id=row["user_id"],
+                first_name=row["first_name"],
+                last_name=row["last_name"]
+            ),
+            title=row["title"],
+            starts_at=row["starts_at"],
+            ends_at=row["ends_at"],
+            status=row["status"],
+            cancelled_at=row["cancelled_at"],
+            price_cents=row["price_cents"],
+            currency=row["currency"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            participants=[
+                UserProfileEntity(
+                    user_id=participant["user_id"],
+                    first_name=participant["first_name"],
+                    last_name=participant["last_name"]
+                )for participant in row["participants"]
+            ]
+        )
