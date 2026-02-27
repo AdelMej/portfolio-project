@@ -9,6 +9,20 @@
 ALTER TABLE app.session_participation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app.session_participation FORCE ROW LEVEL SECURITY;
 
+
+CREATE FUNCTION app.is_participant(_session_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+    SELECT EXISTS (
+        SELECT 1
+        FROM app.session_participation
+        WHERE session_id = _session_id
+          AND user_id = current_setting('app.current_user_id')::uuid
+    );
+$$;
+
 -- ------------------------------------------------------------------
 -- Policy: session_participation_select
 --
@@ -50,6 +64,8 @@ USING (
         WHERE ur.user_id = current_setting('app.current_user_id')::uuid
           AND r.role_name = 'admin'
     )
+    
+	OR app.is_participant(session_participation.session_id)
 );
 
 COMMENT ON POLICY session_participation_select ON app.session_participation IS

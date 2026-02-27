@@ -3,7 +3,9 @@ from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.domain.auth.auth_exceptions import PermissionDeniedError
-from app.domain.session.session_entity import NewSessionParticipationEntity
+from app.domain.session_participation.session_participation_entity import (
+    NewSessionParticipationEntity
+)
 from app.domain.session.session_exception import (
     AlreadyActiveParticipationError,
     SessionCancelledError,

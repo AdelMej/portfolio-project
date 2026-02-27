@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql.expression import text
 from app.domain.session.session_entity import (
+    SessionCompleteEntity,
     SessionEntity,
     SessionWithCoachEntity
 )
@@ -378,3 +379,148 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
         })
 
         return res.scalar_one()
+
+    async def get_own_sessions(
+        self,
+        user_id: UUID,
+        limit: int,
+        offset: int,
+        _from: datetime | None,
+        to: datetime | None
+    ) -> tuple[list[SessionCompleteEntity], bool]:
+        stmt = text("""
+        SELECT
+            s.id,
+            cp.user_id,
+            cp.first_name,
+            cp.last_name,
+            s.title,
+            s.starts_at,
+            s.ends_at,
+            s.status,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency,
+            s.created_at,
+            s.updated_at,
+            COALESCE(
+                array_agg(
+                    json_build_object(
+                        'user_id', up.user_id,
+                        'first_name', up.first_name,
+                        'last_name', up.last_name
+                    )
+                ) FILTER (WHERE up.user_id IS NOT NULL),
+                '{}'
+            ) AS participants
+        FROM app.sessions s
+        JOIN app.v_coach_public cp
+            ON cp.user_id = s.coach_id
+        LEFT JOIN app.session_participation sp
+            ON sp.session_id = s.id
+        LEFT JOIN app.user_profiles up
+            ON up.user_id = sp.user_id
+        WHERE EXISTS (
+            SELECT 1
+                FROM app.session_participation sp2
+                WHERE sp2.session_id = s.id
+                    AND sp2.user_id = :user_id
+        )
+        GROUP BY
+            s.id,
+            cp.user_id,
+            cp.first_name,
+            cp.last_name,
+            s.title,
+            s.starts_at,
+            s.ends_at,
+            s.status,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency,
+            s.created_at,
+            s.updated_at
+        OFFSET :offset
+        LIMIT :limit
+        """)
+
+        rows = await self._session.execute(stmt, {
+            "user_id": user_id,
+            "from_ts": _from,
+            "to_ts": to,
+            "offset": offset,
+            "limit": limit + 1
+        })
+
+        rows = rows.mappings().all()
+        has_more = len(rows) > limit
+
+        rows = rows[:limit]
+
+        return [
+            SessionCompleteEntity(
+                id=row["id"],
+                coach=UserProfileEntity(
+                    user_id=row["user_id"],
+                    first_name=row["first_name"],
+                    last_name=row["last_name"]
+                ),
+                title=row["title"],
+                starts_at=row["starts_at"],
+                ends_at=row["ends_at"],
+                status=row["status"],
+                cancelled_at=row["cancelled_at"],
+                price_cents=row["price_cents"],
+                currency=row["currency"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"],
+                participants=[UserProfileEntity(
+                    user_id=participant["user_id"],
+                    first_name=participant["first_name"],
+                    last_name=participant["last_name"]
+                    ) for participant in row["participants"]
+                ]
+            ) for row in rows
+        ], has_more
+
+    async def get_complete_session_by_id(
+        self,
+        session_id: UUID
+    ) -> SessionCompleteEntity:
+        stmt = text("""
+                SELECT *
+                FROM app_fcn.get_complete_session(
+                    :session_id
+                )
+        """)
+
+        row = await self._session.execute(stmt, {
+            "session_id": session_id
+        })
+
+        row = row.mappings().one()
+
+        return SessionCompleteEntity(
+            id=row["id"],
+            coach=UserProfileEntity(
+                user_id=row["user_id"],
+                first_name=row["first_name"],
+                last_name=row["last_name"]
+            ),
+            title=row["title"],
+            starts_at=row["starts_at"],
+            ends_at=row["ends_at"],
+            status=row["status"],
+            cancelled_at=row["cancelled_at"],
+            price_cents=row["price_cents"],
+            currency=row["currency"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            participants=[
+                UserProfileEntity(
+                    user_id=participant["user_id"],
+                    first_name=participant["first_name"],
+                    last_name=participant["last_name"]
+                )for participant in row["participants"]
+            ]
+        )

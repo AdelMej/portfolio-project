@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+from datetime import datetime
+from uuid import UUID
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 
 from app.domain.auth.actor_entity import Actor
@@ -6,8 +8,10 @@ from app.feature.auth.auth_dto import GetMeOutputDTO
 from app.feature.me.me_dependencies import get_me_service
 from app.feature.me.me_dto import (
     GetMeProfileOutputDTO,
+    GetSessionOutputDto,
     MeEmailChangeInputDTO,
     MePasswordChangeInputDTO,
+    PaginatedSessionsOutputDTO,
     UpdateMeProfileInputDTO
 )
 from app.feature.me.me_service import MeService
@@ -135,4 +139,50 @@ async def delete_me(
     response.delete_cookie(
         key="refresh_token",
         path="/auth"
+    )
+
+
+@router.get(
+    path="/sessions/"
+)
+async def get_own_sessions(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    _from: datetime | None = Query(None),
+    to: datetime | None = Query(None),
+    actor: Actor = Depends(get_current_actor),
+    uow: MeUoWPort = Depends(get_me_uow),
+    service: MeService = Depends(get_me_service)
+) -> PaginatedSessionsOutputDTO:
+    items, has_more = await service.get_own_sessions(
+        offset=offset,
+        limit=limit,
+        _from=_from,
+        to=to,
+        uow=uow,
+        actor=actor
+    )
+
+    return PaginatedSessionsOutputDTO(
+        items=items,
+        limit=limit,
+        offset=offset,
+        has_more=has_more
+    )
+
+
+@router.get(
+    path="/sessions/{session_id}/"
+)
+async def get_session(
+    session_id: UUID,
+    actor: Actor = Depends(get_current_actor),
+    uow: MeSystemUoWPort = Depends(get_me_system_uow),
+    service: MeService = Depends(get_me_service)
+) -> GetSessionOutputDto:
+
+    return await service.get_session_by_id(
+        session_id=session_id,
+        uow=uow,
+        actor=actor
     )

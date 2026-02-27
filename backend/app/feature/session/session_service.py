@@ -46,7 +46,9 @@ from app.feature.session.uow.session_public_uow_port import (
 )
 from app.feature.session.uow.session_uow_port import SessionUoWPort
 from app.domain.session.session_entity import (
-    NewSessionEntity,
+    NewSessionEntity
+)
+from app.domain.session_participation.session_participation_entity import (
     NewSessionParticipationEntity
 )
 from app.domain.currency.currency_rules import (
