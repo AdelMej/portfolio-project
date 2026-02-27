@@ -18,7 +18,7 @@ async function handleLogin() {
     auth.login(tokenResponse.access_token);
     await tick();
     const me: MeResponse = await getMe();
-    auth.login(tokenResponse.access_token, me.roles);
+    auth.login(tokenResponse.access_token, me.roles, me.id, me.email);
 
     if (me.roles.includes('admin')) goto('/dashboard/admin');
     else if (me.roles.includes('coach')) goto('/dashboard/coach');

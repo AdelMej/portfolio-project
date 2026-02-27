@@ -29,7 +29,11 @@
 {:else if error}
   <div style="color: red;">{error}</div>
 {:else}
-  <h1>Modifier l’utilisateur</h1>
-  <div>Email: {user?.email}</div>
-  <!-- Add your edit form here -->
+  {#if user}
+    <h1>Modifier l’utilisateur</h1>
+    <div>Email: {user.email}</div>
+    <!-- Add your edit form here -->
+  {:else}
+    <div style="color: red;">Utilisateur non trouvé</div>
+  {/if}
 {/if}

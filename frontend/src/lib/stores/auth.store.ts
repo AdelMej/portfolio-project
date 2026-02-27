@@ -3,6 +3,8 @@ import { writable } from 'svelte/store';
 interface AuthState {
   accessToken: string | null;
   roles?: string[];
+  userId?: string;
+  email?: string;
 }
 
 function createAuth() {
@@ -10,7 +12,8 @@ function createAuth() {
 
   return {
     subscribe,
-    login: (token: string, roles: string[] = []) => set({ accessToken: token, roles }),
+    login: (token: string, roles: string[] = [], userId?: string, email?: string) =>
+    set({ accessToken: token, roles, userId, email }),
     logout: () => set({ accessToken: null, roles: [] }),
   };
 }

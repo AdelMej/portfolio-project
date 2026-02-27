@@ -1,15 +1,19 @@
 <!-- frontend/src/routes/dashboard/admin/+page.svelte -->
 <script lang="ts">
+
   import { onMount } from 'svelte';
   import { getAdminUsers, type AdminUser } from '$lib/api/admin.api';
   import { listSessions, type Session } from '$lib/api/sessions.api';
+  import { goto } from '$app/navigation';
+  import { afterNavigate } from '$app/navigation';
 
   let users: AdminUser[] = [];
   let sessions: Session[] = [];
   let loading = true;
   let error = '';
 
-  onMount(async () => {
+
+  async function loadDashboardData() {
     loading = true;
     try {
       const usersRes = await getAdminUsers();
@@ -21,6 +25,12 @@
     } finally {
       loading = false;
     }
+  }
+
+  onMount(loadDashboardData);
+
+  afterNavigate(() => {
+    loadDashboardData();
   });
 </script>
 
@@ -77,6 +87,7 @@ tr:last-child td {
     <div style="color: red;">{error}</div>
   {:else}
     <h2>Gestion des utilisateurs</h2>
+      <a href="/dashboard/admin/users/registration" class="dashboard-btn" style="margin-bottom: 18px; display: inline-block;">Créer un nouvel utilisateur</a>
     <table>
       <thead>
         <tr>
@@ -107,17 +118,20 @@ tr:last-child td {
           <th>Date</th>
           <th>Coach</th>
         </tr>
-      </thead>
-      <tbody>
+        </thead>
+        <tbody>
         {#each sessions as s}
-          <tr>
+            <tr>
             <td>{s.title}</td>
             <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
             <td>{s.coach_name ?? 'Non défini'}</td>
-            <td><a href={`/dashboard/admin/sessions/${s.id}/edit`} class="dashboard-btn">Modifier</a></td>
-          </tr>
+            <td>
+                <a href={`/dashboard/admin/sessions/${s.id}/edit`} class="dashboard-btn">Modifier</a>
+                <button on:click={() => goto(`/sessions/${s.id}/participants`)}>Voir participants</button>
+            </td>
+            </tr>
         {/each}
-      </tbody>
+        </tbody>
     </table>
   {/if}
 </div>

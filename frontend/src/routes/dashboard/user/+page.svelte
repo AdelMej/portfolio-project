@@ -1,6 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { apiFetch } from '$lib/api/client';
+import { goto } from '$app/navigation';
+import { auth } from '$lib/stores/auth.store';
 
 type Session = {
   id: string;
@@ -16,7 +18,18 @@ let availableSessions: Session[] = [];
 let loading = true;
 let error = '';
 
-const LOCAL_KEY = 'user_sessions';
+import { get } from 'svelte/store';
+let LOCAL_KEY = '';
+
+function updateLocalKey() {
+  LOCAL_KEY = `user_sessions_${auth.userId ?? 'unknown'}`;
+}
+
+// Watch for userId changes and reload dashboard
+$: if (auth.userId) {
+  updateLocalKey();
+  loadDashboard();
+}
 
 function getLocalSessions(): string[] {
   try {
@@ -29,7 +42,6 @@ function getLocalSessions(): string[] {
 function setLocalSessions(ids: string[]) {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(ids));
 }
-
 async function loadSessions(): Promise<Session[]> {
     const res = await apiFetch('/sessions');
     if (Array.isArray(res.items)) return res.items;
@@ -39,8 +51,9 @@ return [];
 
 async function joinSession(sessionId: string) {
   try {
-    await apiFetch(`/sessions/${sessionId}/attendance`, {
-      method: 'POST'
+    await apiFetch(`/sessions/${sessionId}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
     });
     const session = availableSessions.find(s => s.id === sessionId);
     if (session) {
@@ -71,7 +84,7 @@ async function loadDashboard() {
   }
 }
 
-onMount(loadDashboard);
+// Remove onMount, since reactive statement handles loading
 </script>
 
 <style>
@@ -204,6 +217,9 @@ button:hover {
               <td>
                 <button on:click={() => joinSession(s.id)}>
                   S'inscrire
+                </button>
+                <button on:click={() => goto(`/sessions/${s.id}/participants`)} style="margin-left: 8px;">
+                  Voir participants
                 </button>
               </td>
             </tr>
