@@ -1,7 +1,9 @@
 \c app
 
 create or replace function app_fcn.intent_exists(
-	p_provider_payment_id text
+	p_user_id uuid,
+	p_session_id uuid,
+	p_provider text
 )
 returns boolean
 language sql
@@ -36,7 +38,9 @@ as $$
 	SELECT EXISTS(
 		SELECT 1
 		FROM app.payment_intents
-		WHERE provider_intent_id = p_provider_payment_id
+		WHERE user_id = p_user_id
+			AND session_id = p_session_id
+			AND provider = p_provider
 	)
 $$;
 
