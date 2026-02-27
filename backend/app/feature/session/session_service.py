@@ -8,7 +8,7 @@ from app.domain.payment.payment_exception import PaymentProviderError
 from app.domain.payment_intent.payment_intent_entity import (
     NewPaymentIntentEntity
 )
-from app.domain.payment_intent.payment_intent_providers import PaymentProvier
+from app.domain.payment_intent.payment_intent_providers import PaymentProvider
 from app.domain.session.session_creation_rules import (
     ensure_price_is_not_negative,
     ensure_times_valid,
@@ -363,7 +363,8 @@ class SessionService:
         session_id: UUID,
         actor: Actor,
         uow: SessionUoWPort,
-        session_ttl: int
+        session_ttl: int,
+        front_end_url: str
     ) -> tuple[bool, str | None]:
         ensure_has_permission(actor, Permission.SESSION_REGISTRATION)
 
@@ -419,7 +420,7 @@ class SessionService:
         required_payment = final_amount > 0
 
         if final_amount == 0 and credit_applied == 0:
-            client_secret = None
+            url = None
 
         elif final_amount == 0 and credit_applied > 0:
             await uow.credit_ledger_creation_repo.create_credit_entry(
@@ -431,14 +432,25 @@ class SessionService:
                 )
             )
 
-            client_secret = None
+            url = None
 
         else:
             try:
-                intent = await stripe.PaymentIntent.create_async(
-                    amount=final_amount,
-                    currency=session.currency,
-                    automatic_payment_methods={"enabled": True},
+                stripe_session = await stripe.checkout.Session.create_async(
+                    payment_method_types=["card"],
+                    mode="payment",
+                    line_items=[{
+                        "price_data": {
+                            "currency": session.currency,
+                            "product_data": {"name": f"Session {session_id}"},
+                            "unit_amount": final_amount,
+                        },
+                        "quantity": 1,
+                    }],
+                    success_url=f"{front_end_url}/payment/success"
+                    f"?session_id={{CHECKOUT_SESSION_ID}}",
+                    cancel_url=f"{front_end_url}/payment/cancel"
+                    f"?session_id={session_id}",
                     metadata={
                         "resource": "session_registration",
                         "flow_version": "v1",
@@ -446,6 +458,12 @@ class SessionService:
                         "session_id": str(session_id),
                         "user_id": str(actor.id),
                     },
+                    payment_intent_data={
+                        "metadata": {
+                            "user_id": str(actor.id),
+                            "session_id": str(session.id),
+                        }
+                    }
                 )
             except stripe.StripeError as exc:
                 raise PaymentProviderError() from exc
@@ -454,19 +472,16 @@ class SessionService:
                 NewPaymentIntentEntity(
                     user_id=actor.id,
                     session_id=session.id,
-                    provider=PaymentProvier.STRIPE,
-                    provider_intent_id=intent.id,
-                    status=intent.status,
+                    provider=PaymentProvider.STRIPE,
+                    provider_intent_id=None,
+                    status=str(stripe_session.status),
                     credit_applied_cents=credit_applied,
                     amount_cents=final_amount,
                     currency=session.currency
                 )
             )
 
-            if intent.client_secret is None:
-                raise PaymentProviderError()
-
-            client_secret = intent.client_secret
+            url = stripe_session.url
 
         await uow.session_participation_creation_repo.create_participation(
             participation=NewSessionParticipationEntity(
@@ -476,4 +491,4 @@ class SessionService:
             expires_at=utcnow() + timedelta(seconds=session_ttl)
         )
 
-        return required_payment, client_secret
+        return required_payment, url

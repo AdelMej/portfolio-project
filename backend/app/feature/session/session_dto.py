@@ -193,4 +193,4 @@ class AttendanceInputDTO(BaseModel):
 
 class RegistrationOutputDTO(BaseModel):
     require_payment: bool
-    payment_intent_client_secret: str | None
+    payment_url: str | None

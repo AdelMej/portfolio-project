@@ -8,7 +8,10 @@ from app.feature.coach.coach_service import CoachService
 from app.feature.coach.uow.coach_uow_port import CoachUoWPort
 from app.domain.auth.actor_entity import Actor
 from app.infrastructure.security.provider import get_current_actor
-from app.infrastructure.settings.provider import get_stripe_client
+from app.infrastructure.settings.provider import (
+    get_front_end_link,
+    get_stripe_client
+)
 from app.infrastructure.persistence.sqlalchemy.provider import get_coach_uow
 
 router = APIRouter(
@@ -22,12 +25,14 @@ async def coach_account(
     uow: CoachUoWPort = Depends(get_coach_uow),
     actor: Actor = Depends(get_current_actor),
     client: stripe.StripeClient = Depends(get_stripe_client),
-    service: CoachService = Depends(get_coach_service)
+    service: CoachService = Depends(get_coach_service),
+    front_end_url: str = Depends(get_front_end_link)
 ) -> CoachStripeAccountCreationOutputDTO:
     link = await service.create_onboarding_link(
         uow=uow,
         actor=actor,
-        client=client
+        client=client,
+        front_end_url=front_end_url
     )
 
     return CoachStripeAccountCreationOutputDTO(

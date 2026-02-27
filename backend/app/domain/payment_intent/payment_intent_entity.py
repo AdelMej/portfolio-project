@@ -20,7 +20,7 @@ class NewPaymentIntentEntity:
     user_id: UUID
     session_id: UUID
     provider: str
-    provider_intent_id: str
+    provider_intent_id: str | None
     status: str
     credit_applied_cents: int
     amount_cents: int

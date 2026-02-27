@@ -6,7 +6,7 @@ from app.domain.auth.auth_exceptions import AuthUserIsDisabledError
 from app.domain.auth.permission import Permission
 from app.domain.payment.payment_entity import NewPaymentEntity
 from app.domain.payment.payment_exception import PaymentAlreadyPaidError
-from app.domain.payment_intent.payment_intent_providers import PaymentProvier
+from app.domain.payment_intent.payment_intent_providers import PaymentProvider
 from app.domain.session.session_exception import (
     InvalidCoachAccountError,
     NotOwnerOfSessionError,
@@ -29,7 +29,8 @@ class CoachService():
         self,
         uow: CoachUoWPort,
         actor: Actor,
-        client: stripe.StripeClient
+        client: stripe.StripeClient,
+        front_end_url: str
     ) -> str | None:
         ensure_has_permission(actor, Permission.CREATE_STRIPE_ACCOUNT)
 
@@ -62,8 +63,8 @@ class CoachService():
             params={
                 "account": stripe_acount_id,
                 "type": "account_onboarding",
-                "refresh_url": "https://your-app/stripe/refresh",
-                "return_url": "https://your-app/stripe/return",
+                "refresh_url": f"{front_end_url}/stripe/refresh",
+                "return_url": f"{front_end_url}/stripe/return",
             }
         )
 
@@ -150,7 +151,7 @@ class CoachService():
         payment = NewPaymentEntity(
             session_id=session_id,
             user_id=actor.id,
-            provider=PaymentProvier.STRIPE,
+            provider=PaymentProvider.STRIPE,
             provider_payment_id=transfer.id,
             gross_amount_cents=total,
             provider_fee_cents=0,
