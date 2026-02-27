@@ -443,7 +443,7 @@ AS $$
 				USING ERRCODE = 'AP404';
 		END IF;
 
-		UPDATE app.payment_intent
+		UPDATE app.payment_intents
 		SET
 			provider_intent_id = p_provider_intent_id
 		WHERE user_id = p_user_id
