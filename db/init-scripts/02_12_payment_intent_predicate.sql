@@ -44,6 +44,6 @@ as $$
 	)
 $$;
 
-COMMENT ON FUNCTION app_fcn.intent_exists(text)
+COMMENT ON FUNCTION app_fcn.intent_exists(uuid, uuid, text)
 IS 'Returns true if a payment intent exists for the given provider intent ID.';
 
