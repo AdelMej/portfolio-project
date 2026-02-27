@@ -39,14 +39,14 @@
   max-width: 1100px;
   margin: 40px auto;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: 0 2px 16px #e5e7eb;
   padding: 36px 32px 32px 32px;
 }
 h1 {
   font-size: 2.2rem;
   margin-bottom: 24px;
-  color: #2563eb;
+  color: #991b1b;
   text-align: center;
 }
 h2 {
@@ -71,20 +71,84 @@ th, td {
 }
 th {
   background: #f3f4f6;
-  color: #2563eb;
+  color: #991b1b;
   font-weight: 700;
 }
 tr:last-child td {
   border-bottom: none;
 }
+tr:hover td {
+  background: #fef2f2;
+}
+.dashboard-btn {
+  display: inline-block;
+  background: #991b1b;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(153,27,27,0.12);
+}
+.dashboard-btn:hover {
+  background: #7f1d1d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(153,27,27,0.2);
+}
+button {
+  background: #991b1b;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(153,27,27,0.12);
+}
+button:hover {
+  background: #7f1d1d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(153,27,27,0.2);
+}
+.spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #991b1b;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 28px auto;
+}
+.loading-center {
+  text-align: center;
+  padding: 32px 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.error-msg {
+  color: #991b1b;
+  background: #fee2e2;
+  padding: 10px 16px;
+  border-radius: 6px;
+  text-align: center;
+  margin-bottom: 18px;
+}
 </style>
 
 <div class="admin-dashboard-container">
-  <h1>Admin Dashboard</h1>
+  <h1>Tableau de bord Admin</h1>
   {#if loading}
-    <div>Chargement...</div>
+    <div class="loading-center"><div class="spinner"></div></div>
   {:else if error}
-    <div style="color: red;">{error}</div>
+    <div class="error-msg">{error}</div>
   {:else}
     <h2>Gestion des utilisateurs</h2>
       <a href="/dashboard/admin/users/registration" class="dashboard-btn" style="margin-bottom: 18px; display: inline-block;">Créer un nouvel utilisateur</a>
@@ -94,6 +158,7 @@ tr:last-child td {
           <th>Email</th>
           <th>Rôles</th>
           <th>Statut</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -117,6 +182,7 @@ tr:last-child td {
           <th>Titre</th>
           <th>Date</th>
           <th>Coach</th>
+          <th></th>
         </tr>
         </thead>
         <tbody>
@@ -127,7 +193,7 @@ tr:last-child td {
             <td>{s.coach_name ?? 'Non défini'}</td>
             <td>
                 <a href={`/dashboard/admin/sessions/${s.id}/edit`} class="dashboard-btn">Modifier</a>
-                <button on:click={() => goto(`/sessions/${s.id}/participants`)}>Voir participants</button>
+                <button on:click={() => goto(`/sessions/${s.id}/participants`)} style="margin-left: 8px;">Voir participants</button>
             </td>
             </tr>
         {/each}

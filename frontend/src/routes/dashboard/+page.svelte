@@ -30,7 +30,7 @@ const roles = get(auth).roles || [];
 }
 h1 {
   font-size: 2.2rem;
-  color: #2563eb;
+  color: #991b1b;
   margin-bottom: 18px;
   letter-spacing: 1px;
 }
@@ -41,7 +41,7 @@ h2 {
 }
 a, .dashboard-btn {
   display: inline-block;
-  background: #2563eb;
+  background: #991b1b;
   color: white;
   border: none;
   padding: 12px 28px;
@@ -54,7 +54,7 @@ a, .dashboard-btn {
   transition: background 0.2s;
 }
 a:hover, .dashboard-btn:hover {
-  background: #1d4ed8;
+  background: #7f1d1d;
 }
 </style>
 

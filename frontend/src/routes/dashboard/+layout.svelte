@@ -27,9 +27,9 @@ onMount(() => {
 });
 </script>
 
-<header>
-  <nav aria-label="Main navigation">
-    <ul style="display: flex; gap: 1rem; list-style: none; padding: 0; margin: 0;">
+<div class="dash-layout">
+  <nav class="dash-nav" aria-label="Main navigation">
+    <ul>
       {#if hasRole('admin')}
         <li>
           <a href="/dashboard/admin" class:active={$page.url.pathname === '/dashboard/admin'}>Administration</a>
@@ -47,15 +47,54 @@ onMount(() => {
       {/if}
     </ul>
   </nav>
-</header>
 
-<main>
-  <slot />
-</main>
+  <main>
+    <slot />
+  </main>
+</div>
 
 <style>
-a.active {
-  font-weight: bold;
-  text-decoration: underline;
+.dash-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.dash-nav {
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  padding: 0 8px;
+  box-shadow: 0 1px 4px #e5e7eb;
+}
+.dash-nav ul {
+  display: flex;
+  gap: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.dash-nav li {
+  flex: 1;
+}
+.dash-nav a {
+  display: block;
+  text-align: center;
+  padding: 12px 18px;
+  color: #374151;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s, border-color 0.2s, background 0.15s;
+  border-radius: 8px 8px 0 0;
+}
+.dash-nav a:hover {
+  color: #991b1b;
+  background: #fef2f2;
+}
+.dash-nav a.active {
+  color: #991b1b;
+  border-bottom-color: #991b1b;
+  background: #fff;
+  font-weight: 700;
 }
 </style>

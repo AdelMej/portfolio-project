@@ -60,7 +60,7 @@ onMount(loadSessions);
 h1 {
   font-size: 2.4rem;
   margin-bottom: 32px;
-  color: #2563eb;
+  color: #991b1b;
   text-align: center;
   letter-spacing: 1px;
 }
@@ -70,7 +70,7 @@ h1 {
   margin-bottom: 32px;
 }
 .action-bar button {
-  background: #2563eb;
+  background: #991b1b;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -81,7 +81,7 @@ h1 {
   transition: background 0.2s;
 }
 .action-bar button:hover {
-  background: #1d4ed8;
+  background: #7f1d1d;
 }
 table {
   width: 100%;
@@ -98,7 +98,7 @@ th, td {
 }
 th {
   background: #f3f4f6;
-  color: #2563eb;
+  color: #991b1b;
   font-weight: 700;
   font-size: 1.1rem;
 }
@@ -122,7 +122,7 @@ tr:last-child td {
 }
 
 .participants-btn {
-  background: #2563eb !important;
+  background: #991b1b !important;
   color: white !important;
   border: none;
   padding: 8px 16px;
@@ -132,7 +132,7 @@ tr:last-child td {
   transition: background 0.2s;
 }
 .participants-btn:hover {
-  background: #1d4ed8 !important;
+  background: #7f1d1d !important;
 }
 </style>
 
