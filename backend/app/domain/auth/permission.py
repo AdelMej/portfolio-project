@@ -4,33 +4,34 @@ from app.domain.auth.role import Role
 
 
 class Permission(str, Enum):
-    READ_SELF = "read:self"
-    WRITE_SELF = "write:self"
-    UPDATE_SELF = "update:self"
-    DELETE_SELF = "delete:self"
-    NO_SELF_DELETE = "delete:notSelf"
+    READ_SELF = "user:read:self"
+    WRITE_SELF = "user:write:self"
+    UPDATE_SELF = "user:update:self"
+    DELETE_SELF = "user:delete:self"
+    NO_SELF_DELETE = "admin:delete:notSelf"
     ADMIN_READ_USERS = "admin:read:users"
-    BAN_USER = "ban:user"
-    CREATE_SESSION = "session:create"
-    CANCEL_SESSION = "session:cancel"
+    BAN_USER = "admin:ban:user"
+    CREATE_SESSION = "coach:session:create"
+    CANCEL_SESSION = "coach:session:cancel"
     ADMIN_CANCEL_SESSION = "admin:session:cancel"
     ADMIN_READ_SESSION = "admin:session:read"
-    GRANT_ROLE = "role:grant"
-    REVOKE_ROLE = "role:revoke"
-    DISABLE_USER = "disable:user"
-    REENEABLE_USER = "reenable:user"
-    READ_CREDIT = "read:credit"
-    READ_PAYMENT = "read:payment"
-    UPDATE_SESSION = "update:session"
-    READ_ATTENDANCE = "read:attendance"
+    GRANT_ROLE = "admin:role:grant"
+    REVOKE_ROLE = "admin:role:revoke"
+    DISABLE_USER = "admin:disable:user"
+    REENEABLE_USER = "admin:reenable:user"
+    READ_CREDIT = "user:read:credit"
+    READ_PAYMENT = "user:read:payment"
+    UPDATE_SESSION = "coach:update:session"
+    READ_ATTENDANCE = "coach:read:attendance"
     ADMIN_READ_ATTENDANCE = "admin:attendance:read"
-    CREATE_ATTENDANCE = "create:attendance"
-    SESSION_REGISTRATION = "session:registration"
-    CANCEL_REGISTRATION = "cancel:registration"
-    CREATE_STRIPE_ACCOUNT = "create:stripe"
+    CREATE_ATTENDANCE = "coach:create:attendance"
+    SESSION_REGISTRATION = "user:session:registration"
+    CANCEL_REGISTRATION = "user:cancel:registration"
+    CREATE_STRIPE_ACCOUNT = "coach:create:stripe"
     ADMIN_READ_PAYMENT = "admin:read:payment",
     ADMIN_READ_CREDIT = "admin:read:credit",
-    READ_SESSION = "read:session"
+    READ_SESSION = "user:read:session"
+    COACH_READ_SESSION = "coach:read:session"
 
 
 ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
@@ -72,6 +73,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.UPDATE_SESSION,
         Permission.READ_ATTENDANCE,
         Permission.CREATE_ATTENDANCE,
-        Permission.CREATE_STRIPE_ACCOUNT
+        Permission.CREATE_STRIPE_ACCOUNT,
+        Permission.COACH_READ_SESSION
     }
 }

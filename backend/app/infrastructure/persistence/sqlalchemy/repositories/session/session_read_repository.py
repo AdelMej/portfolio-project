@@ -524,3 +524,63 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
                 )for participant in row["participants"]
             ]
         )
+
+    async def get_own_coach_sessions(
+        self,
+        user_id: UUID,
+        limit: int,
+        offset: int,
+        _from: datetime | None,
+        to: datetime | None
+    ) -> tuple[list[SessionCompleteEntity], bool]:
+        stmt = text("""
+                SELECT *
+                FROM app_fcn.get_own_coach_sessions(
+                    :coach_id,
+                    :limit,
+                    :offset,
+                    :from_ts,
+                    :to_ts
+                )
+        """)
+
+        rows = await self._session.execute(stmt, {
+            "coach_id": user_id,
+            "limit": limit + 1,
+            "offset": offset,
+            "from_ts": _from,
+            "to_ts": to
+        })
+
+        rows = rows.mappings().all()
+
+        has_more = len(rows) > limit
+
+        rows = rows[:limit]
+
+        return [
+            SessionCompleteEntity(
+                id=row["id"],
+                coach=UserProfileEntity(
+                    user_id=row["user_id"],
+                    first_name=row["first_name"],
+                    last_name=row["last_name"]
+                ),
+                title=row["title"],
+                starts_at=row["starts_at"],
+                ends_at=row["ends_at"],
+                status=row["status"],
+                cancelled_at=row["cancelled_at"],
+                price_cents=row["price_cents"],
+                currency=row["currency"],
+                created_at=row["created_at"],
+                updated_at=row["updated_at"],
+                participants=[
+                    UserProfileEntity(
+                        user_id=participant["user_id"],
+                        first_name=participant["first_name"],
+                        last_name=participant["last_name"]
+                    )for participant in row["participants"]
+                ]
+            ) for row in rows
+        ], has_more
