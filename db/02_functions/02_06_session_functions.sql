@@ -356,3 +356,217 @@ cancels all active participations, issues credits for successful
 payments linked to the session (idempotent), and marks the session
 as cancelled. Permission, existence, and idempotency rules are fully
 enforced at the database level.';
+
+create or replace function app_fcn.get_complete_session(
+	p_session_id uuid
+)
+returns table(
+	id uuid,
+	user_id uuid,
+	first_name text,
+	last_name text,
+	title text,
+	starts_at timestamptz,
+	ends_at timestamptz,
+	status text,
+	cancelled_at timestamptz,
+	price_cents int,
+	currency text,
+	created_at timestamptz,
+	updated_at timestamptz,
+	participants json[]
+)
+language plpgsql
+stable
+security definer
+set search_path = app, app_fcn, pg_temp
+as $$
+	/*
+	 * app_fcn.get_complete_session
+	 * ----------------------------------------
+	 * Returns a fully hydrated session projection including:
+	 *   - Core session metadata
+	 *   - Public coach profile information
+	 *   - Aggregated list of participants as JSON
+	 *
+	 * This function is designed as a read-model projection for API
+	 * consumption and bypasses RLS via SECURITY DEFINER.
+	 *
+	 * Access control must therefore be enforced explicitly by
+	 * the caller or by adding predicates inside this function
+	 * if visibility restrictions are required.
+	 *
+	 * Aggregation behavior:
+	 *   - Participants are returned as a JSON array.
+	 *   - If no participants exist, an empty JSON array is returned.
+	 *
+	 * Concurrency:
+	 *   - STABLE classification ensures read-only behavior.
+	 *
+	 * Parameters:
+	 *   p_session_id → UUID of the session to retrieve.
+	 */
+	begin
+		RETURN QUERY
+        SELECT
+            s.id,
+            cp.user_id,
+            cp.first_name::text,
+            cp.last_name::text,
+            s.title::text,
+            s.starts_at,
+            s.ends_at,
+            s.status::text,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency,
+            s.created_at,
+            s.updated_at,
+            COALESCE(
+                array_agg(
+                    json_build_object(
+                        'user_id', up.user_id,
+                        'first_name', up.first_name,
+                        'last_name', up.last_name
+                    )
+                ) FILTER (WHERE up.user_id IS NOT NULL),
+                '{}'
+            ) AS participants
+        FROM app.sessions s
+        JOIN app.v_coach_public cp
+            ON cp.user_id = s.coach_id
+        LEFT JOIN app.session_participation sp
+            ON sp.session_id = s.id
+        LEFT JOIN app.user_profiles up
+            ON up.user_id = sp.user_id
+        WHERE s.id = p_session_id
+        GROUP BY
+            s.id,
+            cp.user_id,
+            cp.first_name,
+            cp.last_name,
+            s.title,
+            s.starts_at,
+            s.ends_at,
+            s.status,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency,
+            s.created_at,
+            s.updated_at;
+	end;
+$$;
+
+COMMENT ON FUNCTION app_fcn.get_complete_session(uuid) IS
+'Returns a complete session projection including coach public profile and aggregated participant list as JSON. Designed as a read-model helper for API consumption. SECURITY DEFINER; bypasses RLS and must enforce visibility explicitly if required.';
+
+create or replace function app_fcn.get_own_coach_sessions(
+	p_coach_id uuid,
+	p_limit int,
+	p_offset int,
+	p_from timestamptz,
+	p_to timestamptz
+)
+returns table(
+	id uuid,
+	user_id uuid,
+	first_name text,
+	last_name text,
+	title text,
+	starts_at timestamptz,
+	ends_at timestamptz,
+	status text,
+	cancelled_at timestamptz,
+	price_cents int,
+	currency text,
+	created_at timestamptz,
+	updated_at timestamptz,
+	participants json[]
+)
+language plpgsql
+security definer
+as $$
+	/*
+	 * Returns paginated sessions owned by a coach.
+	 *
+	 * - Ensures the provided user is a coach.
+	 * - Filters sessions by optional date range (fully contained).
+	 * - Includes aggregated participants as json[].
+	 * - Excludes no sessions by status; caller handles visibility.
+	 *
+	 * Date filtering semantics:
+	 *   - p_from: include sessions starting at or after this timestamp.
+	 *   - p_to:   include sessions ending at or before this timestamp.
+	 *
+	 * Sessions are guaranteed non-overlapping by design.
+	 */
+	begin
+		IF NOT app_fcn.is_coach() THEN
+			RAISE EXCEPTION 'permission denied'
+				USING ERRCODE = 'AP401';
+		END IF;
+
+		RETURN QUERY
+		SELECT
+            s.id,
+            cp.user_id,
+            cp.first_name::text,
+            cp.last_name::text,
+            s.title::text,
+            s.starts_at,
+            s.ends_at,
+            s.status::text,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency::text,
+            s.created_at,
+            s.updated_at,
+            COALESCE(
+                array_agg(
+                    json_build_object(
+                        'user_id', up.user_id,
+                        'first_name', up.first_name,
+                        'last_name', up.last_name
+                    )
+                ) FILTER (WHERE up.user_id IS NOT NULL),
+                ARRAY[]::json[]
+            ) AS participants
+        FROM app.sessions s
+        JOIN app.v_coach_public cp
+            ON cp.user_id = s.coach_id
+        LEFT JOIN app.session_participation sp
+            ON sp.session_id = s.id
+        LEFT JOIN app.user_profiles up
+            ON up.user_id = sp.user_id
+        where s.coach_id = p_coach_id
+			AND (
+				p_from is NULL
+				OR s.starts_at >= p_from
+			)
+			AND (
+				p_to IS NULL
+				or s.ends_at <= p_to
+			)
+        GROUP BY
+            s.id,
+            cp.user_id,
+            cp.first_name,
+            cp.last_name,
+            s.title,
+            s.starts_at,
+            s.ends_at,
+            s.status,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency,
+            s.created_at,
+            s.updated_at
+		OFFSET p_offset
+        LIMIT p_limit;
+	end;
+$$;
+
+COMMENT ON FUNCTION app_fcn.get_own_coach_sessions(
+    uuid, int, int, timestamptz, timestamptz
+) IS
+'Returns paginated sessions owned by a coach, optionally filtered by a fully-contained date range. Includes aggregated participants as json[]. Raises AP401 if the user is not a coach.';
