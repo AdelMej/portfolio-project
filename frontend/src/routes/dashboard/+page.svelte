@@ -60,7 +60,6 @@ a:hover, .dashboard-btn:hover {
 
 <div class="dashboard-landing-container">
   <h1>Tableau de bord</h1>
-  <h2>Accédez à votre espace selon votre rôle</h2>
   {#if roles.includes('admin')}
     <a href="/dashboard/admin" class="dashboard-btn">Espace Administrateur</a>
     <!-- Add more admin-only buttons here -->

@@ -42,6 +42,7 @@ class TokenOutputDTO(BaseModel):
 
 
 class GetMeOutputDTO(BaseModel):
+    id: str
     email: EmailStr = Field(
         ...,
         min_length=MIN_EMAIL_LENGTH,

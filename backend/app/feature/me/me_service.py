@@ -46,6 +46,7 @@ class MeService:
         user = await uow.me_read_repo.get(actor.id)
 
         return GetMeOutputDTO(
+            id=str(actor.id),
             email=user.email,
             roles=user.roles
         )

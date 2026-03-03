@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { browser } from '$app/environment';
 
 interface AuthState {
   accessToken: string | null;
@@ -7,14 +8,46 @@ interface AuthState {
   email?: string;
 }
 
+const STORAGE_KEY = 'auth_state';
+
+function loadFromStorage(): AuthState {
+  if (!browser) return { accessToken: null };
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return { accessToken: null };
+}
+
+function saveToStorage(state: AuthState) {
+  if (!browser) return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch { /* ignore */ }
+}
+
+function clearStorage() {
+  if (!browser) return;
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch { /* ignore */ }
+}
+
 function createAuth() {
-  const { subscribe, set, update } = writable<AuthState>({ accessToken: null });
+  const initial = loadFromStorage();
+  const { subscribe, set } = writable<AuthState>(initial);
 
   return {
     subscribe,
-    login: (token: string, roles: string[] = [], userId?: string, email?: string) =>
-    set({ accessToken: token, roles, userId, email }),
-    logout: () => set({ accessToken: null, roles: [] }),
+    login: (token: string, roles: string[] = [], userId?: string, email?: string) => {
+      const state: AuthState = { accessToken: token, roles, userId, email };
+      saveToStorage(state);
+      set(state);
+    },
+    logout: () => {
+      clearStorage();
+      set({ accessToken: null, roles: [] });
+    },
   };
 }
 

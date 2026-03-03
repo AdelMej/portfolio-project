@@ -4,6 +4,9 @@ import { auth } from '$lib/stores/auth.store';
 import { goto } from '$app/navigation';
 import { onMount } from 'svelte';
 import { get } from 'svelte/store';
+import { browser } from '$app/environment';
+
+let authenticated = false;
 
 function hasRole(role: string) {
   const roles = get(auth).roles;
@@ -23,10 +26,22 @@ onMount(() => {
   const { accessToken } = get(auth);
   if (!accessToken) {
     goto('/login');
+    return;
   }
+  authenticated = true;
 });
+
+// Reactive guard: if token is cleared while on dashboard, redirect
+$: if (browser && !$auth.accessToken && authenticated) {
+  goto('/login');
+}
 </script>
 
+<svelte:head>
+  <title>Tableau de bord | Actual Digital Gym</title>
+</svelte:head>
+
+{#if authenticated}
 <div class="dash-layout">
   <nav class="dash-nav" aria-label="Main navigation">
     <ul>
@@ -52,6 +67,7 @@ onMount(() => {
     <slot />
   </main>
 </div>
+{/if}
 
 <style>
 .dash-layout {

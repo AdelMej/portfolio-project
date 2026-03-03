@@ -5,12 +5,12 @@
 
   let name = '';
   let date = '';
-  let coach = '';
+  let time = '';
   let maxParticipants = 0;
 
  async function submit() {
-  const startsAt = new Date(date + "T10:00:00").toISOString();
-  const endsAt = new Date(date + "T11:00:00").toISOString();
+  const startsAt = new Date(date + "T" + (time || "10:00") + ":00").toISOString();
+  const endsAt = new Date(new Date(startsAt).getTime() + 60 * 60 * 1000).toISOString();
 
   try {
     await createSession({
@@ -38,8 +38,9 @@
   <div class="form-group">
     <input placeholder="Nom de la séance" bind:value={name} />
     <input type="date" bind:value={date} />
-    <input placeholder="Coach" bind:value={coach} />
-    <input type="number" bind:value={maxParticipants} placeholder="Max participants" />
+    <label class="form-label" for="session-time">Heure de la séance</label>
+    <input id="session-time" type="time" bind:value={time} />
+    <input type="number" bind:value={maxParticipants} placeholder="Nombre de participants" />
   </div>
   <div class="form-actions">
     <button class="btn-primary" on:click={submit}>Créer</button>
@@ -81,6 +82,12 @@ input:focus {
   border-color: #991b1b;
   outline: none;
   box-shadow: 0 0 0 3px rgba(153,27,27,0.1);
+}
+.form-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+  margin-bottom: -8px;
 }
 .form-actions {
   display: flex;

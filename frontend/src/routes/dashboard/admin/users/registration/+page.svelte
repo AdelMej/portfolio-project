@@ -1,43 +1,44 @@
 <script lang="ts">
-  import { auth } from '$lib/stores/auth.store';
-  import { get } from 'svelte/store';
+  import { goto } from '$app/navigation';
+  import { apiFetch } from '$lib/api/client';
+
   let email = '';
   let password = '';
+  let firstName = '';
+  let lastName = '';
   let error = '';
   let success = '';
+  let loading = false;
 
   async function handleCreateUser() {
     error = '';
     success = '';
+    loading = true;
     try {
-      const res = await fetch('/api/v1/users', {
+      await apiFetch('/auth/register', {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${get(auth).accessToken}`
-        },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+          email,
+          password,
+          first_name: firstName,
+          last_name: lastName
+        })
       });
-      if (!res.ok) {
-        let data;
-        try {
-          data = await res.json();
-        } catch {
-          data = {};
-        }
-        throw new Error(data?.error || 'Erreur lors de la création');
-      }
       success = 'Utilisateur créé avec succès !';
       email = '';
       password = '';
-    } catch (e) {
-        if (e instanceof Error) {
-        error = e.message || 'Erreur lors de la création';
-        } else {
+      firstName = '';
+      lastName = '';
+    } catch (e: any) {
+      if (e?.detail) {
+        error = typeof e.detail === 'string' ? e.detail : JSON.stringify(e.detail);
+      } else {
         error = 'Erreur lors de la création';
-        }
+      }
+    } finally {
+      loading = false;
     }
-}
+  }
 </script>
 
 <div class="form-container">
@@ -45,10 +46,13 @@
   {#if error}<div class="error-message">{error}</div>{/if}
   {#if success}<div class="success-message">{success}</div>{/if}
   <form on:submit|preventDefault={handleCreateUser}>
+    <input type="text" bind:value={firstName} placeholder="Prénom" required />
+    <input type="text" bind:value={lastName} placeholder="Nom" required />
     <input type="email" bind:value={email} placeholder="Adresse e-mail" required />
     <input type="password" bind:value={password} placeholder="Mot de passe" required />
-    <button type="submit">Créer l'utilisateur</button>
+    <button type="submit" disabled={loading}>{loading ? 'Création...' : "Créer l'utilisateur"}</button>
   </form>
+  <div class="back-link"><a href="/dashboard/admin">← Retour au tableau de bord</a></div>
 </div>
 
 <style>
@@ -112,5 +116,21 @@ button[type="submit"]:hover {
   padding: 10px 16px;
   border-radius: 6px;
   margin-bottom: 16px;
+}
+button[type="submit"]:disabled {
+  background: #fca5a5;
+  cursor: not-allowed;
+}
+.back-link {
+  margin-top: 18px;
+  font-size: 0.9rem;
+}
+.back-link a {
+  color: #991b1b;
+  text-decoration: none;
+  font-weight: 600;
+}
+.back-link a:hover {
+  text-decoration: underline;
 }
 </style>

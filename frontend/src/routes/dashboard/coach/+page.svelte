@@ -11,6 +11,7 @@ type Session = {
   ends_at: string;
   coach_name?: string;
   max_participants?: number;
+  participants_count?: number;
 };
 
 let sessions: Session[] = [];
@@ -134,6 +135,19 @@ tr:last-child td {
 .participants-btn:hover {
   background: #7f1d1d !important;
 }
+.attendance-btn {
+  background: #16a34a !important;
+  color: white !important;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.attendance-btn:hover {
+  background: #15803d !important;
+}
 </style>
 
 <div class="gym-coach-container">
@@ -153,6 +167,7 @@ tr:last-child td {
         <th>Titre</th>
         <th>Date</th>
         <th>Coach</th>
+        <th>Participants</th>
         <th>Action</th>
         </tr>
     </thead>
@@ -162,10 +177,14 @@ tr:last-child td {
             <td>{s.title}</td>
             <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
             <td>{s.coach_name ?? 'Non défini'}</td>
+            <td>{s.participants_count ?? 0}{s.max_participants ? ` / ${s.max_participants}` : ''}</td>
             <td>
             <a href={`/dashboard/coach/sessions/${s.id}/edit`} class="dashboard-btn participants-btn">Modifier</a>
                 <button class="dashboard-btn participants-btn" on:click={() => goto(`/sessions/${s.id}/participants`)} style="margin-left: 8px;">
-                  Voir participants
+                  Participants
+                </button>
+                <button class="dashboard-btn attendance-btn" on:click={() => goto(`/sessions/${s.id}/participants`)} style="margin-left: 8px;">
+                  Présence
                 </button>
             </td>
         </tr>

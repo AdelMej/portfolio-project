@@ -63,3 +63,21 @@ class SqlAlchemySessionParticipationReadRepo(SessionParticipationReadRepoPort):
         )
 
         return result.scalar_one()
+
+    async def get_user_registered_session_ids(
+        self,
+        user_id: UUID
+    ) -> list[UUID]:
+        result = await self._session.execute(
+            text("""
+                SELECT sp.session_id
+                FROM app.session_participation sp
+                WHERE sp.user_id = :user_id
+                  AND sp.cancelled_at IS NULL
+            """),
+            {
+                "user_id": user_id
+            }
+        )
+
+        return [row[0] for row in result.fetchall()]
