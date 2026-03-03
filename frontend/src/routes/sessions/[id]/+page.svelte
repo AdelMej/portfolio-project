@@ -27,7 +27,7 @@
 h1 {
   font-size: 2.2rem;
   margin-bottom: 24px;
-  color: #2563eb;
+  color: #991b1b;
   text-align: center;
 }
 .session-list {
@@ -51,7 +51,7 @@ h1 {
   color: #374151;
 }
 .session-date {
-  color: #2563eb;
+  color: #991b1b;
   font-size: 1rem;
   font-weight: 500;
 }

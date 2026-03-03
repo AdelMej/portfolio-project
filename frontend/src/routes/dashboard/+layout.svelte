@@ -6,45 +6,95 @@ import { onMount } from 'svelte';
 import { get } from 'svelte/store';
 
 function hasRole(role: string) {
-  return get(auth).roles?.includes(role);
+  const roles = get(auth).roles;
+  return Array.isArray(roles) && roles.includes(role);
 }
 
-function logout() {
-  auth.logout();
+let loggingOut = false;
+
+async function logout() {
+  loggingOut = true;
+  await auth.logout();
   goto('/login');
+  loggingOut = false;
 }
 
 onMount(() => {
   const { accessToken } = get(auth);
-
   if (!accessToken) {
     goto('/login');
   }
 });
 </script>
 
-<header>
-<nav>
+<div class="dash-layout">
+  <nav class="dash-nav" aria-label="Main navigation">
+    <ul>
+      {#if hasRole('admin')}
+        <li>
+          <a href="/dashboard/admin" class:active={$page.url.pathname === '/dashboard/admin'}>Administration</a>
+        </li>
+      {/if}
+      {#if hasRole('coach')}
+        <li>
+          <a href="/dashboard/coach" class:active={$page.url.pathname === '/dashboard/coach'}>Coach</a>
+        </li>
+      {/if}
+      {#if hasRole('user')}
+        <li>
+          <a href="/dashboard/user" class:active={$page.url.pathname === '/dashboard/user'}>Mes séances</a>
+        </li>
+      {/if}
+    </ul>
+  </nav>
 
-{#if hasRole('admin')}
-<a href="/dashboard/admin">Administration</a>
-{/if}
+  <main>
+    <slot />
+  </main>
+</div>
 
-{#if hasRole('coach')}
-<a href="/dashboard/coach">Coach</a>
-{/if}
-
-{#if hasRole('user')}
-<a href="/dashboard/user">Mes séances</a>
-{/if}
-
-<button on:click={logout}>
-Se déconnecter
-</button>
-
-</nav>
-</header>
-
-<main>
-<slot />
-</main>
+<style>
+.dash-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.dash-nav {
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-bottom: 24px;
+  padding: 0 8px;
+  box-shadow: 0 1px 4px #e5e7eb;
+}
+.dash-nav ul {
+  display: flex;
+  gap: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.dash-nav li {
+  flex: 1;
+}
+.dash-nav a {
+  display: block;
+  text-align: center;
+  padding: 12px 18px;
+  color: #374151;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s, border-color 0.2s, background 0.15s;
+  border-radius: 8px 8px 0 0;
+}
+.dash-nav a:hover {
+  color: #991b1b;
+  background: #fef2f2;
+}
+.dash-nav a.active {
+  color: #991b1b;
+  border-bottom-color: #991b1b;
+  background: #fff;
+  font-weight: 700;
+}
+</style>

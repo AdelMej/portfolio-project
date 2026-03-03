@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { get } from 'svelte/store';
+  import { auth } from '$lib/stores/auth.store';
 
   type Participant = {
     id: string;
@@ -48,6 +49,18 @@
   }
 
   onMount(loadSession);
+
+  function handleReturn() {
+    const roles = get(auth).roles || [];
+    if (roles.includes('admin')) {
+      goto('/dashboard/admin');
+    } else if (roles.includes('coach')) {
+      goto('/dashboard/coach');
+    } else {
+      goto('/dashboard/user');
+    }
+  }
+
 </script>
 
 <div class="container">
@@ -116,54 +129,93 @@
       </table>
     {/if}
 
-    <button on:click={() => goto('/dashboard/admin')}>
+    <button on:click={handleReturn}>
       Retour
     </button>
   {/if}
 </div>
 
-<style>
-  .container { padding: 40px; }
 
+<style>
+  .container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 16px #e5e7eb;
+    padding: 36px 32px 32px 32px;
+  }
+  h1 {
+    font-size: 2rem;
+    color: #991b1b;
+    margin-bottom: 18px;
+  }
+  h2 {
+    font-size: 1.3rem;
+    color: #374151;
+    margin-top: 24px;
+    margin-bottom: 12px;
+  }
+  p {
+    margin: 8px 0;
+    color: #374151;
+    font-size: 1rem;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
+    margin-top: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px #f3f4f6;
   }
-
   th, td {
-    padding: 10px;
-    border: 1px solid #ddd;
+    padding: 12px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    text-align: left;
   }
-
   th {
     background: #f3f4f6;
+    color: #991b1b;
+    font-weight: 700;
   }
-
+  tr:last-child td {
+    border-bottom: none;
+  }
+  tr:hover td {
+    background: #fef2f2;
+  }
   .badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
     font-weight: 600;
   }
-
   .badge-success {
     background: #d1fae5;
     color: #065f46;
   }
-
   .badge-danger {
     background: #fee2e2;
     color: #991b1b;
   }
-
   button {
-    margin-top: 20px;
-    padding: 8px 14px;
-    border-radius: 4px;
+    margin-top: 24px;
+    padding: 10px 22px;
+    border-radius: 8px;
     border: none;
     cursor: pointer;
-    background-color: #2563eb;
+    background: #991b1b;
     color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(153,27,27,0.12);
+  }
+  button:hover {
+    background: #7f1d1d;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(153,27,27,0.2);
   }
 </style>

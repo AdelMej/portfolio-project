@@ -60,7 +60,7 @@ onMount(loadSessions);
 h1 {
   font-size: 2.4rem;
   margin-bottom: 32px;
-  color: #2563eb;
+  color: #991b1b;
   text-align: center;
   letter-spacing: 1px;
 }
@@ -70,7 +70,7 @@ h1 {
   margin-bottom: 32px;
 }
 .action-bar button {
-  background: #2563eb;
+  background: #991b1b;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -81,7 +81,7 @@ h1 {
   transition: background 0.2s;
 }
 .action-bar button:hover {
-  background: #1d4ed8;
+  background: #7f1d1d;
 }
 table {
   width: 100%;
@@ -98,31 +98,14 @@ th, td {
 }
 th {
   background: #f3f4f6;
-  color: #2563eb;
+  color: #991b1b;
   font-weight: 700;
   font-size: 1.1rem;
 }
 tr:last-child td {
   border-bottom: none;
 }
-.coach-action-btn {
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-right: 8px;
-  transition: background 0.2s;
-}
-.coach-action-btn.cancel {
-  background: #fee2e2;
-  color: #991b1b;
-}
-.coach-action-btn:last-child {
-  margin-right: 0;
-}
+
 .error-message {
   color: #991b1b;
   background: #fee2e2;
@@ -137,12 +120,26 @@ tr:last-child td {
   text-align: center;
   margin: 40px 0;
 }
+
+.participants-btn {
+  background: #991b1b !important;
+  color: white !important;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.participants-btn:hover {
+  background: #7f1d1d !important;
+}
 </style>
 
 <div class="gym-coach-container">
   <h1>Tableau de bord Coach</h1>
   <div class="action-bar">
-    <button on:click={() => goto('/sessions/create')}>Créer une séance</button>
+    <button class="dashboard-btn participants-btn" on:click={() => goto('/sessions/create')}>Créer une séance</button>
   </div>
 
   {#if loading}
@@ -151,35 +148,31 @@ tr:last-child td {
     <div class="error-message">{error}</div>
   {:else}
     <table>
-      <thead>
+    <thead>
         <tr>
-          <th>Titre</th>
-          <th>Date début</th>
-          <th>Date fin</th>
-          <th>Coach</th>
-          <th>Max</th>
-          <th>Actions</th>
+        <th>Titre</th>
+        <th>Date</th>
+        <th>Coach</th>
+        <th>Action</th>
         </tr>
-      </thead>
-      <tbody>
-        {#each sessions as session}
-          <tr>
-            <td>{session.title}</td>
-            <td>{new Date(session.starts_at).toLocaleString('fr-FR')}</td>
-            <td>{new Date(session.ends_at).toLocaleString('fr-FR')}</td>
-            <td>{session.coach_name ?? '-'}</td>
-            <td>{session.max_participants ?? '-'}</td>
+    </thead>
+    <tbody>
+        {#each sessions as s}
+        <tr>
+            <td>{s.title}</td>
+            <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
+            <td>{s.coach_name ?? 'Non défini'}</td>
             <td>
-              <button class="coach-action-btn" on:click={() => goto(`/sessions/${session.id}/participants`)}>
-                Participants
-              </button>
-              <button class="coach-action-btn cancel" on:click={() => cancelSession(session.id)}>
-                Annuler
-              </button>
+            <a href={`/dashboard/coach/sessions/${s.id}/edit`} class="dashboard-btn participants-btn">Modifier</a>
+                <button class="dashboard-btn participants-btn" on:click={() => goto(`/sessions/${s.id}/participants`)} style="margin-left: 8px;">
+                  Voir participants
+                </button>
             </td>
-          </tr>
+        </tr>
         {/each}
-      </tbody>
+ 
+    
+    </tbody>
     </table>
   {/if}
 </div>

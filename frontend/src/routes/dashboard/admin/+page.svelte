@@ -1,91 +1,52 @@
-<!-- SESSIONS LIST: /frontend/src/routes/sessions/+page.svelte -->
+<!-- frontend/src/routes/dashboard/admin/+page.svelte -->
 <script lang="ts">
-import { onMount } from 'svelte';
-import { apiFetch } from '$lib/api/client';
 
-type Session = {
-  id: string;
-  title: string;
-  starts_at: string;
-  ends_at: string;
-  coach_name?: string;
-};
+  import { onMount } from 'svelte';
+  import { getAdminUsers, type AdminUser } from '$lib/api/admin.api';
+  import { listSessions, type Session } from '$lib/api/sessions.api';
+  import { goto } from '$app/navigation';
+  import { afterNavigate } from '$app/navigation';
 
-let mySessions: Session[] = [];
-let availableSessions: Session[] = [];
+  let users: AdminUser[] = [];
+  let sessions: Session[] = [];
+  let loading = true;
+  let error = '';
 
-let loading = true;
-let error = '';
 
-const LOCAL_KEY = 'user_sessions';
-
-function getLocalSessions(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function setLocalSessions(ids: string[]) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(ids));
-}
-
-async function loadSessions(): Promise<Session[]> {
-  const res = await apiFetch('/sessions');
-  return res.items ?? res ?? [];
-}
-
-async function joinSession(sessionId: string) {
-  try {
-    await apiFetch(`/sessions/${sessionId}/attendance`, {
-      method: 'POST'
-    });
-    const session = availableSessions.find(s => s.id === sessionId);
-    if (session) {
-      mySessions = [...mySessions, session];
-      availableSessions = availableSessions.filter(s => s.id !== sessionId);
-      const ids = getLocalSessions();
-      setLocalSessions([...ids, sessionId]);
+  async function loadDashboardData() {
+    loading = true;
+    try {
+      const usersRes = await getAdminUsers();
+      users = usersRes?.items ?? [];
+      const sessionRes = await listSessions();
+      sessions = sessionRes ?? [];
+    } catch (e) {
+      error = "Erreur lors du chargement des données.";
+    } finally {
+      loading = false;
     }
-  } catch (e) {
-    console.error(e);
-    alert("Impossible de s'inscrire");
   }
-}
 
-async function loadDashboard() {
-  loading = true;
-  error = '';
-  try {
-    const sessions = await loadSessions();
-    const localIds = getLocalSessions();
-    mySessions = sessions.filter(s => localIds.includes(s.id));
-    availableSessions = sessions.filter(s => !localIds.includes(s.id));
-  } catch (e) {
-    console.error(e);
-    error = 'Erreur lors du chargement';
-  } finally {
-    loading = false;
-  }
-}
+  onMount(loadDashboardData);
 
-onMount(loadDashboard);
+  afterNavigate(() => {
+    loadDashboardData();
+  });
 </script>
 
 <style>
-.gym-user-container {
-  max-width: 900px;
+.admin-dashboard-container {
+  max-width: 1100px;
   margin: 40px auto;
   background: #fff;
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: 0 2px 16px #e5e7eb;
   padding: 36px 32px 32px 32px;
 }
 h1 {
   font-size: 2.2rem;
   margin-bottom: 24px;
-  color: #2563eb;
+  color: #991b1b;
   text-align: center;
 }
 h2 {
@@ -110,101 +71,133 @@ th, td {
 }
 th {
   background: #f3f4f6;
-  color: #2563eb;
+  color: #991b1b;
   font-weight: 700;
 }
 tr:last-child td {
   border-bottom: none;
 }
-button {
-  background: #2563eb;
+tr:hover td {
+  background: #fef2f2;
+}
+.dashboard-btn {
+  display: inline-block;
+  background: #991b1b;
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.2s;
+  text-decoration: none;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(153,27,27,0.12);
+}
+.dashboard-btn:hover {
+  background: #7f1d1d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(153,27,27,0.2);
+}
+button {
+  background: #991b1b;
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(153,27,27,0.12);
 }
 button:hover {
-  background: #1d4ed8;
+  background: #7f1d1d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(153,27,27,0.2);
 }
-.error-message {
+.spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #991b1b;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 28px auto;
+}
+.loading-center {
+  text-align: center;
+  padding: 32px 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.error-msg {
   color: #991b1b;
   background: #fee2e2;
   padding: 10px 16px;
   border-radius: 6px;
+  text-align: center;
   margin-bottom: 18px;
-  text-align: center;
-}
-.loading-message {
-  color: #888;
-  font-size: 18px;
-  text-align: center;
-  margin: 32px 0;
 }
 </style>
 
-<div class="gym-user-container">
-  <h1>Tableau de bord utilisateur</h1>
-
+<div class="admin-dashboard-container">
+  <h1>Tableau de bord Admin</h1>
   {#if loading}
-    <div class="loading-message">Chargement...</div>
+    <div class="loading-center"><div class="spinner"></div></div>
   {:else if error}
-    <div class="error-message">{error}</div>
+    <div class="error-msg">{error}</div>
   {:else}
-    <h2>Mes séances inscrites</h2>
-    {#if mySessions.length === 0}
-      <div style="color: #888; margin-bottom: 18px;">Aucune séance inscrite.</div>
-    {:else}
-      <table>
-        <thead>
+    <h2>Gestion des utilisateurs</h2>
+      <a href="/dashboard/admin/users/registration" class="dashboard-btn" style="margin-bottom: 18px; display: inline-block;">Créer un nouvel utilisateur</a>
+    <table>
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Rôles</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each users as user}
           <tr>
-            <th>Titre</th>
-            <th>Date</th>
-            <th>Coach</th>
+            <td>{user.email}</td>
+            <td>{user.roles ? user.roles.join(', ') : ''}</td>
+            <td>{user.disabled_at ? 'Désactivé' : 'Actif'}</td>
+            <td><a href={`/dashboard/admin/users/${user.id}/edit`} class="dashboard-btn">Modifier</a></td>
           </tr>
-        </thead>
-        <tbody>
-          {#each mySessions as s}
-            <tr>
-              <td>{s.title}</td>
-              <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
-              <td>{s.coach_name ?? 'Non défini'}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    {/if}
+        {/each}
+      </tbody>
+    </table>
 
-    <h2>Mes séances disponibles</h2>
-    {#if availableSessions.length === 0}
-      <div style="color: #888; margin-bottom: 18px;">Aucune séance disponible.</div>
-    {:else}
-      <table>
-        <thead>
-          <tr>
-            <th>Titre</th>
-            <th>Date</th>
-            <th>Coach</th>
-            <th></th>
-          </tr>
+    <a href="/dashboard/admin/new-session" class="dashboard-btn">Ajouter une séance</a>
+
+    <h2>Gestion des séances</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Date</th>
+          <th>Coach</th>
+          <th></th>
+        </tr>
         </thead>
         <tbody>
-          {#each availableSessions as s}
+        {#each sessions as s}
             <tr>
-              <td>{s.title}</td>
-              <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
-              <td>{s.coach_name ?? 'Non défini'}</td>
-              <td>
-                <button on:click={() => joinSession(s.id)}>
-                  S'inscrire
-                </button>
-              </td>
+            <td>{s.title}</td>
+            <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
+            <td>{s.coach_name ?? 'Non défini'}</td>
+            <td>
+                <a href={`/dashboard/admin/sessions/${s.id}/edit`} class="dashboard-btn">Modifier</a>
+                <button on:click={() => goto(`/sessions/${s.id}/participants`)} style="margin-left: 8px;">Voir participants</button>
+            </td>
             </tr>
-          {/each}
+        {/each}
         </tbody>
-      </table>
-    {/if}
+    </table>
   {/if}
 </div>

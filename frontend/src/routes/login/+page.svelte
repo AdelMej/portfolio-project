@@ -1,4 +1,6 @@
 <script lang="ts">
+import { onMount } from 'svelte';
+import { fly, fade } from 'svelte/transition';
 import type { LoginResponse, MeResponse } from '$lib/api/auth.api';
 import { login, getMe } from '$lib/api/auth.api';
 import { auth } from '$lib/stores/auth.store';
@@ -9,6 +11,9 @@ let email = '';
 let password = '';
 let error = '';
 let loading = false;
+let ready = false;
+
+onMount(() => { ready = true; });
 
 async function handleLogin() {
   loading = true;
@@ -18,7 +23,7 @@ async function handleLogin() {
     auth.login(tokenResponse.access_token);
     await tick();
     const me: MeResponse = await getMe();
-    auth.login(tokenResponse.access_token, me.roles);
+    auth.login(tokenResponse.access_token, me.roles, me.id, me.email);
 
     if (me.roles.includes('admin')) goto('/dashboard/admin');
     else if (me.roles.includes('coach')) goto('/dashboard/coach');
@@ -50,40 +55,52 @@ async function handleLogin() {
 }
 h1 {
   font-size: 2rem;
-  margin-bottom: 28px;
-  color: #2563eb;
+  margin-bottom: 8px;
+  color: #991b1b;
   text-align: center;
   letter-spacing: 1px;
 }
+.login-subtitle {
+  color: #9ca3af;
+  margin-bottom: 28px;
+  font-size: 0.95rem;
+}
 input {
   width: 100%;
-  padding: 12px 10px;
+  padding: 12px 14px;
   margin-bottom: 18px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
   font-size: 1rem;
   background: #f9fafb;
-  transition: border 0.2s;
+  transition: border 0.2s, box-shadow 0.2s;
 }
 input:focus {
-  border: 1.5px solid #2563eb;
+  border: 1.5px solid #991b1b;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(153,27,27,0.1);
 }
 button {
   width: 100%;
-  background: #2563eb;
+  background: #991b1b;
   color: white;
   border: none;
-  padding: 12px 0;
-  border-radius: 6px;
+  padding: 13px 0;
+  border-radius: 8px;
   font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
   margin-bottom: 10px;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(153,27,27,0.12);
+}
+button:hover:not(:disabled) {
+  background: #7f1d1d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(153,27,27,0.2);
 }
 button:disabled {
-  background: #a5b4fc;
+  background: #fca5a5;
   cursor: not-allowed;
 }
 .error-message {
@@ -95,12 +112,27 @@ button:disabled {
   text-align: center;
   width: 100%;
 }
+.register-link {
+  margin-top: 14px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+.register-link a {
+  color: #991b1b;
+  font-weight: 600;
+  text-decoration: none;
+}
+.register-link a:hover {
+  text-decoration: underline;
+}
 </style>
 
-<div class="login-container">
-  <h1>Connexion à votre compte</h1>
+{#if ready}
+<div class="login-container" in:fly={{ y: 30, duration: 400 }}>
+  <h1>Connexion</h1>
+  <p class="login-subtitle">Accédez à votre espace</p>
   {#if error}
-    <div class="error-message">{error}</div>
+    <div class="error-message" in:fade={{ duration: 200 }}>{error}</div>
   {/if}
   <input
     type="email"
@@ -115,8 +147,11 @@ button:disabled {
     bind:value={password}
     autocomplete="current-password"
     required
+    on:keydown={(e) => { if (e.key === 'Enter') handleLogin(); }}
   />
   <button on:click={handleLogin} disabled={loading}>
-    {loading ? 'Connexion...' : 'Se connecter'}
+    {loading ? 'Connexion…' : 'Se connecter'}
   </button>
+  <div class="register-link">Pas encore de compte ? <a href="/registration">S'inscrire</a></div>
 </div>
+{/if}
