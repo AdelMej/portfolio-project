@@ -53,7 +53,6 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.NO_SELF_DELETE,
         Permission.ADMIN_READ_USERS,
         Permission.ADMIN_READ_SESSION,
-        Permission.CREATE_SESSION,
         Permission.ADMIN_CANCEL_SESSION,
         Permission.GRANT_ROLE,
         Permission.REVOKE_ROLE,

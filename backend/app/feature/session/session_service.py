@@ -162,15 +162,6 @@ class SessionService:
             ) for session in sessions
         ], has_more
 
-    async def get_my_registrations(
-        self,
-        uow: SessionUoWPort,
-        actor: Actor
-    ) -> list[UUID]:
-        ensure_has_permission(actor, Permission.SESSION_REGISTRATION)
-        return await uow.session_participation_read_repo \
-            .get_user_registered_session_ids(actor.id)
-
     async def cancel_session(
         self,
         uow: SessionUoWPort,
