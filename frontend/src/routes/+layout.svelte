@@ -3,7 +3,13 @@
 	import { goto } from '$app/navigation';
 
 	let accessToken: string | null;
-	auth.subscribe((value) => (accessToken = value.accessToken));
+	let firstName: string | undefined;
+	let lastName: string | undefined;
+	auth.subscribe((value) => {
+		accessToken = value.accessToken;
+		firstName = value.firstName;
+		lastName = value.lastName;
+	});
 
   let menuOpen = false;
 
@@ -42,6 +48,12 @@
     </div>
   </nav>
 </header>
+
+{#if accessToken && firstName}
+  <div class="welcome-banner">
+    <span class="welcome-text">Bienvenue, <strong>{firstName}</strong> 💪</span>
+  </div>
+{/if}
 
 <main class="main-content">
 	<slot />
@@ -94,6 +106,38 @@
   align-items: center;
   gap: 1.5rem;
 }
+.user-greeting {
+  color: #fca5a5;
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+.welcome-banner {
+  background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+  color: white;
+  text-align: center;
+  padding: 10px 16px;
+  font-size: 1.05rem;
+  letter-spacing: 0.3px;
+  animation: slideDown 0.4s ease-out;
+  box-shadow: 0 2px 8px rgba(153, 27, 27, 0.15);
+}
+.welcome-text {
+  display: inline-block;
+  animation: fadeScale 0.6s ease-out 0.2s both;
+}
+.welcome-text strong {
+  font-size: 1.15rem;
+  text-transform: capitalize;
+}
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fadeScale {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
 .nav-links a {
   color: white;
   text-decoration: none;
@@ -139,8 +183,11 @@
 .main-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 16px 64px 16px;
+  padding: 32px 24px 64px 24px;
   min-height: calc(100vh - 64px - 56px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 .main-footer {
   background: #f3f4f6;

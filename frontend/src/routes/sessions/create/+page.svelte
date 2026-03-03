@@ -5,20 +5,36 @@
 
   let name = '';
   let date = '';
-  let time = '';
-  let maxParticipants = 0;
+  let startTime = '';
+  let endTime = '';
+  let price = '';
 
  async function submit() {
-  const startsAt = new Date(date + "T" + (time || "10:00") + ":00").toISOString();
-  const endsAt = new Date(new Date(startsAt).getTime() + 60 * 60 * 1000).toISOString();
+  if (!date || !startTime || !endTime) {
+    alert('Veuillez remplir la date, l\'heure de début et l\'heure de fin.');
+    return;
+  }
+  if (!name.trim()) {
+    alert('Veuillez entrer un nom de séance.');
+    return;
+  }
+
+  const priceNum = parseFloat(price) || 0;
+  if (priceNum < 0) {
+    alert('Le prix ne peut pas être négatif.');
+    return;
+  }
+
+  const startsAt = new Date(date + "T" + startTime + ":00").toISOString();
+  const endsAt = new Date(date + "T" + endTime + ":00").toISOString();
 
   try {
     await createSession({
-      title: name,
+      title: name.trim(),
       starts_at: startsAt,
       ends_at: endsAt,
-      price_cents: 0,
-      currency: "EUR"
+      price_cents: Math.round(priceNum * 100),
+      currency: 'EUR'
     });
     goto('/dashboard/coach');
   } catch (e) {
@@ -38,9 +54,18 @@
   <div class="form-group">
     <input placeholder="Nom de la séance" bind:value={name} />
     <input type="date" bind:value={date} />
-    <label class="form-label" for="session-time">Heure de la séance</label>
-    <input id="session-time" type="time" bind:value={time} />
-    <input type="number" bind:value={maxParticipants} placeholder="Nombre de participants" />
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label" for="start-time">Heure de début</label>
+        <input id="start-time" type="time" bind:value={startTime} />
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="end-time">Heure de fin</label>
+        <input id="end-time" type="time" bind:value={endTime} />
+      </div>
+    </div>
+    <label class="form-label" for="price">Prix (EUR)</label>
+    <input id="price" type="text" inputmode="decimal" bind:value={price} min="0" placeholder="Ex: 20.00" />
   </div>
   <div class="form-actions">
     <button class="btn-primary" on:click={submit}>Créer</button>
@@ -88,6 +113,32 @@ input:focus {
   color: #374151;
   font-size: 0.95rem;
   margin-bottom: -8px;
+}
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+.form-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f9fafb;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+select:focus {
+  border-color: #991b1b;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(153,27,27,0.1);
 }
 .form-actions {
   display: flex;

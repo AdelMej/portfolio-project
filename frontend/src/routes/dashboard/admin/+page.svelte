@@ -3,14 +3,29 @@
 
   import { onMount } from 'svelte';
   import { getAdminUsers, type AdminUser } from '$lib/api/admin.api';
-  import { listSessions, type Session } from '$lib/api/sessions.api';
+  import { listSessions, cancelSession, type Session } from '$lib/api/sessions.api';
   import { goto } from '$app/navigation';
   import { afterNavigate } from '$app/navigation';
+  import { apiFetch } from '$lib/api/client';
 
   let users: AdminUser[] = [];
   let sessions: Session[] = [];
   let loading = true;
   let error = '';
+  let cancellingId = '';
+
+  async function adminCancelSession(sessionId: string) {
+    if (!confirm('Voulez-vous vraiment annuler cette séance ?')) return;
+    cancellingId = sessionId;
+    try {
+      await apiFetch(`/admin/sessions/${sessionId}/cancel`, { method: 'PUT' });
+      await loadDashboardData();
+    } catch (e) {
+      error = "Erreur lors de l'annulation de la séance.";
+    } finally {
+      cancellingId = '';
+    }
+  }
 
 
   async function loadDashboardData() {
@@ -173,8 +188,6 @@ button:hover {
       </tbody>
     </table>
 
-    <a href="/dashboard/admin/new-session" class="dashboard-btn">Ajouter une séance</a>
-
     <h2>Gestion des séances</h2>
     <table>
       <thead>
@@ -182,6 +195,8 @@ button:hover {
           <th>Titre</th>
           <th>Date</th>
           <th>Coach</th>
+          <th>Prix</th>
+          <th>Statut</th>
           <th></th>
         </tr>
         </thead>
@@ -190,9 +205,15 @@ button:hover {
             <tr>
             <td>{s.title}</td>
             <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
-            <td>{s.coach_name ?? 'Non défini'}</td>
+            <td>{s.coach_name}</td>
+            <td>{s.price_cents != null ? (s.price_cents / 100).toFixed(2) + ' ' + (s.currency ?? 'EUR') : '-'}</td>
+            <td>{s.status === 'cancelled' ? 'Annulée' : 'Active'}</td>
             <td>
-                <a href={`/dashboard/admin/sessions/${s.id}/edit`} class="dashboard-btn">Modifier</a>
+                {#if s.status !== 'cancelled'}
+                  <button on:click={() => adminCancelSession(s.id)} disabled={cancellingId === s.id}>
+                    {cancellingId === s.id ? '...' : 'Annuler'}
+                  </button>
+                {/if}
                 <button on:click={() => goto(`/sessions/${s.id}/participants`)} style="margin-left: 8px;">Voir participants</button>
             </td>
             </tr>

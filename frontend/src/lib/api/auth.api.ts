@@ -27,6 +27,15 @@ export function logout() {
   return apiFetch<void>('/auth/logout', { method: 'POST' });
 }
 
+export interface MeProfileResponse {
+  first_name: string;
+  last_name: string;
+}
+
+export async function getMyProfile(): Promise<MeProfileResponse> {
+  return apiFetch<MeProfileResponse>('/me/profile');
+}
+
 // Registration API call for new users
 export async function createUser(email: string, password: string): Promise<void> {
   return apiFetch<void>('/auth/register', {

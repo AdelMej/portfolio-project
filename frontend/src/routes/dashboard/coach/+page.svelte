@@ -3,16 +3,12 @@
 import { onMount } from 'svelte';
 import { goto } from '$app/navigation';
 import { apiFetch } from '$lib/api/client';
+import { listSessions, type Session } from '$lib/api/sessions.api';
 
-type Session = {
-  id: string;
-  title: string;
-  starts_at: string;
-  ends_at: string;
-  coach_name?: string;
-  max_participants?: number;
-  participants_count?: number;
-};
+function formatPrice(cents?: number, currency?: string): string {
+  if (cents == null) return '-';
+  return (cents / 100).toFixed(2) + ' ' + (currency ?? 'EUR');
+}
 
 let sessions: Session[] = [];
 let loading = true;
@@ -23,8 +19,7 @@ async function loadSessions() {
   error = '';
 
   try {
-    const res = await apiFetch('/sessions');
-    sessions = res.items ?? res ?? [];
+    sessions = await listSessions();
   } catch (e) {
     console.error(e);
     error = 'Impossible de charger les séances';
@@ -166,9 +161,7 @@ tr:last-child td {
         <tr>
         <th>Titre</th>
         <th>Date</th>
-        <th>Coach</th>
-        <th>Participants</th>
-        <th>Action</th>
+        <th>Prix</th>
         </tr>
     </thead>
     <tbody>
@@ -176,8 +169,7 @@ tr:last-child td {
         <tr>
             <td>{s.title}</td>
             <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
-            <td>{s.coach_name ?? 'Non défini'}</td>
-            <td>{s.participants_count ?? 0}{s.max_participants ? ` / ${s.max_participants}` : ''}</td>
+            <td>{formatPrice(s.price_cents, s.currency)}</td>
             <td>
             <a href={`/dashboard/coach/sessions/${s.id}/edit`} class="dashboard-btn participants-btn">Modifier</a>
                 <button class="dashboard-btn participants-btn" on:click={() => goto(`/sessions/${s.id}/participants`)} style="margin-left: 8px;">

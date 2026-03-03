@@ -133,6 +133,11 @@
     font-size: 1rem;
     font-weight: 500;
   }
+  .session-price {
+    color: #065f46;
+    font-size: 1rem;
+    font-weight: 600;
+  }
   .session-coach {
     color: #6b7280;
     font-size: 0.9rem;
@@ -192,6 +197,7 @@
           <span class="session-title">{s.title}</span>
           <span class="session-coach">{s.coach_name ?? ''}</span>
           <span class="session-date">{new Date(s.starts_at).toLocaleString('fr-FR')}</span>
+          <span class="session-price">{s.price_cents != null ? (s.price_cents / 100).toFixed(2) + ' ' + (s.currency ?? 'EUR') : ''}</span>
         </li>
       {/each}
     </ul>

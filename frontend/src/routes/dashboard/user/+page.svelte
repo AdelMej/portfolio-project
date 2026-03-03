@@ -4,16 +4,12 @@ import { fly, fade } from 'svelte/transition';
 import { apiFetch } from '$lib/api/client';
 import { goto } from '$app/navigation';
 import { auth } from '$lib/stores/auth.store';
+import { listSessions, type Session } from '$lib/api/sessions.api';
 
-type Session = {
-  id: string;
-  title: string;
-  starts_at: string;
-  ends_at: string;
-  coach_name?: string;
-  max_participants?: number;
-  participants_count?: number;
-};
+function formatPrice(cents?: number, currency?: string): string {
+  if (cents == null) return '-';
+  return (cents / 100).toFixed(2) + ' ' + (currency ?? 'EUR');
+}
 
 let mySessions: Session[] = [];
 let availableSessions: Session[] = [];
@@ -29,16 +25,14 @@ onMount(() => {
 });
 
 async function loadSessions(): Promise<Session[]> {
-    const res = await apiFetch('/sessions');
-    if (Array.isArray(res.items)) return res.items;
-    if (Array.isArray(res)) return res;
-    return [];
+    return listSessions();
 }
 
 async function loadMyRegistrations(): Promise<string[]> {
     try {
-      const ids: string[] = await apiFetch('/sessions/my-registrations');
-      return Array.isArray(ids) ? ids : [];
+      const res = await apiFetch('/me/sessions/');
+      const items = Array.isArray(res.items) ? res.items : Array.isArray(res) ? res : [];
+      return items.map((s: Session) => s.id);
     } catch {
       return [];
     }
@@ -47,10 +41,21 @@ async function loadMyRegistrations(): Promise<string[]> {
 async function joinSession(sessionId: string) {
   joiningId = sessionId;
   try {
-    await apiFetch(`/sessions/${sessionId}/register`, {
+
+    const res =await apiFetch(`/sessions/${sessionId}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
+    console.log('Join session response:', res);
+    if (res && res.require_payment) {
+      // If payment is required, redirect to the provided URL
+      if (res.payment_url) {
+        window.location.href = res.payment_url;
+      } else {
+        alert('Le paiement est requis, mais aucun lien de paiement n\'a été fourni.');
+      }
+      return;
+    }
     const session = availableSessions.find(s => s.id === sessionId);
     if (session) {
       mySessions = [...mySessions, session];
@@ -222,7 +227,7 @@ button:disabled {
             <th>Titre</th>
             <th>Date</th>
             <th>Coach</th>
-            <th>Places restantes</th>
+            <th>Prix</th>
           </tr>
         </thead>
         <tbody>
@@ -230,8 +235,8 @@ button:disabled {
             <tr in:fly={{ x: -20, duration: 250, delay: 200 + i * 60 }}>
               <td>{s.title}</td>
               <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
-              <td>{s.coach_name ?? 'Non défini'}</td>
-              <td>{s.max_participants != null ? (s.max_participants - (s.participants_count ?? 0)) : '-'}</td>
+              <td>{s.coach_name}</td>
+              <td>{formatPrice(s.price_cents, s.currency)}</td>
             </tr>
           {/each}
         </tbody>
@@ -256,7 +261,7 @@ button:disabled {
             <th>Titre</th>
             <th>Date</th>
             <th>Coach</th>
-            <th>Places restantes</th>
+            <th>Prix</th>
             <th></th>
           </tr>
         </thead>
@@ -265,8 +270,8 @@ button:disabled {
             <tr in:fly={{ x: -20, duration: 250, delay: 350 + i * 60 }}>
               <td>{s.title}</td>
               <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
-              <td>{s.coach_name ?? 'Non défini'}</td>
-              <td>{s.max_participants != null ? (s.max_participants - (s.participants_count ?? 0)) : '-'}</td>
+              <td>{s.coach_name}</td>
+              <td>{formatPrice(s.price_cents, s.currency)}</td>
               <td>
                 <button on:click={() => joinSession(s.id)} disabled={joiningId === s.id}>
                   {joiningId === s.id ? '...' : "S'inscrire"}
