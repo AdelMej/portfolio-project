@@ -8,6 +8,7 @@ from app.feature.admin.session.admin_session_dependencies import (
 )
 from app.feature.admin.session.admin_session_dto import (
     PaginatedAdminSessionOutputDTO,
+    AdminParticipantDTO,
     UserProfileOutputDTO
 )
 from app.feature.admin.session.admin_session_service import (
@@ -58,6 +59,23 @@ async def admin_get_all_session(
         limit=limit,
         offset=offset,
         has_more=has_more
+    )
+
+
+@router.get(
+    "/{session_id}/participants",
+    response_model=list[AdminParticipantDTO]
+)
+async def admin_get_session_participants(
+    session_id: UUID,
+    actor: Actor = Depends(get_current_actor),
+    uow: AdminSessionUoWPort = Depends(get_admin_session_uow),
+    service: AdminSessionService = Depends(get_admin_session_service),
+) -> list[AdminParticipantDTO]:
+    return await service.admin_get_session_participants(
+        session_id=session_id,
+        actor=actor,
+        uow=uow,
     )
 
 

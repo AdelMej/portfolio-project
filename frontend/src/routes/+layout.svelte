@@ -51,7 +51,7 @@
 
 {#if accessToken && firstName}
   <div class="welcome-banner">
-    <span class="welcome-text">Bienvenue, <strong>{firstName}</strong> 💪</span>
+    <span class="welcome-text">Bienvenue, <span class="welcome-name">{firstName}</span></span>
   </div>
 {/if}
 
@@ -123,12 +123,21 @@
   box-shadow: 0 2px 8px rgba(153, 27, 27, 0.15);
 }
 .welcome-text {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   animation: fadeScale 0.6s ease-out 0.2s both;
 }
-.welcome-text strong {
-  font-size: 1.15rem;
+.welcome-name {
+  font-size: 1.25rem;
+  font-weight: 800;
   text-transform: capitalize;
+  background: rgba(255,255,255,0.18);
+  padding: 2px 14px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.2);
 }
 @keyframes slideDown {
   from { transform: translateY(-100%); opacity: 0; }
@@ -185,9 +194,6 @@
   margin: 0 auto;
   padding: 32px 24px 64px 24px;
   min-height: calc(100vh - 64px - 56px);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 .main-footer {
   background: #f3f4f6;

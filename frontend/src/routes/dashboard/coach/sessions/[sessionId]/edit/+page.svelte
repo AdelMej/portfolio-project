@@ -3,9 +3,9 @@
 	import { onMount } from 'svelte';
 	import { get } from 'svelte/store';
 	import { goto } from '$app/navigation';
-	import { listSessions, updateSession, type Session } from '$lib/api/sessions.api';
+	import { listCoachSessions, updateSession, type CompleteSession } from '$lib/api/sessions.api';
 
-	let session: Session | null = null;
+	let session: CompleteSession | null = null;
 	let loading = true;
 	let saving = false;
 	let error = '';
@@ -15,12 +15,13 @@
 	let date = '';
 	let startTime = '';
 	let endTime = '';
+    let participants: any[] = [];
 
 	onMount(async () => {
 		loading = true;
 		try {
 			const sessionId = get(page).params.sessionId;
-			const sessions = await listSessions();
+			const sessions = await listCoachSessions();
 			session = sessions.find(s => s.id === sessionId) || null;
 			if (session) {
 				title = session.title;
@@ -28,7 +29,8 @@
 				const endsAt = new Date(session.ends_at);
 				date = startsAt.toISOString().slice(0, 10);
 				startTime = startsAt.toTimeString().slice(0, 5);
-				endTime = endsAt.toTimeString().slice(0, 5);
+				endTime = endsAt.toTimeString().slice(0, 5);    
+                participants = session.participants || [];
 			} else {
 				error = 'Seance non trouvee';
 			}
