@@ -164,8 +164,13 @@ BEGIN
             ON sp.user_id = i.user_id
            AND sp.session_id = p_session_id
            AND sp.cancelled_at IS NULL
-           AND sp.paid_at IS NOT NULL
+        JOIN app.sessions s 
+        	ON s.id = p_session_id
         WHERE sp.user_id IS NULL
+        OR (
+        	s.price_cents > 0
+        	AND sp.paid_at IS NULL
+        );
     )
     INTO invalid;
 
