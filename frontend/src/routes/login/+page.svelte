@@ -41,6 +41,10 @@ async function handleLogin() {
 }
 </script>
 
+<svelte:head>
+  <title>Connexion | Actual Digital Gym</title>
+</svelte:head>
+
 <style>
 .login-container {
   max-width: 400px;

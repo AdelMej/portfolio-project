@@ -47,6 +47,7 @@ async def get_me(
     user = await service.get_me(actor, uow)
 
     return GetMeOutputDTO(
+        id=str(actor.id),
         email=user.email,
         roles=user.roles
     )

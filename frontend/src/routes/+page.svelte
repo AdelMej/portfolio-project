@@ -51,11 +51,6 @@
     width: auto;
     border-radius: 8px;
   }
-  .subtitle {
-    font-size: 1.15rem;
-    color: #6b7280;
-    margin-bottom: 32px;
-  }
   .stats-bar {
     display: flex;
     justify-content: center;
@@ -166,17 +161,12 @@
 <div class="home-container" in:fade={{ duration: 350 }}>
   <div class="hero" in:fly={{ y: -30, duration: 450 }}>
     <h1><img src="/actual-logo.png" alt="actual" class="hero-logo" /> Bienvenue chez actual</h1>
-    <p class="subtitle">Votre salle de sport connectée.</p>
   </div>
 
   <div class="stats-bar" in:fly={{ y: 20, duration: 450, delay: 180 }}>
     <div class="stat">
       <div class="stat-number">{loading ? '…' : sessions.length}</div>
       <div class="stat-label">Séances</div>
-    </div>
-    <div class="stat">
-      <div class="stat-number">24/7</div>
-      <div class="stat-label">Accès</div>
     </div>
   </div>
 

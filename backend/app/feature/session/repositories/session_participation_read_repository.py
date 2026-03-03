@@ -21,3 +21,9 @@ class SessionParticipationReadRepoPort(Protocol):
         session_id: UUID
     ) -> bool:
         ...
+
+    async def get_user_registered_session_ids(
+        self,
+        user_id: UUID
+    ) -> list[UUID]:
+        ...

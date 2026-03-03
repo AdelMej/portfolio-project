@@ -34,6 +34,19 @@ router = APIRouter(
 
 
 @router.get(
+    "/my-registrations",
+    response_model=list[str]
+)
+async def get_my_registrations(
+    actor: Actor = Depends(get_current_actor),
+    uow: SessionUoWPort = Depends(get_session_uow),
+    service: SessionService = Depends(get_session_service)
+) -> list[str]:
+    ids = await service.get_my_registrations(uow, actor)
+    return [str(sid) for sid in ids]
+
+
+@router.get(
     "/{session_id}",
     status_code=200
 )

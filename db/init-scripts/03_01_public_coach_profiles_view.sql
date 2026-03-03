@@ -16,7 +16,7 @@
  * - Underlying tables remain protected
  */
 CREATE OR REPLACE VIEW app.v_coach_public AS
-SELECT
+SELECT DISTINCT
     u.user_id,
     u.first_name,
     u.last_name

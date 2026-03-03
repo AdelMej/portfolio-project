@@ -1,10 +1,26 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { createSession } from '$lib/api/sessions.api';
+  import { getAdminUsers, type AdminUser } from '$lib/api/admin.api';
 
   let title = '';
   let date = '';
   let maxParticipants = 0;
+  let selectedCoachId = '';
+  let coaches: AdminUser[] = [];
+  let loadingCoaches = true;
+
+  onMount(async () => {
+    try {
+      const res = await getAdminUsers(100, 0);
+      coaches = (res.items ?? []).filter(u => u.roles?.includes('coach'));
+    } catch (e) {
+      console.error('Erreur chargement coachs', e);
+    } finally {
+      loadingCoaches = false;
+    }
+  });
 
   async function submit() {
     const startsAt = new Date(date).toISOString();
@@ -26,8 +42,15 @@
   <h1>Créer une séance</h1>
   <div class="form-group">
     <input placeholder="Nom de la séance" bind:value={title} />
+    <label class="form-label" for="coach-select">Coach</label>
+    <select id="coach-select" bind:value={selectedCoachId}>
+      <option value="" disabled>-- Sélectionner un coach --</option>
+      {#each coaches as c}
+        <option value={c.id}>{c.email}</option>
+      {/each}
+    </select>
     <input type="datetime-local" bind:value={date} />
-    <input type="number" bind:value={maxParticipants} placeholder="Max participants" />
+    <input type="number" bind:value={maxParticipants} placeholder="Nombre de participants" />
   </div>
   <div class="form-actions">
     <button class="btn-primary" on:click={submit}>Créer séance</button>
@@ -65,10 +88,27 @@ input {
   transition: border 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
 }
-input:focus {
+input:focus, select:focus {
   border-color: #991b1b;
   outline: none;
   box-shadow: 0 0 0 3px rgba(153,27,27,0.1);
+}
+select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #f9fafb;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.form-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+  margin-bottom: -8px;
 }
 .form-actions {
   display: flex;

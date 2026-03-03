@@ -21,9 +21,13 @@
   }
 </script>
 
+<svelte:head>
+  <title>Actual Digital Gym</title>
+</svelte:head>
+
 <header class="main-header">
   <nav class="main-nav">
-    <a href="/" class="nav-logo" on:click={closeMenu}><img src="/actual-logo.png" alt="actual" class="logo-img" /> actual</a>
+    <a href="/" class="nav-logo" on:click={closeMenu}><img src="/actual-logo.png" alt="actual" class="logo-img" /></a>
     <button class="hamburger" class:open={menuOpen} on:click={toggleMenu} aria-label="Menu">
       <span></span><span></span><span></span>
     </button>

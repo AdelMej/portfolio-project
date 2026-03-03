@@ -11,6 +11,8 @@ type Session = {
   starts_at: string;
   ends_at: string;
   coach_name?: string;
+  max_participants?: number;
+  participants_count?: number;
 };
 
 let mySessions: Session[] = [];
@@ -21,36 +23,25 @@ let error = '';
 let ready = false;
 let joiningId = '';
 
-import { get } from 'svelte/store';
-let LOCAL_KEY = '';
-
-function updateLocalKey() {
-  const state = get(auth);
-  LOCAL_KEY = `user_sessions_${state.userId ?? 'unknown'}`;
-}
-
 onMount(() => {
   ready = true;
-  updateLocalKey();
   loadDashboard();
 });
 
-function getLocalSessions(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
-
-function setLocalSessions(ids: string[]) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(ids));
-}
 async function loadSessions(): Promise<Session[]> {
     const res = await apiFetch('/sessions');
     if (Array.isArray(res.items)) return res.items;
     if (Array.isArray(res)) return res;
-return [];
+    return [];
+}
+
+async function loadMyRegistrations(): Promise<string[]> {
+    try {
+      const ids: string[] = await apiFetch('/sessions/my-registrations');
+      return Array.isArray(ids) ? ids : [];
+    } catch {
+      return [];
+    }
 }
 
 async function joinSession(sessionId: string) {
@@ -64,8 +55,6 @@ async function joinSession(sessionId: string) {
     if (session) {
       mySessions = [...mySessions, session];
       availableSessions = availableSessions.filter(s => s.id !== sessionId);
-      const ids = getLocalSessions();
-      setLocalSessions([...ids, sessionId]);
     }
   } catch (e) {
     error = "Impossible de s'inscrire";
@@ -79,10 +68,12 @@ async function loadDashboard() {
   loading = true;
   error = '';
   try {
-    const sessions = await loadSessions();
-    const localIds = getLocalSessions();
-    mySessions = sessions.filter(s => localIds.includes(s.id));
-    availableSessions = sessions.filter(s => !localIds.includes(s.id));
+    const [sessions, registeredIds] = await Promise.all([
+      loadSessions(),
+      loadMyRegistrations()
+    ]);
+    mySessions = sessions.filter(s => registeredIds.includes(s.id));
+    availableSessions = sessions.filter(s => !registeredIds.includes(s.id));
   } catch (e) {
     console.error(e);
     error = 'Erreur lors du chargement';
@@ -231,6 +222,7 @@ button:disabled {
             <th>Titre</th>
             <th>Date</th>
             <th>Coach</th>
+            <th>Places restantes</th>
           </tr>
         </thead>
         <tbody>
@@ -239,6 +231,7 @@ button:disabled {
               <td>{s.title}</td>
               <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
               <td>{s.coach_name ?? 'Non défini'}</td>
+              <td>{s.max_participants != null ? (s.max_participants - (s.participants_count ?? 0)) : '-'}</td>
             </tr>
           {/each}
         </tbody>
@@ -263,6 +256,7 @@ button:disabled {
             <th>Titre</th>
             <th>Date</th>
             <th>Coach</th>
+            <th>Places restantes</th>
             <th></th>
           </tr>
         </thead>
@@ -272,6 +266,7 @@ button:disabled {
               <td>{s.title}</td>
               <td>{new Date(s.starts_at).toLocaleString('fr-FR')}</td>
               <td>{s.coach_name ?? 'Non défini'}</td>
+              <td>{s.max_participants != null ? (s.max_participants - (s.participants_count ?? 0)) : '-'}</td>
               <td>
                 <button on:click={() => joinSession(s.id)} disabled={joiningId === s.id}>
                   {joiningId === s.id ? '...' : "S'inscrire"}

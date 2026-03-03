@@ -84,8 +84,8 @@ INSERT INTO app.user_profiles (
 )
 SELECT
     iur.user_id,
-    'System',
-    'Coach'
+    'fu',
+    'fo'
 FROM insert_user_role iur;
 
 
