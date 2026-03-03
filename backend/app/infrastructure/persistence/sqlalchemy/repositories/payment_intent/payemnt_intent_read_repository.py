@@ -1,6 +1,8 @@
+from uuid import UUID
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.domain.payment_intent.payment_intent_entity import PaymentIntentEntity
+from app.domain.payment_intent.payment_intent_providers import PaymentProvider
 from app.feature.stripe.repositories import (
     PaymentIntentReadRepoPort
 )
@@ -17,32 +19,46 @@ class SqlAlchemyPaymentIntentReadRepo(
 
     async def intent_exists(
         self,
-        provider_payment_id: str
+        user_id: UUID,
+        session_id: UUID,
+        provider: PaymentProvider
     ) -> bool:
         stmt = text("""
             SELECT
-                app_fcn.intent_exists(:provider_payment_id)
+                app_fcn.intent_exists(
+                    :user_id,
+                    :session_id,
+                    :provider
+                )
         """)
 
         result = await self._session.execute(stmt, {
-            "provider_payment_id": provider_payment_id
+            "user_id": user_id,
+            "session_id": session_id,
+            "provider": provider
         })
 
         return result.scalar_one()
 
-    async def get_by_provider_id(
+    async def get_by_identity(
         self,
-        provider_payment_id: str
+        user_id: UUID,
+        session_id: UUID,
+        provider: PaymentProvider
     ) -> PaymentIntentEntity:
         stmt = text("""
             SELECT *
-            FROM app_fcn.get_by_provider_id(
-                    :provider_payment_id
+            FROM app_fcn.get_by_identity(
+                    :user_id,
+                    :session_id,
+                    :provider
             )
         """)
 
         result = await self._session.execute(stmt, {
-            "provider_payment_id": provider_payment_id
+            "user_id": user_id,
+            "session_id": session_id,
+            "provider": provider
         })
 
         row = result.mappings().one()

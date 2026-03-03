@@ -4,16 +4,17 @@ from uuid import UUID
 
 
 @dataclass(frozen=True)
-class PaymentParticipationEntity():
+class SessionParticipationEntity():
     id: UUID
     session_id: UUID
     user_id: UUID
     paid_at: datetime
     registred_at: datetime
     cancelled_at: datetime
+    expires_at: datetime
 
 
 @dataclass(frozen=True)
-class NewPaymentParticipationEntity():
+class NewSessionParticipationEntity():
     session_id: UUID
     user_id: UUID

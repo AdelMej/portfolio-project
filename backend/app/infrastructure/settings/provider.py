@@ -41,6 +41,10 @@ def get_web_hook_secret(request: Request) -> str:
     return request.app.state.settings.stripe_webhook_secret
 
 
+def get_front_end_link(request: Request) -> str:
+    return request.app.state.settings.frontend_base_url
+
+
 def get_stripe_client(request: Request) -> stripe.StripeClient:
     return request.app.state.stripe_client
 

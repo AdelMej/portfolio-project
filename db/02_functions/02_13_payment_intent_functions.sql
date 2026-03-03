@@ -113,8 +113,10 @@ Errors:
 - AP404: session not found
 - AP409: payment intent already exists';
 
-create or replace function app_fcn.get_by_provider_id(
-	p_provider_payment_id text
+create or replace function app_fcn.get_by_identity(
+	p_user_id uuid,
+	p_session_id uuid,
+	p_provider text
 )
 returns table (
 	id uuid,
@@ -161,10 +163,12 @@ as $$
         pi.amount_cents,
         pi.currency
     FROM app.payment_intents pi
-    WHERE pi.provider_intent_id = p_provider_payment_id;
+    WHERE pi.user_id = p_user_id
+		AND pi.session_id = p_session_id
+		AND pi.provider = p_provider;
 $$;
 
-COMMENT ON FUNCTION app_fcn.get_by_provider_id(text)
+COMMENT ON FUNCTION app_fcn.get_by_identity(uuid, uuid, text)
 IS
 'Resolves an internal payment intent using a provider-side payment intent ID.
 Used by payment webhooks to map external events to internal payment state.';
@@ -393,3 +397,63 @@ IS
 Used for payment failure or cancellation webhooks. No-ops if participation is
 missing, already cancelled, or already paid.';
 
+CREATE OR replace function app_fcn.set_provider_id(
+	p_user_id uuid,
+	p_session_id uuid,
+	p_provider text,
+	p_provider_intent_id text
+)
+returns void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = app, app_fcn, pg_temp
+AS $$
+	/*
+	 * set_provider_id
+	 *
+	 * Associates a provider-specific payment intent identifier with an existing
+	 * payment_intent row.
+	 *
+	 * Concurrency:
+	 *   Uses pg_advisory_xact_lock scoped to (user_id, session_id) to ensure
+	 *   that concurrent updates for the same logical payment intent are serialized.
+	 *
+	 * Behavior:
+	 *   - Verifies the intent exists using app_fcn.intent_exists(...)
+	 *   - Raises AP404 if no matching intent is found
+	 *   - Updates provider_intent_id for the matching (user, session, provider)
+	 *
+	 * Security:
+	 *   - SECURITY DEFINER
+	 *   - search_path restricted to app, app_fcn, pg_temp
+	 *
+	 * Notes:
+	 *   - Designed to be idempotent at the application level
+	 *   - Does not create intents; only updates existing rows
+	 */
+	BEGIN
+		PERFORM pg_advisory_xact_lock(
+			hashtext('user:' || p_user_id::text || ':session:' || p_session_id::text)
+		);
+
+		IF NOT app_fcn.intent_exists(p_user_id, p_session_id, p_provider) THEN
+			RAISE EXCEPTION 'payment intent not found'
+				USING ERRCODE = 'AP404';
+		END IF;
+
+		UPDATE app.payment_intents
+		SET
+			provider_intent_id = p_provider_intent_id
+		WHERE user_id = p_user_id
+			AND session_id = p_session_id
+			AND provider = p_provider;
+	END;
+$$;
+
+COMMENT ON FUNCTION app_fcn.set_provider_id(uuid, uuid, text, text)
+IS
+'Associates a provider-specific payment intent identifier with an existing payment_intent row.
+
+Concurrency-safe via pg_advisory_xact_lock scoped to (user_id, session_id).
+Raises AP404 if the intent does not exist.
+Does not create rows; only updates provider_intent_id.';

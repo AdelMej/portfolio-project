@@ -1,5 +1,8 @@
+from datetime import datetime
 from typing import Protocol
 from uuid import UUID
+
+from app.domain.session.session_entity import SessionCompleteEntity
 
 
 class SessionReadRepoPort(Protocol):
@@ -26,4 +29,20 @@ class SessionReadRepoPort(Protocol):
         self,
         session_id: UUID
     ) -> bool:
+        ...
+
+    async def get_complete_session_by_id(
+        self,
+        session_id: UUID
+    ) -> SessionCompleteEntity:
+        ...
+
+    async def get_own_coach_sessions(
+        self,
+        user_id: UUID,
+        limit: int,
+        offset: int,
+        _from: datetime | None,
+        to: datetime | None
+    ) -> tuple[list[SessionCompleteEntity], bool]:
         ...

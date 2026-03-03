@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { auth } from '$lib/stores/auth.store';
-  import { goto } from '$app/navigation';
+	import { auth } from '$lib/stores/auth.store';
+	import { goto } from '$app/navigation';
 
-  let accessToken: string | null;
-  auth.subscribe(value => accessToken = value.accessToken);
+	let accessToken: string | null;
+	auth.subscribe((value) => (accessToken = value.accessToken));
 
   let menuOpen = false;
 
@@ -40,7 +40,7 @@
 </header>
 
 <main class="main-content">
-  <slot />
+	<slot />
 </main>
 
 <footer class="main-footer">

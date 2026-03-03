@@ -32,12 +32,6 @@ class NewSessionEntity:
 
 
 @dataclass(frozen=True)
-class NewSessionParticipationEntity:
-    session_id: UUID
-    user_id: UUID
-
-
-@dataclass(frozen=True)
 class SessionWithCoachEntity:
     id: UUID
     coach: UserProfileEntity
@@ -50,3 +44,19 @@ class SessionWithCoachEntity:
     currency: str
     created_at: datetime
     updated_at: datetime
+
+
+@dataclass(frozen=True)
+class SessionCompleteEntity:
+    id: UUID
+    coach: UserProfileEntity
+    title: str
+    starts_at: datetime
+    ends_at: datetime
+    status: SessionStatus
+    cancelled_at: datetime
+    price_cents: int
+    currency: str
+    created_at: datetime
+    updated_at: datetime
+    participants: list[UserProfileEntity]

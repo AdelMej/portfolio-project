@@ -39,6 +39,8 @@ class AppSettings(BaseSettings):
 
     session_participation_ttl_seconds: int
 
+    frontend_base_url: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

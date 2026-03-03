@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS app.payment_intents (
     provider TEXT NOT NULL,
 
     -- Provider-side payment intent identifier
-    provider_intent_id TEXT NOT NULL,
+    provider_intent_id TEXT NULL,
 
     -- Current lifecycle status of the intent
     -- (e.g. created, requires_action, succeeded, cancelled, failed)
@@ -73,6 +73,9 @@ CREATE TABLE IF NOT EXISTS app.payment_intents (
     -- Prevent duplicate intents from the same provider
     CONSTRAINT uq_payment_intents_provider_intent
         UNIQUE (provider, provider_intent_id),
+        
+   	CONSTRAINT uq_payment_intents_domain_intent
+   		UNIQUE (user_id, session_id, provider),
         
     -- ------------------------------------------------------------------
     -- Invariants

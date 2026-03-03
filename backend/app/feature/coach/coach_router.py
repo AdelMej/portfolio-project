@@ -1,14 +1,22 @@
+from datetime import datetime
 from uuid import UUID
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 import stripe
 
 from app.feature.coach.coach_dependencies import get_coach_service
-from app.feature.coach.coach_dto import CoachStripeAccountCreationOutputDTO
+from app.feature.coach.coach_dto import (
+    CoachStripeAccountCreationOutputDTO,
+    GetSessionOutputDto,
+    PaginatedSessionsOutputDTO
+)
 from app.feature.coach.coach_service import CoachService
 from app.feature.coach.uow.coach_uow_port import CoachUoWPort
 from app.domain.auth.actor_entity import Actor
 from app.infrastructure.security.provider import get_current_actor
-from app.infrastructure.settings.provider import get_stripe_client
+from app.infrastructure.settings.provider import (
+    get_front_end_link,
+    get_stripe_client
+)
 from app.infrastructure.persistence.sqlalchemy.provider import get_coach_uow
 
 router = APIRouter(
@@ -22,12 +30,14 @@ async def coach_account(
     uow: CoachUoWPort = Depends(get_coach_uow),
     actor: Actor = Depends(get_current_actor),
     client: stripe.StripeClient = Depends(get_stripe_client),
-    service: CoachService = Depends(get_coach_service)
+    service: CoachService = Depends(get_coach_service),
+    front_end_url: str = Depends(get_front_end_link)
 ) -> CoachStripeAccountCreationOutputDTO:
     link = await service.create_onboarding_link(
         uow=uow,
         actor=actor,
-        client=client
+        client=client,
+        front_end_url=front_end_url
     )
 
     return CoachStripeAccountCreationOutputDTO(
@@ -51,4 +61,51 @@ async def coach_payout(
         uow=uow,
         actor=actor,
         client=client,
+    )
+
+
+@router.get(
+    path='/sessions/',
+    status_code=200
+)
+async def coach_get_own_sessions(
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    _from: datetime | None = Query(None),
+    to: datetime | None = Query(None),
+    uow: CoachUoWPort = Depends(get_coach_uow),
+    actor: Actor = Depends(get_current_actor),
+    service: CoachService = Depends(get_coach_service)
+) -> PaginatedSessionsOutputDTO:
+    items, has_more = await service.get_own_sessions(
+        actor=actor,
+        uow=uow,
+        limit=limit,
+        offset=offset,
+        _from=_from,
+        to=to
+    )
+
+    return PaginatedSessionsOutputDTO(
+        items=items,
+        limit=limit,
+        offset=offset,
+        has_more=has_more
+    )
+
+
+@router.get(
+    path='/sessions/{session_id}',
+    status_code=200
+)
+async def coach_get_session_by_id(
+    session_id: UUID,
+    uow: CoachUoWPort = Depends(get_coach_uow),
+    actor: Actor = Depends(get_current_actor),
+    service: CoachService = Depends(get_coach_service)
+) -> GetSessionOutputDto:
+    return await service.get_session_by_id(
+        session_id=session_id,
+        uow=uow,
+        actor=actor,
     )

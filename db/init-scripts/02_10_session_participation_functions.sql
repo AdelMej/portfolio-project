@@ -217,3 +217,5 @@ $$;
 COMMENT ON FUNCTION app_fcn.revoke_all_active_session(uuid)
 IS
 'Revoke all active session participations for the given user. Used to cancel pending or active registrations during checkout failures, user-initiated cancellations, or safety rollback paths. Only affects active participations and preserves historical records.';
+
+

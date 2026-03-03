@@ -1,3 +1,4 @@
+from uuid import UUID
 from app.domain.credit.credit_cause import CreditCause
 from app.domain.credit.credit_entity import NewCreditEntity
 from app.domain.stripe.stripe_exception import (
@@ -10,7 +11,7 @@ import stripe
 from app.domain.payment.payment_entity import NewPaymentEntity
 from app.feature.stripe.uow.stripe_uow_port import StripeUoWPort
 from app.domain.payment_intent.payment_intent_providers import (
-    PaymentProvier
+    PaymentProvider
 )
 
 
@@ -27,20 +28,41 @@ class StripeService:
                 if not isinstance(intent, stripe.PaymentIntent):
                     raise IntentIsInvalidError()
 
+                user_id = UUID(intent["metadata"]["user_id"])
+                session_id = UUID(intent["metadata"]["session_id"])
+
                 provider_payment_id = intent["id"]
 
                 if not await uow.payment_intent_read_repo.intent_exists(
-                    provider_payment_id
+                    user_id=user_id,
+                    session_id=session_id,
+                    provider=PaymentProvider.STRIPE
                 ):
                     return
 
-                payment_intent = stripe_client.payment_intents.retrieve(
+                payment_intent = (
+                    await uow.payment_intent_read_repo.get_by_identity(
+                        user_id=user_id,
+                        session_id=session_id,
+                        provider=PaymentProvider.STRIPE
+                    )
+                )
+
+                if payment_intent.provider_intent_id is None:
+                    await uow.payment_intent_update_repo.set_provider_id(
+                        user_id=user_id,
+                        session_id=session_id,
+                        provider=PaymentProvider.STRIPE,
+                        provider_intent_id=provider_payment_id,
+                    )
+
+                stripe_payment_intent = stripe_client.payment_intents.retrieve(
                     provider_payment_id,
                     params={
                         "expand": ["latest_charge.balance_transaction"]
                     }
                 )
-                charges = payment_intent.latest_charge
+                charges = stripe_payment_intent.latest_charge
                 if charges is None or isinstance(charges, str):
                     raise ChargeNotReadyError()
 
@@ -52,12 +74,6 @@ class StripeService:
                 provider_fee = balance_tx.fee
                 net_amount = balance_tx.net
 
-                payment_intent = (
-                    await uow.payment_intent_read_repo.get_by_provider_id(
-                        provider_payment_id
-                    )
-                )
-
                 await uow.payment_intent_update_repo.mark_payment_intent(
                     provider_payment_id=provider_payment_id,
                     provider_status=intent["status"]
@@ -66,7 +82,7 @@ class StripeService:
                 payment = NewPaymentEntity(
                     session_id=payment_intent.session_id,
                     user_id=payment_intent.user_id,
-                    provider=PaymentProvier.STRIPE.value,
+                    provider=PaymentProvider.STRIPE.value,
                     provider_payment_id=provider_payment_id,
                     gross_amount_cents=gross_amount,
                     provider_fee_cents=provider_fee,
@@ -100,16 +116,32 @@ class StripeService:
 
                 provider_payment_id = intent["id"]
 
+                user_id = UUID(intent["metadata"]["user_id"])
+                session_id = UUID(intent["metadata"]["session_id"])
+
                 if not await uow.payment_intent_read_repo.intent_exists(
-                    provider_payment_id
+                    user_id=user_id,
+                    session_id=session_id,
+                    provider=PaymentProvider.STRIPE
                 ):
                     return
 
                 payment_intent = (
-                    await uow.payment_intent_read_repo.get_by_provider_id(
-                        provider_payment_id
+                    await uow.payment_intent_read_repo.get_by_identity(
+                        user_id=user_id,
+                        session_id=session_id,
+                        provider=PaymentProvider.STRIPE
                     )
                 )
+
+                if payment_intent.provider_intent_id is None:
+                    await uow.payment_intent_update_repo.set_provider_id(
+                        user_id=user_id,
+                        session_id=session_id,
+                        provider=PaymentProvider.STRIPE,
+                        provider_intent_id=provider_payment_id,
+                    )
+
                 await uow.payment_intent_update_repo.mark_payment_intent(
                     provider_payment_id=provider_payment_id,
                     provider_status=intent["status"],
@@ -127,16 +159,31 @@ class StripeService:
 
                 provider_payment_id = intent["id"]
 
+                user_id = UUID(intent["metadata"]["user_id"])
+                session_id = UUID(intent["metadata"]["session_id"])
+
                 if not await uow.payment_intent_read_repo.intent_exists(
-                    provider_payment_id
+                    user_id=user_id,
+                    session_id=session_id,
+                    provider=PaymentProvider.STRIPE
                 ):
                     return
 
                 payment_intent = (
-                    await uow.payment_intent_read_repo.get_by_provider_id(
-                        provider_payment_id
+                    await uow.payment_intent_read_repo.get_by_identity(
+                        user_id=user_id,
+                        session_id=session_id,
+                        provider=PaymentProvider.STRIPE
                     )
                 )
+
+                if payment_intent.provider_intent_id is None:
+                    await uow.payment_intent_update_repo.set_provider_id(
+                        user_id=user_id,
+                        session_id=session_id,
+                        provider=PaymentProvider.STRIPE,
+                        provider_intent_id=provider_payment_id,
+                    )
 
                 await uow.payment_intent_update_repo.mark_payment_intent(
                     provider_payment_id=provider_payment_id,
