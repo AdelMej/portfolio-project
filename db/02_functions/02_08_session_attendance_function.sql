@@ -56,10 +56,19 @@ as $$
 		JOIN app.user_profiles up
 			ON up.user_id = sp.user_id
 		JOIN app.sessions s ON s.id = sp.session_id
+<<<<<<< HEAD
 		WHERE sp.session_id = :p_session_id
 			AND sp.cancelled_at IS NULL
 			AND (sp.paid_at IS NOT null or s.price_cents = 0);
 
+=======
+		WHERE sp.session_id = p_session_id
+			AND sp.cancelled_at IS NULL
+			AND (
+				sp.paid_at IS NOT NULL
+				OR s.price_cents = 0				
+			);
+>>>>>>> bff4c9d24d137eabe3790e5b3faf573d7e6197be
 	END;
 $$;
 

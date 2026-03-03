@@ -57,11 +57,13 @@ as $$
 		FROM app.session_participation sp
 		JOIN app.user_profiles up
 			ON up.user_id = sp.user_id
-		JOIN app.sessions s ON s.session_id = sp.session_id
+		JOIN app.sessions s ON s.id = sp.session_id
 		WHERE sp.session_id = p_session_id
-			AND s.price_cents = 0
 			AND sp.cancelled_at IS NULL
-			AND sp.paid_at IS NOT NULL;
+			AND (
+				sp.paid_at IS NOT NULL
+				OR s.price_cents = 0				
+			);
 	END;
 $$;
 

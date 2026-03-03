@@ -1,6 +1,7 @@
 <!-- COACH DASHBOARD: /frontend/src/routes/dashboard/coach/+page.svelte -->
 <script lang="ts">
 import { onMount } from 'svelte';
+import { goto } from '$app/navigation';
 import { fly, fade } from 'svelte/transition';
 import { apiFetch } from '$lib/api/client';
 import { auth } from '$lib/stores/auth.store';
@@ -278,6 +279,8 @@ onMount(() => {
 .btn-action:hover { background: #7f1d1d; }
 .btn-action.green { background: #16a34a; }
 .btn-action.green:hover { background: #15803d; }
+.btn-action.purple { background: #7c3aed; }
+.btn-action.purple:hover { background: #6d28d9; }
 .btn-cancel {
   background: #dc2626; color: white; border: none;
   padding: 7px 14px; border-radius: 20px; font-size: 0.8rem;
@@ -408,6 +411,7 @@ onMount(() => {
                 <div class="session-actions">
                   <button class="btn-action green" on:click={() => toggleParticipants(s.id)}>Participants ({s.participants?.length ?? 0})</button>
                   {#if s.status !== 'cancelled'}
+                    <a href={`/sessions/${s.id}/attendance`} class="btn-action purple">Présence</a>
                     <button class="btn-cancel" on:click={() => cancelSession(s.id)}>Annuler</button>
                     <a href={`/dashboard/coach/sessions/${s.id}/edit`} class="btn-action">Modifier</a>
                   {/if}
