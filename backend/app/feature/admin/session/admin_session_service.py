@@ -13,6 +13,7 @@ from app.domain.session.session_exception import (
 )
 from app.feature.admin.session.admin_session_dto import (
     AdminSessionOutputDTO,
+    AdminParticipantDTO,
     UserProfileOutputDTO
 )
 from app.feature.admin.session.uow.admin_session_system_uow_port import (
@@ -162,4 +163,23 @@ class AdminSessionService:
                 last_name=profile.last_name,
                 attended=profile.attended
             ) for profile in profiles
+        ]
+
+    async def admin_get_session_participants(
+        self,
+        session_id: UUID,
+        actor: Actor,
+        uow: AdminSessionUoWPort,
+    ) -> list[AdminParticipantDTO]:
+        ensure_has_permission(actor, Permission.ADMIN_READ_SESSION)
+
+        participants = await uow.session_read_repo.get_session_participants(
+            session_id=session_id
+        )
+
+        return [
+            AdminParticipantDTO(
+                first_name=first_name,
+                last_name=last_name
+            ) for first_name, last_name in participants
         ]

@@ -49,3 +49,9 @@ class AdminSessionReadRepoPort(Protocol):
         session_id: UUID
     ) -> bool:
         ...
+
+    async def get_session_participants(
+        self,
+        session_id: UUID
+    ) -> list[tuple[str, str]]:
+        ...

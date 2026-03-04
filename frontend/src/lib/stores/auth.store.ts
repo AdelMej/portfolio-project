@@ -6,6 +6,8 @@ interface AuthState {
   roles?: string[];
   userId?: string;
   email?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 const STORAGE_KEY = 'auth_state';
@@ -39,8 +41,8 @@ function createAuth() {
 
   return {
     subscribe,
-    login: (token: string, roles: string[] = [], userId?: string, email?: string) => {
-      const state: AuthState = { accessToken: token, roles, userId, email };
+    login: (token: string, roles: string[] = [], userId?: string, email?: string, firstName?: string, lastName?: string) => {
+      const state: AuthState = { accessToken: token, roles, userId, email, firstName, lastName };
       saveToStorage(state);
       set(state);
     },

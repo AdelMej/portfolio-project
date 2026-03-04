@@ -27,7 +27,7 @@
 h1 {
   font-size: 2.2rem;
   margin-bottom: 24px;
-  color: #991b1b;
+  color: #1f2937;
   text-align: center;
 }
 .session-list {
@@ -51,9 +51,14 @@ h1 {
   color: #374151;
 }
 .session-date {
-  color: #991b1b;
+  color: #374151;
   font-size: 1rem;
   font-weight: 500;
+}
+.session-price {
+  color: #065f46;
+  font-size: 1rem;
+  font-weight: 600;
 }
 .empty-message {
   color: #888;
@@ -74,6 +79,7 @@ h1 {
         <li class="session-item">
           <span class="session-title">{s.title}</span>
           <span class="session-date">{new Date(s.starts_at).toLocaleString('fr-FR')}</span>
+          <span class="session-price">{s.price_cents != null ? (s.price_cents / 100).toFixed(2) + ' ' + (s.currency ?? 'EUR') : ''}</span>
         </li>
       {/each}
     </ul>

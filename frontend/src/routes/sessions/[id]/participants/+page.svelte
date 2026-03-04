@@ -8,8 +8,6 @@
   import { fly, fade } from 'svelte/transition';
 
   type Participant = {
-    id: string;
-    email: string;
     first_name?: string;
     last_name?: string;
   };
@@ -19,9 +17,7 @@
     title: string;
     starts_at: string;
     ends_at: string;
-    coach_id: string;
     coach_name?: string;
-    max_participants?: number;
     participants?: Participant[];
     status: 'scheduled' | 'cancelled';
   };
@@ -191,18 +187,17 @@
     <h1 in:fly={{ y: -10, duration: 300 }}>Participants – {session.title}</h1>
 
     <div class="session-info" in:fade={{ delay: 100 }}>
-      <p><strong>Coach :</strong> {session.coach_name || session.coach_id || 'Inconnu'}</p>
+      <p><strong>Coach :</strong> {session.coach_name || 'Inconnu'}</p>
       <p><strong>Début :</strong> {new Date(session.starts_at).toLocaleString('fr-FR')}</p>
       <p><strong>Fin :</strong> {new Date(session.ends_at).toLocaleString('fr-FR')}</p>
-      <p><strong>Participants max :</strong> {session.max_participants ?? '-'}</p>
-      <p>
+      <div>
         <strong>Statut :</strong>
         {#if session.status === 'cancelled'}
           <span class="badge badge-danger">Annulée</span>
         {:else}
           <span class="badge badge-success">Active</span>
         {/if}
-      </p>
+      </div>
     </div>
 
     <!-- ── Participant list ── -->
@@ -226,7 +221,6 @@
             <tr in:fly={{ x: -15, duration: 250, delay: 250 + i * 40 }}>
               <td>{p.last_name || '-'}</td>
               <td>{p.first_name || '-'}</td>
-              <td>{p.email}</td>
             </tr>
           {/each}
         </tbody>

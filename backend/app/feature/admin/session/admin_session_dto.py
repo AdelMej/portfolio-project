@@ -30,3 +30,8 @@ class UserProfileOutputDTO(BaseModel):
     first_name: str
     last_name: str
     attended: bool
+
+
+class AdminParticipantDTO(BaseModel):
+    first_name: str
+    last_name: str

@@ -69,7 +69,7 @@
 }
 h1 {
   font-size: 2rem;
-  color: #991b1b;
+  color: #1f2937;
   text-align: center;
   margin-bottom: 28px;
 }

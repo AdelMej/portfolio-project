@@ -86,6 +86,24 @@ class SessionService:
             status=session.status
         )
 
+    async def get_session_participants(
+            self,
+            uow: SessionUoWPort,
+            session_id: UUID
+    ) -> list:
+        from app.feature.session.session_dto import ParticipantDTO
+        if not await uow.session_read_repo.exist_session(session_id):
+            raise SessionNotFoundError()
+        participants = await uow.session_read_repo.get_session_participants(
+            session_id=session_id
+        )
+        return [
+            ParticipantDTO(
+                first_name=first_name,
+                last_name=last_name
+            ) for first_name, last_name in participants
+        ]
+
     async def create_session(
             self,
             uow: SessionUoWPort,

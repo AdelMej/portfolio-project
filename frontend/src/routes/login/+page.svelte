@@ -2,7 +2,7 @@
 import { onMount } from 'svelte';
 import { fly, fade } from 'svelte/transition';
 import type { LoginResponse, MeResponse } from '$lib/api/auth.api';
-import { login, getMe } from '$lib/api/auth.api';
+import { login, getMe, getMyProfile } from '$lib/api/auth.api';
 import { auth } from '$lib/stores/auth.store';
 import { goto } from '$app/navigation';
 import { tick } from 'svelte';
@@ -23,7 +23,8 @@ async function handleLogin() {
     auth.login(tokenResponse.access_token);
     await tick();
     const me: MeResponse = await getMe();
-    auth.login(tokenResponse.access_token, me.roles, me.id, me.email);
+    const profile = await getMyProfile();
+    auth.login(tokenResponse.access_token, me.roles, me.id, me.email, profile.first_name, profile.last_name);
 
     if (me.roles.includes('admin')) goto('/dashboard/admin');
     else if (me.roles.includes('coach')) goto('/dashboard/coach');
@@ -60,7 +61,7 @@ async function handleLogin() {
 h1 {
   font-size: 2rem;
   margin-bottom: 8px;
-  color: #991b1b;
+  color: #1f2937;
   text-align: center;
   letter-spacing: 1px;
 }
@@ -104,7 +105,7 @@ button:hover:not(:disabled) {
   box-shadow: 0 4px 12px rgba(153,27,27,0.2);
 }
 button:disabled {
-  background: #fca5a5;
+  background: #d1d5db;
   cursor: not-allowed;
 }
 .error-message {

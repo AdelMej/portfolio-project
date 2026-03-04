@@ -67,7 +67,7 @@
 }
 h1 {
   font-size: 1.8rem;
-  color: #991b1b;
+  color: #1f2937;
   margin-bottom: 24px;
 }
 input {
@@ -118,7 +118,7 @@ button[type="submit"]:hover {
   margin-bottom: 16px;
 }
 button[type="submit"]:disabled {
-  background: #fca5a5;
+  background: #d1d5db;
   cursor: not-allowed;
 }
 .back-link {

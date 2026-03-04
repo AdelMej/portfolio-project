@@ -21,6 +21,17 @@ ON TABLE app.session_participation
 TO app_user;
 
 -- ------------------------------------------------------------------
+-- app_system: read access for backend logic
+--
+-- Notes:
+-- - app_system needs SELECT to query participation data
+--   (e.g. get_user_registered_session_ids)
+-- ------------------------------------------------------------------
+GRANT SELECT
+ON TABLE app.session_participation
+TO app_system;
+
+-- ------------------------------------------------------------------
 -- Documentation
 -- ------------------------------------------------------------------
 

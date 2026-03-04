@@ -7,6 +7,7 @@
   import { auth } from '$lib/stores/auth.store';
 
   let sessions: Session[] = [];
+  let availableSessions: Session[] = [];
   let loading = true;
   let ready = false;
 
@@ -15,6 +16,8 @@
     try {
       const res: Session[] = await listSessions();
       sessions = res;
+      const now = new Date();
+      availableSessions = res.filter(s => s.status !== 'cancelled' && new Date(s.ends_at) >= now);
     } catch (err) {
       console.error('Failed to fetch sessions', err);
     } finally {
@@ -38,7 +41,7 @@
   }
   h1 {
     font-size: 2.8rem;
-    color: #991b1b;
+    color: #1f2937;
     margin-bottom: 12px;
     letter-spacing: 1px;
     display: flex;
@@ -63,7 +66,7 @@
   .stat-number {
     font-size: 2rem;
     font-weight: 800;
-    color: #991b1b;
+    color: #1f2937;
   }
   .stat-label {
     font-size: 0.82rem;
@@ -129,9 +132,14 @@
     color: #374151;
   }
   .session-date {
-    color: #991b1b;
+    color: #374151;
     font-size: 1rem;
     font-weight: 500;
+  }
+  .session-price {
+    color: #065f46;
+    font-size: 1rem;
+    font-weight: 600;
   }
   .session-coach {
     color: #6b7280;
@@ -142,7 +150,7 @@
     width: 36px;
     height: 36px;
     border: 3px solid #e5e7eb;
-    border-top-color: #991b1b;
+    border-top-color: #374151;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
     margin: 28px auto;
@@ -165,7 +173,7 @@
 
   <div class="stats-bar" in:fly={{ y: 20, duration: 450, delay: 180 }}>
     <div class="stat">
-      <div class="stat-number">{loading ? '…' : sessions.length}</div>
+      <div class="stat-number">{loading ? '…' : availableSessions.length}</div>
       <div class="stat-label">Séances</div>
     </div>
   </div>
@@ -183,15 +191,16 @@
 
   {#if loading}
     <div class="spinner"></div>
-  {:else if sessions.length === 0}
+  {:else if availableSessions.length === 0}
     <div class="empty-msg" in:fade>Aucune séance disponible.</div>
   {:else}
     <ul class="session-list">
-      {#each sessions as s, i}
+      {#each availableSessions as s, i}
         <li class="session-item" in:fly={{ y: 20, duration: 280, delay: 480 + i * 70 }}>
           <span class="session-title">{s.title}</span>
           <span class="session-coach">{s.coach_name ?? ''}</span>
           <span class="session-date">{new Date(s.starts_at).toLocaleString('fr-FR')}</span>
+          <span class="session-price">{s.price_cents != null ? (s.price_cents / 100).toFixed(2) + ' ' + (s.currency ?? 'EUR') : ''}</span>
         </li>
       {/each}
     </ul>

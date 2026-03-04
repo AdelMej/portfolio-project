@@ -5,19 +5,6 @@ import { get } from 'svelte/store';
 const roles = get(auth).roles || [];
 </script>
 
-{#if roles.includes('admin')}
-  <!-- Admin dashboard window -->
-  <h1>Admin Dashboard</h1>
-{:else if roles.includes('coach')}
-  <!-- Coach dashboard window -->
-  <h1>Coach Dashboard</h1>
-  <!-- Coach-specific content here -->
-{:else}
-  <!-- User dashboard window -->
-  <h1>Tableau de bord utilisateur</h1>
-  <!-- User-specific content here -->
-{/if}
-
 <style>
 .dashboard-landing-container {
   max-width: 700px;
@@ -30,14 +17,9 @@ const roles = get(auth).roles || [];
 }
 h1 {
   font-size: 2.2rem;
-  color: #991b1b;
+  color: #1f2937;
   margin-bottom: 18px;
   letter-spacing: 1px;
-}
-h2 {
-  font-size: 1.3rem;
-  color: #374151;
-  margin-bottom: 32px;
 }
 a, .dashboard-btn {
   display: inline-block;
