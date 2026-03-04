@@ -5,11 +5,14 @@
   import type { Session } from '$lib/api/sessions.api';
   import { listSessions } from '$lib/api/sessions.api';
   import { auth } from '$lib/stores/auth.store';
+  import SessionIcon from '$lib/components/SessionIcon.svelte';
 
   let sessions: Session[] = [];
   let availableSessions: Session[] = [];
   let loading = true;
   let ready = false;
+  let coachCount = 0;
+  let nextSession: Session | null = null;
 
   onMount(async () => {
     ready = true;
@@ -17,13 +20,26 @@
       const res: Session[] = await listSessions();
       sessions = res;
       const now = new Date();
-      availableSessions = res.filter(s => s.status !== 'cancelled' && new Date(s.ends_at) >= now);
+      availableSessions = res
+        .filter(s => s.status !== 'cancelled' && new Date(s.ends_at) >= now)
+        .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+      const coaches = new Set(availableSessions.map(s => s.coach_id).filter(Boolean));
+      coachCount = coaches.size;
+      nextSession = availableSessions[0] ?? null;
     } catch (err) {
       console.error('Failed to fetch sessions', err);
     } finally {
       loading = false;
     }
   });
+
+  function formatPrice(cents: number, currency: string): string {
+    return (cents / 100).toFixed(2) + ' ' + (currency ?? 'EUR');
+  }
+
+  function formatDate(iso: string): string {
+    return new Date(iso).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
 </script>
 
 <style>
@@ -112,8 +128,8 @@
   }
   .session-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 16px;
     background: #f9fafb;
     border-radius: 10px;
     box-shadow: 0 1px 4px #f3f4f6;
@@ -127,23 +143,45 @@
     transform: translateY(-3px) scale(1.01);
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
   }
+  .session-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px; height: 40px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+  .session-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
   .session-title {
     font-weight: 600;
     color: #374151;
   }
   .session-date {
     color: #374151;
-    font-size: 1rem;
+    font-size: 0.92rem;
     font-weight: 500;
+    white-space: nowrap;
   }
   .session-price {
     color: #065f46;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
+    white-space: nowrap;
   }
   .session-coach {
     color: #6b7280;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+  }
+  .next-session .stat-number {
+    color: #991b1b;
   }
   .spinner {
     display: inline-block;
@@ -174,8 +212,18 @@
   <div class="stats-bar" in:fly={{ y: 20, duration: 450, delay: 180 }}>
     <div class="stat">
       <div class="stat-number">{loading ? '…' : availableSessions.length}</div>
-      <div class="stat-label">Séances</div>
+      <div class="stat-label">Séances disponibles</div>
     </div>
+    <div class="stat">
+      <div class="stat-number">{loading ? '…' : coachCount}</div>
+      <div class="stat-label">Coachs</div>
+    </div>
+    {#if nextSession}
+      <div class="stat next-session">
+        <div class="stat-number" style="font-size:1.1rem">{formatDate(nextSession.starts_at)}</div>
+        <div class="stat-label">Prochaine séance</div>
+      </div>
+    {/if}
   </div>
 
   <div class="home-links" in:fly={{ y: 20, duration: 450, delay: 320 }}>
@@ -197,10 +245,13 @@
     <ul class="session-list">
       {#each availableSessions as s, i}
         <li class="session-item" in:fly={{ y: 20, duration: 280, delay: 480 + i * 70 }}>
-          <span class="session-title">{s.title}</span>
-          <span class="session-coach">{s.coach_name ?? ''}</span>
-          <span class="session-date">{new Date(s.starts_at).toLocaleString('fr-FR')}</span>
-          <span class="session-price">{s.price_cents != null ? (s.price_cents / 100).toFixed(2) + ' ' + (s.currency ?? 'EUR') : ''}</span>
+          <div class="session-icon-wrap"><SessionIcon title={s.title} size={22} /></div>
+          <div class="session-info">
+            <span class="session-title">{s.title}</span>
+            <span class="session-coach">{s.coach_name ?? ''}</span>
+          </div>
+          <span class="session-date">{formatDate(s.starts_at)}</span>
+          <span class="session-price">{s.price_cents != null ? formatPrice(s.price_cents, s.currency) : ''}</span>
         </li>
       {/each}
     </ul>

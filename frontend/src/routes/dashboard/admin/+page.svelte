@@ -33,10 +33,14 @@ let searchQuery = '';
 let expandedSession: string | null = null;
 let participantsCache: Record<string, {first_name: string; last_name: string}[]> = {};
 let loadingParticipants: string | null = null;
+let expandedAttendance: string | null = null;
+let attendanceCache: Record<string, {user_id: string; first_name: string; last_name: string; attended: boolean}[]> = {};
+let loadingAttendance: string | null = null;
 
 async function toggleParticipants(id: string) {
   if (expandedSession === id) { expandedSession = null; return; }
   expandedSession = id;
+  expandedAttendance = null;
   if (participantsCache[id]) return;
   loadingParticipants = id;
   try {
@@ -47,6 +51,23 @@ async function toggleParticipants(id: string) {
     participantsCache[id] = [];
   } finally {
     loadingParticipants = null;
+  }
+}
+
+async function toggleAttendance(id: string) {
+  if (expandedAttendance === id) { expandedAttendance = null; return; }
+  expandedAttendance = id;
+  expandedSession = null;
+  if (attendanceCache[id]) return;
+  loadingAttendance = id;
+  try {
+    const data = await apiFetch(`/admin/sessions/${id}/attendance`);
+    attendanceCache[id] = data;
+    attendanceCache = attendanceCache;
+  } catch {
+    attendanceCache[id] = [];
+  } finally {
+    loadingAttendance = null;
   }
 }
 
@@ -275,6 +296,27 @@ afterNavigate(() => {
 .p-loading { text-align: center; padding: 12px 0; color: #9ca3af; font-size: 0.82rem; }
 @keyframes slideOpen { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 300px; } }
 
+.attendance-dropdown {
+  background: #fafafa; border: none; border-top: 1px solid #f0f0f0;
+  border-radius: 0 0 14px 14px; padding: 14px 20px;
+  animation: slideOpen 0.2s ease-out;
+}
+.attendance-dropdown .p-title {
+  font-weight: 600; font-size: 0.8rem; color: #6b7280; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.attendance-dropdown ul { list-style: none; margin: 0; padding: 0; }
+.attendance-dropdown li {
+  padding: 8px 12px; font-size: 0.86rem; color: #374151;
+  border-bottom: 1px solid #f5f5f5; display: flex; align-items: center; gap: 10px;
+}
+.attendance-dropdown li:last-child { border-bottom: none; }
+.att-status {
+  font-size: 0.72rem; font-weight: 600; padding: 3px 9px;
+  border-radius: 12px; margin-left: auto; white-space: nowrap;
+}
+.att-present { background: #f0fdf4; color: #16a34a; }
+.att-absent { background: #fef2f2; color: #ef4444; }
+
 .card-icon {
   width: 42px; height: 42px; border-radius: 12px;
   background: #374151;
@@ -305,6 +347,8 @@ afterNavigate(() => {
 .btn-action:hover { background: #e5e7eb; color: #111827; }
 .btn-action.green { background: #f0fdf4; color: #16a34a; }
 .btn-action.green:hover { background: #dcfce7; color: #15803d; }
+.btn-action.purple { background: #faf5ff; color: #7c3aed; }
+.btn-action.purple:hover { background: #ede9fe; color: #6d28d9; }
 .btn-cancel {
   background: #fef2f2; color: #dc2626; border: none;
   padding: 7px 14px; border-radius: 8px; font-size: 0.78rem;
@@ -463,6 +507,7 @@ afterNavigate(() => {
                     <span class="card-badge badge-active">Active</span>
                     <div class="card-actions">
                       <button class="btn-action green" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                      <button class="btn-action purple" on:click={() => toggleAttendance(s.id)}>Présence</button>
                       <button class="btn-cancel" on:click={() => adminCancelSession(s.id)} disabled={cancellingId === s.id}>
                         {cancellingId === s.id ? '...' : 'Annuler'}
                       </button>
@@ -487,6 +532,28 @@ afterNavigate(() => {
                       {/if}
                     </div>
                   {/if}
+                  {#if expandedAttendance === s.id}
+                    <div class="attendance-dropdown" in:fade={{ duration: 150 }}>
+                      <div class="p-title">Liste de présence</div>
+                      {#if loadingAttendance === s.id}
+                        <div class="p-loading">Chargement...</div>
+                      {:else if !attendanceCache[s.id] || attendanceCache[s.id].length === 0}
+                        <div class="p-empty">Aucune donnée de présence.</div>
+                      {:else}
+                        <ul>
+                          {#each attendanceCache[s.id] as a}
+                            <li>
+                              <span class="p-avatar">{(a.first_name?.[0] ?? '')}{(a.last_name?.[0] ?? '')}</span>
+                              {a.first_name} {a.last_name}
+                              <span class="att-status" class:att-present={a.attended} class:att-absent={!a.attended}>
+                                {a.attended ? 'Présent' : 'Absent'}
+                              </span>
+                            </li>
+                          {/each}
+                        </ul>
+                      {/if}
+                    </div>
+                  {/if}
                 </div>
               {/each}
             {/if}
@@ -505,6 +572,7 @@ afterNavigate(() => {
                     <span class="card-badge badge-passed">Terminée</span>
                     <div class="card-actions">
                       <button class="btn-action green" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                      <button class="btn-action purple" on:click={() => toggleAttendance(s.id)}>Présence</button>
                     </div>
                   </div>
                   {#if expandedSession === s.id}
@@ -520,6 +588,28 @@ afterNavigate(() => {
                             <li>
                               <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
                               {p.first_name} {p.last_name}
+                            </li>
+                          {/each}
+                        </ul>
+                      {/if}
+                    </div>
+                  {/if}
+                  {#if expandedAttendance === s.id}
+                    <div class="attendance-dropdown" in:fade={{ duration: 150 }}>
+                      <div class="p-title">Liste de présence</div>
+                      {#if loadingAttendance === s.id}
+                        <div class="p-loading">Chargement...</div>
+                      {:else if !attendanceCache[s.id] || attendanceCache[s.id].length === 0}
+                        <div class="p-empty">Aucune donnée de présence.</div>
+                      {:else}
+                        <ul>
+                          {#each attendanceCache[s.id] as a}
+                            <li>
+                              <span class="p-avatar">{(a.first_name?.[0] ?? '')}{(a.last_name?.[0] ?? '')}</span>
+                              {a.first_name} {a.last_name}
+                              <span class="att-status" class:att-present={a.attended} class:att-absent={!a.attended}>
+                                {a.attended ? 'Présent' : 'Absent'}
+                              </span>
                             </li>
                           {/each}
                         </ul>
@@ -544,6 +634,7 @@ afterNavigate(() => {
                     <span class="card-badge badge-cancelled">Annulée</span>
                     <div class="card-actions">
                       <button class="btn-action green" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                      <button class="btn-action purple" on:click={() => toggleAttendance(s.id)}>Présence</button>
                     </div>
                   </div>
                   {#if expandedSession === s.id}
@@ -559,6 +650,28 @@ afterNavigate(() => {
                             <li>
                               <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
                               {p.first_name} {p.last_name}
+                            </li>
+                          {/each}
+                        </ul>
+                      {/if}
+                    </div>
+                  {/if}
+                  {#if expandedAttendance === s.id}
+                    <div class="attendance-dropdown" in:fade={{ duration: 150 }}>
+                      <div class="p-title">Liste de présence</div>
+                      {#if loadingAttendance === s.id}
+                        <div class="p-loading">Chargement...</div>
+                      {:else if !attendanceCache[s.id] || attendanceCache[s.id].length === 0}
+                        <div class="p-empty">Aucune donnée de présence.</div>
+                      {:else}
+                        <ul>
+                          {#each attendanceCache[s.id] as a}
+                            <li>
+                              <span class="p-avatar">{(a.first_name?.[0] ?? '')}{(a.last_name?.[0] ?? '')}</span>
+                              {a.first_name} {a.last_name}
+                              <span class="att-status" class:att-present={a.attended} class:att-absent={!a.attended}>
+                                {a.attended ? 'Présent' : 'Absent'}
+                              </span>
                             </li>
                           {/each}
                         </ul>
