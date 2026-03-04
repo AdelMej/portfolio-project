@@ -67,11 +67,14 @@ $: filteredSessions = searchQuery
   : sessions;
 
 $: now = new Date();
-$: activeFiltered = filteredSessions.filter(s => s.status !== 'cancelled' && new Date(s.ends_at) >= now)
+$: activeFiltered = filteredSessions
+  .filter(s => s.status !== 'cancelled' && new Date(s.ends_at) >= now)
   .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
-$: finishedFiltered = filteredSessions.filter(s => s.status !== 'cancelled' && new Date(s.ends_at) < now)
+$: finishedFiltered = filteredSessions
+  .filter(s => s.status !== 'cancelled' && new Date(s.ends_at) < now)
   .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime());
-$: cancelledFiltered = filteredSessions.filter(s => s.status === 'cancelled')
+$: cancelledFiltered = filteredSessions
+  .filter(s => s.status === 'cancelled')
   .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime());
 
 async function adminCancelSession(sessionId: string) {
@@ -96,10 +99,10 @@ async function loadDashboardData() {
     const items = adminSessionsRes?.items ?? [];
     sessions = items.map((s: any) => ({
       ...s,
+      coach_id: s.coach?.id ?? s.coach_id ?? '',
       coach_name: s.coach
         ? `${s.coach.first_name} ${s.coach.last_name}`
         : (s.coach_name ?? 'Non défini'),
-      coach_id: s.coach?.id ?? s.coach_id ?? '',
     }));
   } catch (e) {
     error = "Erreur lors du chargement des données.";
@@ -311,6 +314,15 @@ afterNavigate(() => {
 
 .empty-state { text-align: center; padding: 40px 16px; color: #9ca3af; font-style: italic; }
 
+.group-header {
+  font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 14px 0 8px; margin-top: 8px; border-bottom: 2px solid #f0f0f0;
+}
+.group-header:first-child { margin-top: 0; }
+.active-header { color: #16a34a; border-bottom-color: #bbf7d0; }
+.finished-header { color: #6b7280; border-bottom-color: #e5e7eb; }
+.cancelled-header { color: #dc2626; border-bottom-color: #fecaca; }
+
 .error-message {
   color: #991b1b; background: #fef2f2;
   padding: 12px 16px; border-radius: 12px; text-align: center; font-size: 0.88rem;
@@ -437,7 +449,6 @@ afterNavigate(() => {
           {#if filteredSessions.length === 0}
             <div class="empty-state">Aucune séance trouvée.</div>
           {:else}
-            <!-- ACTIVE SESSIONS -->
             {#if activeFiltered.length > 0}
               <div class="group-header active-header">Actives ({activeFiltered.length})</div>
               {#each activeFiltered as s, i}
@@ -446,7 +457,7 @@ afterNavigate(() => {
                     <div class="card-icon"><SessionIcon title={s.title} size={20} /></div>
                     <div class="card-info">
                       <div class="card-title">{s.title}</div>
-                      <div class="card-sub">Coach : {s.coach_name ?? 'Non défini'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                      <div class="card-sub">Coach : {s.coach_name ?? '-'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
                     </div>
                     <div class="card-price">{formatPrice(s.price_cents, s.currency)}</div>
                     <span class="card-badge badge-active">Active</span>
@@ -480,7 +491,6 @@ afterNavigate(() => {
               {/each}
             {/if}
 
-            <!-- FINISHED SESSIONS -->
             {#if finishedFiltered.length > 0}
               <div class="group-header finished-header">Terminées ({finishedFiltered.length})</div>
               {#each finishedFiltered as s, i}
@@ -489,7 +499,7 @@ afterNavigate(() => {
                     <div class="card-icon"><SessionIcon title={s.title} size={20} /></div>
                     <div class="card-info">
                       <div class="card-title">{s.title}</div>
-                      <div class="card-sub">Coach : {s.coach_name ?? 'Non défini'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                      <div class="card-sub">Coach : {s.coach_name ?? '-'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
                     </div>
                     <div class="card-price">{formatPrice(s.price_cents, s.currency)}</div>
                     <span class="card-badge badge-passed">Terminée</span>
@@ -520,7 +530,6 @@ afterNavigate(() => {
               {/each}
             {/if}
 
-            <!-- CANCELLED SESSIONS -->
             {#if cancelledFiltered.length > 0}
               <div class="group-header cancelled-header">Annulées ({cancelledFiltered.length})</div>
               {#each cancelledFiltered as s, i}
@@ -529,7 +538,7 @@ afterNavigate(() => {
                     <div class="card-icon"><SessionIcon title={s.title} size={20} /></div>
                     <div class="card-info">
                       <div class="card-title">{s.title}</div>
-                      <div class="card-sub">Coach : {s.coach_name ?? 'Non défini'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                      <div class="card-sub">Coach : {s.coach_name ?? '-'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
                     </div>
                     <div class="card-price">{formatPrice(s.price_cents, s.currency)}</div>
                     <span class="card-badge badge-cancelled">Annulée</span>
