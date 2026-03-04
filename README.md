@@ -1,5 +1,5 @@
 ```
-		   _____ _______ _    _         _         _______     ____  __ 
+     _____ _______ _    _         _         _______     ____  __ 
      /\   / ____|__   __| |  | |  /\   | |       / ____\ \   / /  \/  |
     /  \ | |       | |  | |  | | /  \  | |      | |  __ \ \_/ /| \  / |
    / /\ \| |       | |  | |  | |/ /\ \ | |      | | |_| \   / | |\/| |
@@ -1651,12 +1651,16 @@ Work in progress
 ## 🔧 What's next?
 
 - Working on missing features:
- 	- displaying of payment and credit info for the user
- 	- displaying of payment and credit info for the admin
- 	- displaying of payment info for the coach
- 	- adding proper invite links
+  - displaying of payment and credit info for the user
+  - displaying of payment and credit info for the admin
+  - displaying of payment info for the coach
+  - adding proper invite links
 
 ## 👷 Authors
 
-- Adel, Mejrissi [![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/adel-mejrissi-709374172/), [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AdelMej)
-- Daniel Ramirez [![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](), [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)]()
+- Adel Mejrissi
+  - [![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/adel-mejrissi-709374172/)
+  - [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AdelMej)
+- Daniel Ramirez
+  - [![LinkedIn](https://img.shields.io/badge/linkedin-%230077B5.svg?style=for-the-badge&logo=linkedin&logoColor=white)]()
+  - [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)]()
