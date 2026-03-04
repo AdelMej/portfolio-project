@@ -34,7 +34,7 @@ let success = '';
 let attendanceClosed = false;
 let alreadySubmitted = false;
 
-$: sessionId = $page.params.id;
+$: sessionId = $page.params.id ?? '';
 
 async function loadData() {
   loading = true;

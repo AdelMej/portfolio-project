@@ -1,55 +1,38 @@
 <script lang="ts">
 import { auth } from '$lib/stores/auth.store';
+import { goto } from '$app/navigation';
+import { onMount } from 'svelte';
 import { get } from 'svelte/store';
 
-const roles = get(auth).roles || [];
+onMount(() => {
+  const roles = get(auth).roles || [];
+  if (roles.includes('admin')) goto('/dashboard/admin', { replaceState: true });
+  else if (roles.includes('coach')) goto('/dashboard/coach', { replaceState: true });
+  else goto('/dashboard/user', { replaceState: true });
+});
 </script>
 
 <style>
-.dashboard-landing-container {
-  max-width: 700px;
-  margin: 60px auto;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 24px #e5e7eb;
-  padding: 48px 40px 40px 40px;
+.redirect-container {
+  max-width: 400px;
+  margin: 120px auto;
   text-align: center;
+  color: #9ca3af;
+  font-size: 0.95rem;
 }
-h1 {
-  font-size: 2.2rem;
-  color: #1f2937;
-  margin-bottom: 18px;
-  letter-spacing: 1px;
-}
-a, .dashboard-btn {
+.spinner {
   display: inline-block;
-  background: #991b1b;
-  color: white;
-  border: none;
-  padding: 12px 28px;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 1.1rem;
-  cursor: pointer;
-  margin: 18px 10px 0 10px;
-  text-decoration: none;
-  transition: background 0.2s;
+  width: 28px; height: 28px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #374151;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-bottom: 16px;
 }
-a:hover, .dashboard-btn:hover {
-  background: #7f1d1d;
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
-<div class="dashboard-landing-container">
-  <h1>Tableau de bord</h1>
-  {#if roles.includes('admin')}
-    <a href="/dashboard/admin" class="dashboard-btn">Espace Administrateur</a>
-    <!-- Add more admin-only buttons here -->
-  {:else if roles.includes('coach')}
-    <a href="/dashboard/coach" class="dashboard-btn">Espace Coach</a>
-    <!-- Add more coach-only buttons here -->
-  {:else}
-    <a href="/dashboard/user" class="dashboard-btn">Espace Utilisateur</a>
-    <!-- Add more user-only buttons here -->
-  {/if}
+<div class="redirect-container">
+  <div class="spinner"></div>
+  <p>Redirection…</p>
 </div>

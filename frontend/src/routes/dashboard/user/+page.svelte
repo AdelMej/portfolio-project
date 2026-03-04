@@ -34,12 +34,10 @@ let searchQuery = '';
 // Participants state
 let expandedSession: string | null = null;
 let participantsCache: Record<string, {first_name: string; last_name: string}[]> = {};
-let loadingParticipants: string | null = null;
 
-async function toggleParticipants(id: string) {
+function toggleParticipants(id: string) {
   if (expandedSession === id) { expandedSession = null; return; }
   expandedSession = id;
-  // Participants are already cached from the sessions fetch — no extra call needed
 }
 
 // Calendar state
@@ -551,7 +549,6 @@ async function loadDashboard() {
   justify-content: center; font-weight: 700; flex-shrink: 0; text-transform: uppercase;
 }
 .p-empty { color: #9ca3af; font-style: italic; font-size: 0.82rem; padding: 8px 0; }
-.p-loading { text-align: center; padding: 12px 0; color: #9ca3af; font-size: 0.82rem; }
 @keyframes slideOpen { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 300px; } }
 .btn-join {
   background: #991b1b;
@@ -739,9 +736,7 @@ async function loadDashboard() {
               {#if expandedSession === s.id}
                 <div class="participants-dropdown" in:fade={{ duration: 150 }}>
                   <div class="p-title">Participants inscrits</div>
-                  {#if loadingParticipants === s.id}
-                    <div class="p-loading">Chargement...</div>
-                  {:else if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                  {#if !participantsCache[s.id] || participantsCache[s.id].length === 0}
                     <div class="p-empty">Aucun participant inscrit.</div>
                   {:else}
                     <ul>
@@ -801,9 +796,7 @@ async function loadDashboard() {
               {#if expandedSession === s.id}
                 <div class="participants-dropdown" in:fade={{ duration: 150 }}>
                   <div class="p-title">Participants inscrits</div>
-                  {#if loadingParticipants === s.id}
-                    <div class="p-loading">Chargement...</div>
-                  {:else if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                  {#if !participantsCache[s.id] || participantsCache[s.id].length === 0}
                     <div class="p-empty">Aucun participant inscrit.</div>
                   {:else}
                     <ul>

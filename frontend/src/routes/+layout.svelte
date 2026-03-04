@@ -2,14 +2,9 @@
 	import { auth } from '$lib/stores/auth.store';
 	import { goto } from '$app/navigation';
 
-	let accessToken: string | null;
-	let firstName: string | undefined;
-	let lastName: string | undefined;
-	auth.subscribe((value) => {
-		accessToken = value.accessToken;
-		firstName = value.firstName;
-		lastName = value.lastName;
-	});
+	$: accessToken = $auth.accessToken;
+	$: firstName = $auth.firstName;
+	$: lastName = $auth.lastName;
 
   let menuOpen = false;
 
