@@ -30,7 +30,7 @@ By digitizing these processes, the system simplifies daily management tasks, imp
 - 🔨 [Tech stack](#-tech-stack)
 - 🎬 [Demo](#-demo)
 - 🌐 [Api](#-api)
-- 🏗️ [Structure](#%EF%B8%8Fstructure)
+- 🏗️ [Structure](#%EF%B8%8F-structure)
 - 🔧 [What's next?](#-whats-next)
 - 👷 [Authors](#-authors)
 
