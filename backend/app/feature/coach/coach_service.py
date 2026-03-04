@@ -70,7 +70,7 @@ class CoachService():
                 "account": stripe_acount_id,
                 "type": "account_onboarding",
                 "refresh_url": f"{front_end_url}/dashboard/coach",
-                "return_url": f"{front_end_url}/dashboard/coach",
+                "return_url": f"{front_end_url}/stripe/return",
             }
         )
 
