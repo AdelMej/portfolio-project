@@ -29,6 +29,27 @@ let ready = false;
 let joiningId = '';
 let searchQuery = '';
 
+// Participants state
+let expandedSession: string | null = null;
+let participantsCache: Record<string, {first_name: string; last_name: string}[]> = {};
+let loadingParticipants: string | null = null;
+
+async function toggleParticipants(id: string) {
+  if (expandedSession === id) { expandedSession = null; return; }
+  expandedSession = id;
+  if (participantsCache[id]) return;
+  loadingParticipants = id;
+  try {
+    const data = await apiFetch(`/me/sessions/${id}/`);
+    participantsCache[id] = data.participants || [];
+    participantsCache = participantsCache;
+  } catch {
+    participantsCache[id] = [];
+  } finally {
+    loadingParticipants = null;
+  }
+}
+
 // Calendar state
 let calendarDate = new Date();
 $: calendarYear = calendarDate.getFullYear();
@@ -62,7 +83,6 @@ function hasSession(day: number | null) {
 }
 
 // Stats
-$: totalSpent = mySessions.reduce((sum, s) => sum + (s.price_cents ?? 0), 0);
 $: nextSession = mySessions
   .map(s => new Date(s.starts_at))
   .filter(d => d > new Date())
@@ -90,7 +110,14 @@ async function loadMyRegistrations(): Promise<string[]> {
     try {
       const res = await apiFetch('/me/sessions/');
       const items = Array.isArray(res.items) ? res.items : Array.isArray(res) ? res : [];
-      return items.map((s: Session) => s.id);
+      // Pre-populate participantsCache from /me/sessions/ data
+      for (const s of items) {
+        if (s.participants) {
+          participantsCache[s.id] = s.participants;
+        }
+      }
+      participantsCache = participantsCache;
+      return items.map((s: any) => s.id);
     } catch {
       return [];
     }
@@ -150,10 +177,10 @@ async function loadDashboard() {
 .dashboard-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
-  gap: 24px;
+  gap: 32px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 32px 16px;
   min-height: calc(100vh - 140px);
 }
 
@@ -161,140 +188,150 @@ async function loadDashboard() {
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 .profile-card {
-  background: rgba(255,255,255,0.95);
-  border-radius: 16px;
-  padding: 28px 20px 20px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px 20px 24px;
   text-align: center;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  border: none;
 }
 .avatar {
-  width: 80px;
-  height: 80px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: linear-gradient(135deg, #991b1b, #dc2626);
   color: white;
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 12px;
-  box-shadow: 0 4px 12px rgba(153, 27, 27, 0.3);
+  margin: 0 auto 14px;
+  box-shadow: 0 4px 16px rgba(153, 27, 27, 0.18);
   text-transform: uppercase;
 }
 .profile-name {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #111827;
   margin-bottom: 2px;
+  letter-spacing: -0.01em;
 }
 .profile-role {
-  color: #991b1b;
-  font-size: 0.85rem;
+  color: #9ca3af;
+  font-size: 0.8rem;
   font-style: italic;
+  font-weight: 400;
 }
 
 .stats-card {
-  background: rgba(255,255,255,0.95);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  border: none;
 }
 .stat-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f3f4f6;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f5f5f5;
 }
 .stat-row:last-child { border-bottom: none; }
 .stat-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
   flex-shrink: 0;
 }
-.stat-icon.blue { background: #dbeafe; color: #2563eb; }
-.stat-icon.green { background: #d1fae5; color: #059669; }
-.stat-icon.orange { background: #ffedd5; color: #ea580c; }
+.stat-icon.blue { background: #eff6ff; color: #3b82f6; }
+.stat-icon.orange { background: #fff7ed; color: #f97316; }
 .stat-num {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: #1f2937;
+  color: #111827;
   line-height: 1;
+  letter-spacing: -0.02em;
 }
 .stat-label {
-  font-size: 0.78rem;
-  color: #6b7280;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
 }
 
 /* Calendar */
 .calendar-card {
-  background: rgba(255,255,255,0.95);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  border: none;
 }
 .cal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .cal-header span {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #111827;
   text-transform: capitalize;
 }
 .cal-btn {
   background: none;
   border: none;
-  font-size: 1.1rem;
+  font-size: 1rem;
   cursor: pointer;
-  color: #991b1b;
+  color: #9ca3af;
   padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.15s;
+  border-radius: 8px;
+  transition: all 0.15s;
   box-shadow: none;
 }
-.cal-btn:hover { background: #fef2f2; }
+.cal-btn:hover { background: #f5f5f5; color: #374151; }
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 .cal-day-label {
-  font-weight: 700;
-  color: #6b7280;
+  font-weight: 600;
+  color: #9ca3af;
   padding: 4px 0;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .cal-day {
   padding: 5px 0;
   border-radius: 8px;
-  color: #374151;
-  font-size: 0.82rem;
+  color: #6b7280;
+  font-size: 0.8rem;
   position: relative;
 }
 .cal-day.today {
-  background: #991b1b;
+  background: #111827;
   color: white;
-  font-weight: 700;
+  font-weight: 600;
 }
 .cal-day.has-session {
-  background: #fef2f2;
-  color: #991b1b;
-  font-weight: 700;
+  background: #eff6ff;
+  color: #3b82f6;
+  font-weight: 600;
 }
 .cal-day.has-session::after {
   content: '';
@@ -302,34 +339,35 @@ async function loadDashboard() {
   bottom: 2px;
   left: 50%;
   transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  background: #dc2626;
+  width: 4px;
+  height: 4px;
+  background: #3b82f6;
   border-radius: 50%;
 }
 
 /* Sidebar nav */
 .sidebar-nav {
-  background: rgba(255,255,255,0.95);
-  border-radius: 16px;
+  background: #fff;
+  border-radius: 18px;
   padding: 8px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  border: none;
 }
 .sidebar-nav a {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
-  color: #374151;
+  padding: 11px 14px;
+  color: #6b7280;
   text-decoration: none;
-  border-radius: 10px;
-  font-size: 0.9rem;
+  border-radius: 12px;
+  font-size: 0.88rem;
   font-weight: 500;
   transition: background 0.15s, color 0.15s;
 }
-.sidebar-nav a:hover { background: #fef2f2; color: #991b1b; }
+.sidebar-nav a:hover { background: #f9fafb; color: #111827; }
 .sidebar-nav a.active {
-  background: linear-gradient(135deg, #991b1b, #dc2626);
+  background: #111827;
   color: white;
 }
 
@@ -337,148 +375,196 @@ async function loadDashboard() {
 .main-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 .welcome-title {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 800;
-  color: #1f2937;
+  color: #111827;
+  letter-spacing: -0.02em;
 }
-.welcome-title span { color: #fff; background: #991b1b; padding: 2px 14px; border-radius: 20px; }
+.welcome-title span { color: #991b1b; font-weight: 800; }
 
 .search-bar {
   display: flex;
-  background: rgba(255,255,255,0.95);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  border: none;
   overflow: hidden;
 }
 .search-bar input {
   flex: 1;
   border: none;
-  padding: 14px 18px;
-  font-size: 0.95rem;
+  padding: 15px 20px;
+  font-size: 0.92rem;
   outline: none;
   background: transparent;
   color: #374151;
 }
 .search-bar button {
-  background: #991b1b;
+  background: #1f2937;
   color: white;
   border: none;
-  padding: 0 18px;
+  padding: 0 20px;
   cursor: pointer;
-  font-size: 1.1rem;
+  font-size: 1rem;
   border-radius: 0;
   box-shadow: none;
+  transition: background 0.15s;
 }
+.search-bar button:hover { background: #374151; }
 
 /* Session cards */
 .section-title {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #111827;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 .sessions-panel {
-  background: rgba(255,255,255,0.95);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  background: #fff;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05);
+  border: none;
 }
 .session-card {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px;
-  border-radius: 12px;
-  background: #fef7f7;
-  border: 1px solid #fecaca;
-  margin-bottom: 12px;
+  padding: 18px 20px;
+  border-radius: 14px;
+  background: #fafafa;
+  border: none;
   transition: transform 0.15s, box-shadow 0.15s;
 }
-.session-card:last-child { margin-bottom: 0; }
+.session-card-wrapper { margin-bottom: 10px; }
+.session-card-wrapper:last-child { margin-bottom: 0; }
 .session-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(153, 27, 27, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  background: #f5f5f5;
 }
 .session-icon {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #991b1b, #dc2626);
+  background: #374151;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   flex-shrink: 0;
 }
 .session-info { flex: 1; min-width: 0; }
 .session-title-text {
-  font-weight: 700;
-  font-size: 1rem;
-  color: #1f2937;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #111827;
   text-transform: capitalize;
 }
 .session-date-text {
-  font-size: 0.82rem;
-  color: #6b7280;
-  margin-top: 2px;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 3px;
 }
 .session-coach-text {
-  font-size: 0.85rem;
-  color: #374151;
+  font-size: 0.82rem;
+  color: #6b7280;
   white-space: nowrap;
 }
 .session-price-text {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #111827;
   white-space: nowrap;
 }
 .session-status {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 20px;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
-.status-confirmed { background: #d1fae5; color: #065f46; }
-.status-cancelled { background: #fee2e2; color: #991b1b; }
+.status-confirmed { background: #f0fdf4; color: #16a34a; }
+.status-cancelled { background: #fef2f2; color: #ef4444; }
 .session-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 .btn-cancel {
-  background: #dc2626;
-  color: white;
+  background: #fef2f2;
+  color: #dc2626;
   border: none;
   padding: 7px 14px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.15s;
   box-shadow: none;
 }
-.btn-cancel:hover { background: #b91c1c; }
+.btn-cancel:hover { background: #fee2e2; color: #b91c1c; }
+.btn-participants {
+  background: #f3f4f6;
+  color: #374151;
+  border: none;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: none;
+}
+.btn-participants:hover { background: #e5e7eb; color: #111827; }
+
+/* Participants dropdown */
+.participants-dropdown {
+  background: #fafafa; border: none; border-top: 1px solid #f0f0f0;
+  border-radius: 0 0 14px 14px; padding: 14px 20px;
+  animation: slideOpen 0.2s ease-out;
+}
+.participants-dropdown .p-title {
+  font-weight: 600; font-size: 0.8rem; color: #6b7280; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.participants-dropdown ul {
+  list-style: none; margin: 0; padding: 0;
+}
+.participants-dropdown li {
+  padding: 8px 12px; font-size: 0.86rem; color: #374151;
+  border-bottom: 1px solid #f5f5f5; display: flex; align-items: center; gap: 10px;
+}
+.participants-dropdown li:last-child { border-bottom: none; }
+.p-avatar {
+  width: 30px; height: 30px; border-radius: 50%; font-size: 0.62rem;
+  background: #374151; color: white; display: flex; align-items: center;
+  justify-content: center; font-weight: 700; flex-shrink: 0; text-transform: uppercase;
+}
+.p-empty { color: #9ca3af; font-style: italic; font-size: 0.82rem; padding: 8px 0; }
+.p-loading { text-align: center; padding: 12px 0; color: #9ca3af; font-size: 0.82rem; }
+@keyframes slideOpen { from { opacity: 0; max-height: 0; } to { opacity: 1; max-height: 300px; } }
 .btn-join {
   background: #991b1b;
   color: white;
   border: none;
   padding: 7px 16px;
-  border-radius: 20px;
-  font-size: 0.8rem;
+  border-radius: 8px;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
+  transition: all 0.15s;
   box-shadow: none;
 }
-.btn-join:hover { background: #7f1d1d; transform: translateY(-1px); }
+.btn-join:hover { background: #7f1d1d; }
 .btn-join:disabled {
-  background: #fca5a5;
+  background: #e5e7eb;
+  color: #9ca3af;
   cursor: not-allowed;
   transform: none;
 }
@@ -486,46 +572,45 @@ async function loadDashboard() {
 /* Empty state */
 .empty-state {
   text-align: center;
-  padding: 32px 16px;
+  padding: 40px 16px;
   color: #9ca3af;
 }
 .empty-state p {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-style: italic;
   margin-bottom: 16px;
-  color: #6b7280;
+  color: #9ca3af;
 }
 .btn-discover {
-  background: linear-gradient(135deg, #991b1b, #dc2626);
+  background: #1f2937;
   color: white;
   border: none;
   padding: 10px 24px;
-  border-radius: 24px;
-  font-size: 0.9rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(153, 27, 27, 0.2);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: all 0.15s;
 }
 .btn-discover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(153, 27, 27, 0.3);
+  background: #374151;
 }
 
 .error-message {
   color: #991b1b;
-  background: #fee2e2;
-  padding: 10px 16px;
-  border-radius: 10px;
+  background: #fef2f2;
+  padding: 12px 16px;
+  border-radius: 12px;
   text-align: center;
+  font-size: 0.88rem;
 }
 
 .spinner {
   display: inline-block;
-  width: 36px;
-  height: 36px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #991b1b;
+  width: 32px;
+  height: 32px;
+  border: 2.5px solid #f0f0f0;
+  border-top-color: #6b7280;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   margin: 28px auto;
@@ -565,13 +650,6 @@ async function loadDashboard() {
         <div>
           <div class="stat-num">{mySessions.length}</div>
           <div class="stat-label">séances inscrites</div>
-        </div>
-      </div>
-      <div class="stat-row">
-        <div class="stat-icon green">€</div>
-        <div>
-          <div class="stat-num">{(totalSpent / 100).toFixed(0)} €</div>
-          <div class="stat-label">dépensées</div>
         </div>
       </div>
       <div class="stat-row">
@@ -635,20 +713,44 @@ async function loadDashboard() {
           </div>
         {:else}
           {#each filteredMySessions as s, i}
-            <div class="session-card" in:fly={{ x: -20, duration: 250, delay: 200 + i * 60 }}>
-              <div class="session-icon">S</div>
-              <div class="session-info">
-                <div class="session-title-text">{s.title}</div>
-                <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
-              </div>
-              <div class="session-coach-text">{s.coach_name}</div>
-              <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
-              {#if s.status === 'cancelled'}
-                <span class="session-status status-cancelled">Annulée</span>
-              {:else}
-                <span class="session-status status-confirmed">Confirmé</span>
+            <div class="session-card-wrapper" in:fly={{ x: -20, duration: 250, delay: 200 + i * 60 }}>
+              <div class="session-card">
+                <div class="session-icon">S</div>
+                <div class="session-info">
+                  <div class="session-title-text">{s.title}</div>
+                  <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                </div>
+                <div class="session-coach-text">{s.coach_name}</div>
+                <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
+                {#if s.status === 'cancelled'}
+                  <span class="session-status status-cancelled">Annulée</span>
+                {:else}
+                  <span class="session-status status-confirmed">Confirmé</span>
+                {/if}
                 <div class="session-actions">
-                  <button class="btn-cancel">Annuler</button>
+                  <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                  {#if s.status !== 'cancelled'}
+                    <button class="btn-cancel">Annuler</button>
+                  {/if}
+                </div>
+              </div>
+              {#if expandedSession === s.id}
+                <div class="participants-dropdown" in:fade={{ duration: 150 }}>
+                  <div class="p-title">Participants inscrits</div>
+                  {#if loadingParticipants === s.id}
+                    <div class="p-loading">Chargement...</div>
+                  {:else if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                    <div class="p-empty">Aucun participant inscrit.</div>
+                  {:else}
+                    <ul>
+                      {#each participantsCache[s.id] as p}
+                        <li>
+                          <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
+                          {p.first_name} {p.last_name}
+                        </li>
+                      {/each}
+                    </ul>
+                  {/if}
                 </div>
               {/if}
             </div>
@@ -667,21 +769,45 @@ async function loadDashboard() {
       {:else}
         <div class="sessions-panel" in:fly={{ y: 15, duration: 350, delay: 300 }}>
           {#each filteredAvailable as s, i}
-            <div class="session-card" in:fly={{ x: -20, duration: 250, delay: 350 + i * 60 }}>
-              <div class="session-icon">S</div>
-              <div class="session-info">
-                <div class="session-title-text">{s.title}</div>
-                <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+            <div class="session-card-wrapper" in:fly={{ x: -20, duration: 250, delay: 350 + i * 60 }}>
+              <div class="session-card">
+                <div class="session-icon">S</div>
+                <div class="session-info">
+                  <div class="session-title-text">{s.title}</div>
+                  <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                </div>
+                <div class="session-coach-text">{s.coach_name}</div>
+                <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
+
+
+                {#if s.status === 'cancelled'}
+                  <span class="session-status status-cancelled">Annulée</span>
+                {:else}
+                  <div class="session-actions">
+                    <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                    <button class="btn-join" on:click={() => joinSession(s.id)} disabled={joiningId === s.id}>
+                      {joiningId === s.id ? '...' : "S'inscrire"}
+                    </button>
+                  </div>
+                {/if}
               </div>
-              <div class="session-coach-text">{s.coach_name}</div>
-              <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
-              {#if s.status === 'cancelled'}
-                <span class="session-status status-cancelled">Annulée</span>
-              {:else}
-                <div class="session-actions">
-                  <button class="btn-join" on:click={() => joinSession(s.id)} disabled={joiningId === s.id}>
-                    {joiningId === s.id ? '...' : "S'inscrire"}
-                  </button>
+              {#if expandedSession === s.id}
+                <div class="participants-dropdown" in:fade={{ duration: 150 }}>
+                  <div class="p-title">Participants inscrits</div>
+                  {#if loadingParticipants === s.id}
+                    <div class="p-loading">Chargement...</div>
+                  {:else if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                    <div class="p-empty">Aucun participant inscrit.</div>
+                  {:else}
+                    <ul>
+                      {#each participantsCache[s.id] as p}
+                        <li>
+                          <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
+                          {p.first_name} {p.last_name}
+                        </li>
+                      {/each}
+                    </ul>
+                  {/if}
                 </div>
               {/if}
             </div>

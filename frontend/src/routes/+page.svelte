@@ -38,7 +38,7 @@
   }
   h1 {
     font-size: 2.8rem;
-    color: #991b1b;
+    color: #1f2937;
     margin-bottom: 12px;
     letter-spacing: 1px;
     display: flex;
@@ -63,7 +63,7 @@
   .stat-number {
     font-size: 2rem;
     font-weight: 800;
-    color: #991b1b;
+    color: #1f2937;
   }
   .stat-label {
     font-size: 0.82rem;
@@ -129,7 +129,7 @@
     color: #374151;
   }
   .session-date {
-    color: #991b1b;
+    color: #374151;
     font-size: 1rem;
     font-weight: 500;
   }
@@ -147,7 +147,7 @@
     width: 36px;
     height: 36px;
     border: 3px solid #e5e7eb;
-    border-top-color: #991b1b;
+    border-top-color: #374151;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
     margin: 28px auto;

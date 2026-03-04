@@ -127,7 +127,7 @@
 }
 h1 {
   font-size: 2rem;
-  color: #991b1b;
+  color: #1f2937;
   margin-bottom: 24px;
   text-align: center;
 }
@@ -137,7 +137,7 @@ h1 {
 .form-group label {
   display: block;
   font-weight: 700;
-  color: #991b1b;
+  color: #374151;
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -193,16 +193,16 @@ h1 {
 .btn-secondary {
   padding: 12px 22px;
   border-radius: 8px;
-  border: 1.5px solid #991b1b;
+  border: 1.5px solid #e5e7eb;
   cursor: pointer;
   background: white;
-  color: #991b1b;
+  color: #374151;
   font-weight: 700;
   font-size: 1rem;
   transition: background 0.2s;
 }
 .btn-secondary:hover {
-  background: #fef2f2;
+  background: #f3f4f6;
 }
 .badge {
   display: inline-block;
@@ -244,7 +244,7 @@ h1 {
   width: 32px;
   height: 32px;
   border: 3px solid #e5e7eb;
-  border-top-color: #991b1b;
+  border-top-color: #374151;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }

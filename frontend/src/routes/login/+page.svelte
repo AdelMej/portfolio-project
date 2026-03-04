@@ -61,7 +61,7 @@ async function handleLogin() {
 h1 {
   font-size: 2rem;
   margin-bottom: 8px;
-  color: #991b1b;
+  color: #1f2937;
   text-align: center;
   letter-spacing: 1px;
 }
@@ -105,7 +105,7 @@ button:hover:not(:disabled) {
   box-shadow: 0 4px 12px rgba(153,27,27,0.2);
 }
 button:disabled {
-  background: #fca5a5;
+  background: #d1d5db;
   cursor: not-allowed;
 }
 .error-message {

@@ -70,7 +70,7 @@ onMount(loadUsers);
 }
 h1 {
   font-size: 2rem;
-  color: #991b1b;
+  color: #1f2937;
   text-align: center;
   margin-bottom: 24px;
 }
@@ -89,14 +89,14 @@ th, td {
 }
 th {
   background: #f3f4f6;
-  color: #991b1b;
+  color: #374151;
   font-weight: 700;
 }
 tr:last-child td {
   border-bottom: none;
 }
 tr:hover td {
-  background: #fef2f2;
+  background: #f3f4f6;
 }
 .error-msg {
   color: #991b1b;
@@ -114,7 +114,7 @@ tr:hover td {
   width: 32px;
   height: 32px;
   border: 3px solid #e5e7eb;
-  border-top-color: #991b1b;
+  border-top-color: #374151;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }

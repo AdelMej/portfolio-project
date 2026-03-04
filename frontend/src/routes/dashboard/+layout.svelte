@@ -75,11 +75,12 @@ $: if (browser && !$auth.accessToken && authenticated) {
   margin: 0 auto;
 }
 .dash-nav {
-  background: #f9fafb;
+  background: #fff;
   border-radius: 10px;
   margin-bottom: 24px;
   padding: 0 8px;
-  box-shadow: 0 1px 4px #e5e7eb;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  border: 1px solid #e5e7eb;
 }
 .dash-nav ul {
   display: flex;
@@ -104,8 +105,8 @@ $: if (browser && !$auth.accessToken && authenticated) {
   border-radius: 8px 8px 0 0;
 }
 .dash-nav a:hover {
-  color: #991b1b;
-  background: #fef2f2;
+  color: #1f2937;
+  background: #f3f4f6;
 }
 .dash-nav a.active {
   color: #991b1b;

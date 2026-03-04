@@ -84,7 +84,7 @@
 }
 h1 {
   font-size: 2rem;
-  color: #991b1b;
+  color: #1f2937;
   text-align: center;
   margin-bottom: 28px;
 }
@@ -124,22 +124,7 @@ input:focus {
   flex-direction: column;
   gap: 6px;
 }
-select {
-  width: 100%;
-  padding: 12px 14px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: #f9fafb;
-  transition: border 0.2s, box-shadow 0.2s;
-  box-sizing: border-box;
-  cursor: pointer;
-}
-select:focus {
-  border-color: #991b1b;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(153,27,27,0.1);
-}
+
 .form-actions {
   display: flex;
   gap: 12px;

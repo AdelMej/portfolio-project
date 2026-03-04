@@ -65,13 +65,14 @@
 
 <style>
 .main-header {
-  background: #991b1b;
-  color: white;
+  background: #fff;
+  color: #1f2937;
   padding: 0;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
   position: sticky;
   top: 0;
   z-index: 100;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 .main-nav {
   display: flex;
@@ -85,7 +86,7 @@
 .nav-logo {
   font-size: 1.5rem;
   font-weight: 800;
-  color: white;
+  color: #1f2937;
   text-decoration: none;
   letter-spacing: 1px;
   transition: transform 0.2s;
@@ -106,21 +107,17 @@
   align-items: center;
   gap: 1.5rem;
 }
-.user-greeting {
-  color: #fca5a5;
-  font-weight: 600;
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
+
 .welcome-banner {
-  background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
-  color: white;
+  background: rgba(255,255,255,0.7);
+  color: #1f2937;
   text-align: center;
-  padding: 10px 16px;
-  font-size: 1.05rem;
-  letter-spacing: 0.3px;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  letter-spacing: 0.2px;
   animation: slideDown 0.4s ease-out;
-  box-shadow: 0 2px 8px rgba(153, 27, 27, 0.15);
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  backdrop-filter: blur(8px);
 }
 .welcome-text {
   display: inline-flex;
@@ -129,15 +126,11 @@
   animation: fadeScale 0.6s ease-out 0.2s both;
 }
 .welcome-name {
-  font-size: 1.25rem;
-  font-weight: 800;
+  font-size: 1.05rem;
+  font-weight: 700;
   text-transform: capitalize;
-  background: rgba(255,255,255,0.18);
-  padding: 2px 14px;
-  border-radius: 20px;
-  letter-spacing: 0.5px;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  color: #991b1b;
+  letter-spacing: 0.3px;
 }
 @keyframes slideDown {
   from { transform: translateY(-100%); opacity: 0; }
@@ -148,13 +141,13 @@
   to { opacity: 1; transform: scale(1); }
 }
 .nav-links a {
-  color: white;
+  color: #6b7280;
   text-decoration: none;
-  font-weight: 600;
-  font-size: 1.05rem;
+  font-weight: 500;
+  font-size: 0.95rem;
   position: relative;
   transition: color 0.2s;
-  padding-bottom: 2px;
+  padding: 4px 0;
 }
 .nav-links a::after {
   content: '';
@@ -163,30 +156,30 @@
   bottom: -2px;
   width: 0;
   height: 2px;
-  background: #fca5a5;
+  background: #991b1b;
+  border-radius: 1px;
   transition: width 0.25s ease;
 }
 .nav-links a:hover::after {
   width: 100%;
 }
 .nav-links a:hover {
-  color: #fca5a5;
+  color: #1f2937;
 }
 .logout-btn {
-  background: #fff;
-  color: #991b1b;
+  background: #1f2937;
+  color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 8px 18px;
-  font-weight: 700;
-  font-size: 1rem;
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-weight: 600;
+  font-size: 0.88rem;
   cursor: pointer;
   margin-left: 10px;
-  transition: background 0.2s, color 0.2s, transform 0.15s;
+  transition: background 0.2s, transform 0.15s;
 }
 .logout-btn:hover {
-  background: #fca5a5;
-  color: #7f1d1d;
+  background: #374151;
   transform: translateY(-1px);
 }
 .main-content {
@@ -196,12 +189,13 @@
   min-height: calc(100vh - 64px - 56px);
 }
 .main-footer {
-  background: #f3f4f6;
+  background: rgba(255,255,255,0.6);
   text-align: center;
   padding: 16px 0;
   color: #9ca3af;
-  font-size: 0.85rem;
-  border-top: 1px solid #e5e7eb;
+  font-size: 0.82rem;
+  border-top: 1px solid rgba(0,0,0,0.04);
+  backdrop-filter: blur(8px);
 }
 
 /* Hamburger menu for mobile */
@@ -218,7 +212,7 @@
   display: block;
   width: 26px;
   height: 3px;
-  background: white;
+  background: #374151;
   border-radius: 2px;
   transition: transform 0.25s, opacity 0.2s;
 }
@@ -242,11 +236,12 @@
     top: 64px;
     left: 0;
     right: 0;
-    background: #991b1b;
+    background: #fff;
     flex-direction: column;
     padding: 16px 32px;
     gap: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-bottom: 1px solid #e5e7eb;
   }
   .nav-links.show {
     display: flex;
