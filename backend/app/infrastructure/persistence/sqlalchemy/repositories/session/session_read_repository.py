@@ -481,7 +481,22 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
                 ]
             ) for row in rows
         ], has_more
-
+    async def get_session_participants(
+        self,
+        session_id: UUID
+    ) -> list[tuple[str, str]]:
+        res = await self._session.execute(
+            text("""
+                SELECT up.first_name, up.last_name
+                FROM app.session_participation sp
+                JOIN app.user_profiles up ON up.user_id = sp.user_id
+                WHERE sp.session_id = :session_id
+                ORDER BY up.last_name, up.first_name
+            """),
+            {"session_id": session_id}
+        )
+        rows = res.all()
+        return [(r[0], r[1]) for r in rows]
     async def get_complete_session_by_id(
         self,
         session_id: UUID

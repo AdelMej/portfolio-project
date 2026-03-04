@@ -8,6 +8,9 @@ import { browser } from '$app/environment';
 
 let authenticated = false;
 
+$: roles = $auth.roles ?? [];
+$: tabCount = (['admin', 'coach', 'user'].filter(r => roles.includes(r))).length;
+
 function hasRole(role: string) {
   const roles = get(auth).roles;
   return Array.isArray(roles) && roles.includes(role);
@@ -43,6 +46,7 @@ $: if (browser && !$auth.accessToken && authenticated) {
 
 {#if authenticated}
 <div class="dash-layout">
+  {#if tabCount > 1}
   <nav class="dash-nav" aria-label="Main navigation">
     <ul>
       {#if hasRole('admin')}
@@ -62,6 +66,7 @@ $: if (browser && !$auth.accessToken && authenticated) {
       {/if}
     </ul>
   </nav>
+  {/if}
 
   <main>
     <slot />

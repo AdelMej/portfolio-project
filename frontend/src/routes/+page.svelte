@@ -7,6 +7,7 @@
   import { auth } from '$lib/stores/auth.store';
 
   let sessions: Session[] = [];
+  let availableSessions: Session[] = [];
   let loading = true;
   let ready = false;
 
@@ -15,6 +16,8 @@
     try {
       const res: Session[] = await listSessions();
       sessions = res;
+      const now = new Date();
+      availableSessions = res.filter(s => s.status !== 'cancelled' && new Date(s.ends_at) >= now);
     } catch (err) {
       console.error('Failed to fetch sessions', err);
     } finally {
@@ -170,7 +173,7 @@
 
   <div class="stats-bar" in:fly={{ y: 20, duration: 450, delay: 180 }}>
     <div class="stat">
-      <div class="stat-number">{loading ? '…' : sessions.length}</div>
+      <div class="stat-number">{loading ? '…' : availableSessions.length}</div>
       <div class="stat-label">Séances</div>
     </div>
   </div>
@@ -188,11 +191,11 @@
 
   {#if loading}
     <div class="spinner"></div>
-  {:else if sessions.length === 0}
+  {:else if availableSessions.length === 0}
     <div class="empty-msg" in:fade>Aucune séance disponible.</div>
   {:else}
     <ul class="session-list">
-      {#each sessions as s, i}
+      {#each availableSessions as s, i}
         <li class="session-item" in:fly={{ y: 20, duration: 280, delay: 480 + i * 70 }}>
           <span class="session-title">{s.title}</span>
           <span class="session-coach">{s.coach_name ?? ''}</span>

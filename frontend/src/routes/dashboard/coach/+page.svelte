@@ -6,6 +6,8 @@ import { fly, fade } from 'svelte/transition';
 import { apiFetch } from '$lib/api/client';
 import { auth } from '$lib/stores/auth.store';
 import { listCoachSessions, type CompleteSession } from '$lib/api/sessions.api';
+import SessionIcon from '$lib/components/SessionIcon.svelte';
+import { Search } from 'lucide-svelte';
 
 function formatPrice(cents?: number, currency?: string): string {
   if (cents == null) return '-';
@@ -152,7 +154,6 @@ onMount(() => {
   font-size: 0.85rem; font-weight: 800; flex-shrink: 0;
 }
 .stat-icon.blue { background: #eff6ff; color: #3b82f6; }
-.stat-icon.green { background: #f0fdf4; color: #22c55e; }
 .stat-icon.red { background: #fef2f2; color: #ef4444; }
 .stat-num { font-size: 1.5rem; font-weight: 800; color: #111827; line-height: 1; letter-spacing: -0.02em; }
 .stat-label { font-size: 0.72rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
@@ -276,6 +277,7 @@ onMount(() => {
 }
 .status-active { background: #f0fdf4; color: #16a34a; }
 .status-cancelled { background: #fef2f2; color: #ef4444; }
+.status-passed { background: #f3f4f6; color: #6b7280; }
 
 .session-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
 .btn-action {
@@ -337,13 +339,6 @@ onMount(() => {
         </div>
       </div>
       <div class="stat-row">
-        <div class="stat-icon green">€</div>
-        <div>
-          <div class="stat-num">{(totalRevenue / 100).toFixed(0)} €</div>
-          <div class="stat-label">revenus total</div>
-        </div>
-      </div>
-      <div class="stat-row">
         <div class="stat-icon red">X</div>
         <div>
           <div class="stat-num">{cancelledSessions.length}</div>
@@ -385,7 +380,7 @@ onMount(() => {
 
     <div class="search-bar" in:fly={{ y: 10, duration: 350, delay: 100 }}>
       <input type="text" placeholder="Rechercher une séance..." bind:value={searchQuery} />
-      <button class="search-btn">Q</button>
+      <button class="search-btn"><Search size={18} /></button>
     </div>
 
     {#if loading}
@@ -407,18 +402,22 @@ onMount(() => {
           {#each filteredSessions as s, i}
             <div class="session-card-wrapper" in:fly={{ x: -20, duration: 250, delay: 200 + i * 60 }}>
               <div class="session-card">
-                <div class="session-icon">S</div>
+                <div class="session-icon"><SessionIcon title={s.title} size={20} /></div>
                 <div class="session-info">
                   <div class="session-title-text">{s.title}</div>
                   <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
                 </div>
                 <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
-                <span class="session-status" class:status-active={s.status !== 'cancelled'} class:status-cancelled={s.status === 'cancelled'}>
-                  {s.status === 'cancelled' ? 'Annulée' : 'Active'}
-                </span>
+                {#if s.status === 'cancelled'}
+                  <span class="session-status status-cancelled">Annulée</span>
+                {:else if new Date(s.ends_at) < new Date()}
+                  <span class="session-status status-passed">Terminée</span>
+                {:else}
+                  <span class="session-status status-active">Active</span>
+                {/if}
                 <div class="session-actions">
                   <button class="btn-action green" on:click={() => toggleParticipants(s.id)}>Participants ({s.participants?.length ?? 0})</button>
-                  {#if s.status !== 'cancelled'}
+                  {#if s.status !== 'cancelled' && new Date(s.ends_at) >= new Date()}
                     <a href={`/sessions/${s.id}/attendance`} class="btn-action purple">Présence</a>
                     <button class="btn-cancel" on:click={() => cancelSession(s.id)}>Annuler</button>
                     <a href={`/dashboard/coach/sessions/${s.id}/edit`} class="btn-action">Modifier</a>

@@ -5,6 +5,8 @@ import { apiFetch } from '$lib/api/client';
 import { goto } from '$app/navigation';
 import { auth } from '$lib/stores/auth.store';
 import { listSessions, type Session } from '$lib/api/sessions.api';
+import SessionIcon from '$lib/components/SessionIcon.svelte';
+import { Search } from 'lucide-svelte';
 
 function formatPrice(cents?: number, currency?: string): string {
   if (cents == null) return '-';
@@ -37,17 +39,7 @@ let loadingParticipants: string | null = null;
 async function toggleParticipants(id: string) {
   if (expandedSession === id) { expandedSession = null; return; }
   expandedSession = id;
-  if (participantsCache[id]) return;
-  loadingParticipants = id;
-  try {
-    const data = await apiFetch(`/me/sessions/${id}/`);
-    participantsCache[id] = data.participants || [];
-    participantsCache = participantsCache;
-  } catch {
-    participantsCache[id] = [];
-  } finally {
-    loadingParticipants = null;
-  }
+  // Participants are already cached from the sessions fetch — no extra call needed
 }
 
 // Calendar state
@@ -93,9 +85,10 @@ $: daysUntilNext = nextSession ? Math.ceil((nextSession.getTime() - Date.now()) 
 $: filteredMySessions = searchQuery
   ? mySessions.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.coach_name.toLowerCase().includes(searchQuery.toLowerCase()))
   : mySessions;
+$: joinableAvailable = availableSessions.filter(s => s.status !== 'cancelled' && new Date(s.ends_at) >= new Date());
 $: filteredAvailable = searchQuery
-  ? availableSessions.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.coach_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  : availableSessions;
+  ? joinableAvailable.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.coach_name.toLowerCase().includes(searchQuery.toLowerCase()))
+  : joinableAvailable;
 
 onMount(() => {
   ready = true;
@@ -103,7 +96,29 @@ onMount(() => {
 });
 
 async function loadSessions(): Promise<Session[]> {
-    return listSessions();
+    const res = await apiFetch('/sessions');
+    const items = Array.isArray(res.items) ? res.items : Array.isArray(res) ? res : [];
+    // Cache participants from sessions response
+    for (const s of items) {
+      if (s.participants) {
+        participantsCache[s.id] = s.participants;
+      }
+    }
+    participantsCache = participantsCache;
+    return items.map((raw: any) => ({
+      id: raw.id,
+      coach_id: raw.coach?.id ?? raw.coach_id ?? '',
+      coach_name: raw.coach
+        ? `${raw.coach.first_name} ${raw.coach.last_name}`
+        : (raw.coach_name ?? 'Non défini'),
+      title: raw.title,
+      starts_at: raw.starts_at,
+      ends_at: raw.ends_at,
+      max_participants: raw.max_participants,
+      price_cents: raw.price_cents,
+      currency: raw.currency,
+      status: raw.status,
+    }));
 }
 
 async function loadMyRegistrations(): Promise<string[]> {
@@ -492,24 +507,13 @@ async function loadDashboard() {
 }
 .status-confirmed { background: #f0fdf4; color: #16a34a; }
 .status-cancelled { background: #fef2f2; color: #ef4444; }
+.status-passed { background: #f3f4f6; color: #6b7280; }
 .session-actions {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
 }
-.btn-cancel {
-  background: #fef2f2;
-  color: #dc2626;
-  border: none;
-  padding: 7px 14px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  box-shadow: none;
-}
-.btn-cancel:hover { background: #fee2e2; color: #b91c1c; }
+
 .btn-participants {
   background: #f3f4f6;
   color: #374151;
@@ -682,7 +686,6 @@ async function loadDashboard() {
     <nav class="sidebar-nav">
       <a href="/">Accueil</a>
       <a href="/dashboard/user" class="active">Mes séances</a>
-      <a href="/sessions">Trouver une séance</a>
     </nav>
   </aside>
 
@@ -694,7 +697,7 @@ async function loadDashboard() {
 
     <div class="search-bar" in:fly={{ y: 10, duration: 350, delay: 100 }}>
       <input type="text" placeholder="Rechercher une séance..." bind:value={searchQuery} />
-      <button>Q</button>
+      <button><Search size={18} /></button>
     </div>
 
     {#if loading}
@@ -715,7 +718,7 @@ async function loadDashboard() {
           {#each filteredMySessions as s, i}
             <div class="session-card-wrapper" in:fly={{ x: -20, duration: 250, delay: 200 + i * 60 }}>
               <div class="session-card">
-                <div class="session-icon">S</div>
+                <div class="session-icon"><SessionIcon title={s.title} size={20} /></div>
                 <div class="session-info">
                   <div class="session-title-text">{s.title}</div>
                   <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
@@ -724,14 +727,13 @@ async function loadDashboard() {
                 <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
                 {#if s.status === 'cancelled'}
                   <span class="session-status status-cancelled">Annulée</span>
+                {:else if new Date(s.ends_at) < new Date()}
+                  <span class="session-status status-passed">Terminée</span>
                 {:else}
                   <span class="session-status status-confirmed">Confirmé</span>
                 {/if}
                 <div class="session-actions">
                   <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>
-                  {#if s.status !== 'cancelled'}
-                    <button class="btn-cancel">Annuler</button>
-                  {/if}
                 </div>
               </div>
               {#if expandedSession === s.id}
@@ -771,7 +773,7 @@ async function loadDashboard() {
           {#each filteredAvailable as s, i}
             <div class="session-card-wrapper" in:fly={{ x: -20, duration: 250, delay: 350 + i * 60 }}>
               <div class="session-card">
-                <div class="session-icon">S</div>
+                <div class="session-icon"><SessionIcon title={s.title} size={20} /></div>
                 <div class="session-info">
                   <div class="session-title-text">{s.title}</div>
                   <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
@@ -782,6 +784,11 @@ async function loadDashboard() {
 
                 {#if s.status === 'cancelled'}
                   <span class="session-status status-cancelled">Annulée</span>
+                {:else if new Date(s.ends_at) < new Date()}
+                  <span class="session-status status-passed">Terminée</span>
+                  <div class="session-actions">
+                    <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                  </div>
                 {:else}
                   <div class="session-actions">
                     <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>

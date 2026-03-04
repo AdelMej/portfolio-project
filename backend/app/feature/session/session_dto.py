@@ -39,6 +39,11 @@ class GetOutputDto(BaseModel):
     status: str
 
 
+class ParticipantDTO(BaseModel):
+    first_name: str
+    last_name: str
+
+
 class PaginatedSessionsOutputDTO(BaseModel):
     items: list[GetOutputDto]
     limit: int

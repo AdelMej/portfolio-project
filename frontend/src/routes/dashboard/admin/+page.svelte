@@ -6,7 +6,9 @@ import { fly, fade } from 'svelte/transition';
 import { apiFetch } from '$lib/api/client';
 import { auth } from '$lib/stores/auth.store';
 import { getAdminUsers, type AdminUser } from '$lib/api/admin.api';
-import { listSessions, cancelSession, type Session } from '$lib/api/sessions.api';
+import { type Session } from '$lib/api/sessions.api';
+import SessionIcon from '$lib/components/SessionIcon.svelte';
+import { Search } from 'lucide-svelte';
 
 function formatPrice(cents?: number, currency?: string): string {
   if (cents == null) return '-';
@@ -64,6 +66,14 @@ $: filteredSessions = searchQuery
     )
   : sessions;
 
+$: now = new Date();
+$: activeFiltered = filteredSessions.filter(s => s.status !== 'cancelled' && new Date(s.ends_at) >= now)
+  .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+$: finishedFiltered = filteredSessions.filter(s => s.status !== 'cancelled' && new Date(s.ends_at) < now)
+  .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime());
+$: cancelledFiltered = filteredSessions.filter(s => s.status === 'cancelled')
+  .sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime());
+
 async function adminCancelSession(sessionId: string) {
   if (!confirm('Voulez-vous vraiment annuler cette séance ?')) return;
   cancellingId = sessionId;
@@ -86,7 +96,10 @@ async function loadDashboardData() {
     const items = adminSessionsRes?.items ?? [];
     sessions = items.map((s: any) => ({
       ...s,
-      coach_name: s.coach_name ?? null
+      coach_name: s.coach
+        ? `${s.coach.first_name} ${s.coach.last_name}`
+        : (s.coach_name ?? 'Non défini'),
+      coach_id: s.coach?.id ?? s.coach_id ?? '',
     }));
   } catch (e) {
     error = "Erreur lors du chargement des données.";
@@ -206,8 +219,8 @@ afterNavigate(() => {
   transition: all 0.2s; box-shadow: none;
 }
 .tab-btn.active { background: #fff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04); }
-.tab-btn:not(.active) { background: transparent; color: #9ca3af; border: none; }
-.tab-btn:not(.active):hover { color: #6b7280; background: rgba(255,255,255,0.5); }
+.tab-btn:not(.active) { background: rgba(255,255,255,0.35); color: #374151; border: none; }
+.tab-btn:not(.active):hover { color: #111827; background: rgba(255,255,255,0.6); }
 
 .panel {
   background: #fff;
@@ -276,6 +289,7 @@ afterNavigate(() => {
 .badge-active { background: #f0fdf4; color: #16a34a; }
 .badge-disabled { background: #fef2f2; color: #ef4444; }
 .badge-cancelled { background: #fef2f2; color: #ef4444; }
+.badge-passed { background: #f3f4f6; color: #6b7280; }
 .card-price { font-size: 0.92rem; font-weight: 700; color: #111827; white-space: nowrap; }
 
 .card-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
@@ -373,7 +387,7 @@ afterNavigate(() => {
 
     <div class="search-bar" in:fly={{ y: 10, duration: 350, delay: 100 }}>
       <input type="text" placeholder={activeTab === 'users' ? 'Rechercher un utilisateur...' : 'Rechercher une séance...'} bind:value={searchQuery} />
-      <button class="search-btn">Q</button>
+      <button class="search-btn"><Search size={18} /></button>
     </div>
 
     {#if loading}
@@ -423,49 +437,128 @@ afterNavigate(() => {
           {#if filteredSessions.length === 0}
             <div class="empty-state">Aucune séance trouvée.</div>
           {:else}
-            {#each filteredSessions as s, i}
-              <div class="card-item-wrapper" in:fly={{ x: -20, duration: 250, delay: 200 + i * 50 }}>
-                <div class="card-item">
-                  <div class="card-icon">S</div>
-                  <div class="card-info">
-                    <div class="card-title">{s.title}</div>
-                    <div class="card-sub">Coach : {s.coach_name ?? '-'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
-                  </div>
-                  <div class="card-price">{formatPrice(s.price_cents, s.currency)}</div>
-                  <span class="card-badge" class:badge-active={s.status !== 'cancelled'} class:badge-cancelled={s.status === 'cancelled'}>
-                    {s.status === 'cancelled' ? 'Annulée' : 'Active'}
-                  </span>
-                  <div class="card-actions">
-                    <button class="btn-action green" on:click={() => toggleParticipants(s.id)}>Participants</button>
-                    {#if s.status !== 'cancelled'}
-                      <a href={`/dashboard/coach/sessions/${s.id}/edit`} class="btn-action">Modifier</a>
+            <!-- ACTIVE SESSIONS -->
+            {#if activeFiltered.length > 0}
+              <div class="group-header active-header">Actives ({activeFiltered.length})</div>
+              {#each activeFiltered as s, i}
+                <div class="card-item-wrapper" in:fly={{ x: -20, duration: 250, delay: 100 + i * 40 }}>
+                  <div class="card-item">
+                    <div class="card-icon"><SessionIcon title={s.title} size={20} /></div>
+                    <div class="card-info">
+                      <div class="card-title">{s.title}</div>
+                      <div class="card-sub">Coach : {s.coach_name ?? 'Non défini'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                    </div>
+                    <div class="card-price">{formatPrice(s.price_cents, s.currency)}</div>
+                    <span class="card-badge badge-active">Active</span>
+                    <div class="card-actions">
+                      <button class="btn-action green" on:click={() => toggleParticipants(s.id)}>Participants</button>
                       <button class="btn-cancel" on:click={() => adminCancelSession(s.id)} disabled={cancellingId === s.id}>
                         {cancellingId === s.id ? '...' : 'Annuler'}
                       </button>
-                    {/if}
+                    </div>
                   </div>
+                  {#if expandedSession === s.id}
+                    <div class="participants-dropdown" in:fade={{ duration: 150 }}>
+                      <div class="p-title">Participants inscrits</div>
+                      {#if loadingParticipants === s.id}
+                        <div class="p-loading">Chargement...</div>
+                      {:else if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                        <div class="p-empty">Aucun participant inscrit.</div>
+                      {:else}
+                        <ul>
+                          {#each participantsCache[s.id] as p}
+                            <li>
+                              <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
+                              {p.first_name} {p.last_name}
+                            </li>
+                          {/each}
+                        </ul>
+                      {/if}
+                    </div>
+                  {/if}
                 </div>
-                {#if expandedSession === s.id}
-                  <div class="participants-dropdown" in:fade={{ duration: 150 }}>
-                    <div class="p-title">Participants inscrits</div>
-                    {#if loadingParticipants === s.id}
-                      <div class="p-loading">Chargement...</div>
-                    {:else if !participantsCache[s.id] || participantsCache[s.id].length === 0}
-                      <div class="p-empty">Aucun participant inscrit.</div>
-                    {:else}
-                      <ul>
-                        {#each participantsCache[s.id] as p}
-                          <li>
-                            <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
-                            {p.first_name} {p.last_name}
-                          </li>
-                        {/each}
-                      </ul>
-                    {/if}
+              {/each}
+            {/if}
+
+            <!-- FINISHED SESSIONS -->
+            {#if finishedFiltered.length > 0}
+              <div class="group-header finished-header">Terminées ({finishedFiltered.length})</div>
+              {#each finishedFiltered as s, i}
+                <div class="card-item-wrapper" in:fly={{ x: -20, duration: 250, delay: 100 + i * 40 }}>
+                  <div class="card-item">
+                    <div class="card-icon"><SessionIcon title={s.title} size={20} /></div>
+                    <div class="card-info">
+                      <div class="card-title">{s.title}</div>
+                      <div class="card-sub">Coach : {s.coach_name ?? 'Non défini'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                    </div>
+                    <div class="card-price">{formatPrice(s.price_cents, s.currency)}</div>
+                    <span class="card-badge badge-passed">Terminée</span>
+                    <div class="card-actions">
+                      <button class="btn-action green" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                    </div>
                   </div>
-                {/if}
-              </div>
-            {/each}
+                  {#if expandedSession === s.id}
+                    <div class="participants-dropdown" in:fade={{ duration: 150 }}>
+                      <div class="p-title">Participants inscrits</div>
+                      {#if loadingParticipants === s.id}
+                        <div class="p-loading">Chargement...</div>
+                      {:else if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                        <div class="p-empty">Aucun participant inscrit.</div>
+                      {:else}
+                        <ul>
+                          {#each participantsCache[s.id] as p}
+                            <li>
+                              <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
+                              {p.first_name} {p.last_name}
+                            </li>
+                          {/each}
+                        </ul>
+                      {/if}
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+            {/if}
+
+            <!-- CANCELLED SESSIONS -->
+            {#if cancelledFiltered.length > 0}
+              <div class="group-header cancelled-header">Annulées ({cancelledFiltered.length})</div>
+              {#each cancelledFiltered as s, i}
+                <div class="card-item-wrapper" in:fly={{ x: -20, duration: 250, delay: 100 + i * 40 }}>
+                  <div class="card-item">
+                    <div class="card-icon"><SessionIcon title={s.title} size={20} /></div>
+                    <div class="card-info">
+                      <div class="card-title">{s.title}</div>
+                      <div class="card-sub">Coach : {s.coach_name ?? 'Non défini'} — {new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                    </div>
+                    <div class="card-price">{formatPrice(s.price_cents, s.currency)}</div>
+                    <span class="card-badge badge-cancelled">Annulée</span>
+                    <div class="card-actions">
+                      <button class="btn-action green" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                    </div>
+                  </div>
+                  {#if expandedSession === s.id}
+                    <div class="participants-dropdown" in:fade={{ duration: 150 }}>
+                      <div class="p-title">Participants inscrits</div>
+                      {#if loadingParticipants === s.id}
+                        <div class="p-loading">Chargement...</div>
+                      {:else if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                        <div class="p-empty">Aucun participant inscrit.</div>
+                      {:else}
+                        <ul>
+                          {#each participantsCache[s.id] as p}
+                            <li>
+                              <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
+                              {p.first_name} {p.last_name}
+                            </li>
+                          {/each}
+                        </ul>
+                      {/if}
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+            {/if}
           {/if}
         </div>
       {/if}
