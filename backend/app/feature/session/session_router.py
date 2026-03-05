@@ -55,8 +55,7 @@ async def get_session(
 )
 async def get_session_participants(
     session_id: UUID,
-    actor: Actor = Depends(get_current_actor),
-    uow: SessionUoWPort = Depends(get_session_uow),
+    uow: SessionPulbicUoWPort = Depends(get_session_public_uow),
     service: SessionService = Depends(get_session_service)
 ) -> list[ParticipantDTO]:
     return await service.get_session_participants(
