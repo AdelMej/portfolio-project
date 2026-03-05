@@ -9,9 +9,6 @@ This document lists the development artifacts produced during the project.
 
 Sprint reviews were conducted informally and tracked within the Jira project.
 
-Jira board:
-
-* <https://adelmejrissi.atlassian.net/jira/software/projects/KAN/boards/1>
 
 ---
 
@@ -25,9 +22,6 @@ Retrospectives were discussed within the team but were not formally documented.
 
 Sprint planning activities were tracked through Jira epics and cards.
 
-Jira board:
-
-* <https://adelmejrissi.atlassian.net/jira/software/projects/KAN/boards/1>
 
 ---
 
