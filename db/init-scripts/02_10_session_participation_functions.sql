@@ -79,7 +79,10 @@ BEGIN
         p_user_id,
         now(),
         p_expires_at
-    );
+    )
+	ON CONFLICT (session_id, user_id)
+	DO UPDATE
+	SET expires_at = EXCLUDED.expires_at;
 END;
 $$;
 
@@ -217,5 +220,3 @@ $$;
 COMMENT ON FUNCTION app_fcn.revoke_all_active_session(uuid)
 IS
 'Revoke all active session participations for the given user. Used to cancel pending or active registrations during checkout failures, user-initiated cancellations, or safety rollback paths. Only affects active participations and preserves historical records.';
-
-
