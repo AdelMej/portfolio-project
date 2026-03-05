@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { auth } from '$lib/stores/auth.store';
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 
 	$: accessToken = $auth.accessToken;
 	$: firstName = $auth.firstName;
@@ -35,6 +36,7 @@
     <div class="nav-links" class:show={menuOpen}>
       <a href="/" on:click={closeMenu}>Accueil</a>
       {#if accessToken}
+        <a href="/sessions" on:click={closeMenu}>Séances</a>
         <a href="/dashboard" on:click={closeMenu}>Tableau de bord</a>
         <button class="logout-btn" on:click={() => { logout(); closeMenu(); }}>Déconnexion</button>
       {:else}
@@ -44,9 +46,11 @@
   </nav>
 </header>
 
-{#if accessToken && firstName}
+{#if accessToken}
   <div class="welcome-banner">
-    <span class="welcome-text">Bienvenue, <span class="welcome-name">{firstName}</span></span>
+    <span class="welcome-text">
+      <span class="banner-date">{new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+    </span>
   </div>
 {/if}
 
@@ -104,29 +108,27 @@
 }
 
 .welcome-banner {
-  background: rgba(255,255,255,0.7);
+  background: #fff;
   color: #1f2937;
   text-align: center;
-  padding: 8px 16px;
-  font-size: 0.95rem;
+  padding: 6px 16px;
+  font-size: 0.8rem;
   letter-spacing: 0.2px;
   animation: slideDown 0.4s ease-out;
-  border-bottom: 1px solid rgba(0,0,0,0.04);
-  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #e5e7eb;
 }
 .welcome-text {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   animation: fadeScale 0.6s ease-out 0.2s both;
 }
-.welcome-name {
-  font-size: 1.05rem;
-  font-weight: 700;
+.banner-date {
   text-transform: capitalize;
-  color: #991b1b;
-  letter-spacing: 0.3px;
+  font-weight: 500;
+  color: #374151;
 }
+
 @keyframes slideDown {
   from { transform: translateY(-100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }

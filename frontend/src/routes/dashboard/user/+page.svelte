@@ -6,7 +6,7 @@ import { goto } from '$app/navigation';
 import { auth } from '$lib/stores/auth.store';
 import { listSessions, type Session } from '$lib/api/sessions.api';
 import SessionIcon from '$lib/components/SessionIcon.svelte';
-import { Search } from 'lucide-svelte';
+import { Search, ChevronLeft, ChevronRight, X } from 'lucide-svelte';
 
 function formatPrice(cents?: number, currency?: string): string {
   if (cents == null) return '-';
@@ -42,35 +42,39 @@ function toggleParticipants(id: string) {
 
 // Calendar state
 let calendarDate = new Date();
+let selectedDate: string | null = null;
 $: calendarYear = calendarDate.getFullYear();
 $: calendarMonth = calendarDate.getMonth();
 $: calendarMonthName = calendarDate.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
 $: calendarDays = buildCalendar(calendarYear, calendarMonth);
-$: sessionDates = new Set(mySessions.map(s => {
-  const d = new Date(s.starts_at);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}));
 
-function buildCalendar(year: number, month: number) {
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function todayStr(): string { return toDateStr(new Date()); }
+
+$: mySessionDates = new Set(mySessions.map(s => toDateStr(new Date(s.starts_at))));
+$: allSessionDates = new Set([...mySessions, ...availableSessions].map(s => toDateStr(new Date(s.starts_at))));
+
+function buildCalendar(year: number, month: number): ({ day: number; dateStr: string } | null)[] {
   const first = new Date(year, month, 1);
-  const last = new Date(year, month + 1, 0);
-  const startDay = first.getDay();
-  const days: (number | null)[] = [];
-  for (let i = 0; i < startDay; i++) days.push(null);
-  for (let d = 1; d <= last.getDate(); d++) days.push(d);
-  return days;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  let startDow = first.getDay();
+  startDow = startDow === 0 ? 6 : startDow - 1; // Mon=0
+  const cells: ({ day: number; dateStr: string } | null)[] = [];
+  for (let i = 0; i < startDow; i++) cells.push(null);
+  for (let d = 1; d <= lastDay; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    cells.push({ day: d, dateStr });
+  }
+  return cells;
 }
 function prevMonth() { calendarDate = new Date(calendarYear, calendarMonth - 1, 1); }
 function nextMonth() { calendarDate = new Date(calendarYear, calendarMonth + 1, 1); }
-function isToday(day: number | null) {
-  if (!day) return false;
-  const now = new Date();
-  return day === now.getDate() && calendarMonth === now.getMonth() && calendarYear === now.getFullYear();
+function selectDay(dateStr: string) {
+  selectedDate = selectedDate === dateStr ? null : dateStr;
 }
-function hasSession(day: number | null) {
-  if (!day) return false;
-  return sessionDates.has(`${calendarYear}-${calendarMonth}-${day}`);
-}
+function clearFilter() { selectedDate = null; }
 
 // Stats
 $: nextSession = mySessions
@@ -79,14 +83,35 @@ $: nextSession = mySessions
   .sort((a, b) => a.getTime() - b.getTime())[0] ?? null;
 $: daysUntilNext = nextSession ? Math.ceil((nextSession.getTime() - Date.now()) / 86400000) : null;
 
-// Filtered sessions
-$: filteredMySessions = searchQuery
-  ? mySessions.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.coach_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  : mySessions;
+// Helper: session status
+function getStatus(s: Session): 'active' | 'finished' | 'cancelled' {
+  if (s.status === 'cancelled') return 'cancelled';
+  if (new Date(s.ends_at) < new Date()) return 'finished';
+  return 'active';
+}
+
+// Apply search + date filter
+function applyFilters(list: Session[], dateFilter: string | null, query: string): Session[] {
+  let result = list;
+  if (dateFilter) {
+    result = result.filter(s => toDateStr(new Date(s.starts_at)) === dateFilter);
+  }
+  if (query) {
+    const q = query.toLowerCase();
+    result = result.filter(s => s.title.toLowerCase().includes(q) || s.coach_name.toLowerCase().includes(q));
+  }
+  return result;
+}
+
+// My sessions grouped by status
+$: myFiltered = applyFilters(mySessions, selectedDate, searchQuery);
+$: myActive = myFiltered.filter(s => getStatus(s) === 'active').sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+$: myFinished = myFiltered.filter(s => getStatus(s) === 'finished').sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime());
+$: myCancelled = myFiltered.filter(s => getStatus(s) === 'cancelled').sort((a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime());
+
+// Available sessions
 $: joinableAvailable = availableSessions.filter(s => s.status !== 'cancelled' && new Date(s.ends_at) >= new Date());
-$: filteredAvailable = searchQuery
-  ? joinableAvailable.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()) || s.coach_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  : joinableAvailable;
+$: filteredAvailable = applyFilters(joinableAvailable, selectedDate, searchQuery);
 
 onMount(() => {
   ready = true;
@@ -335,28 +360,86 @@ async function loadDashboard() {
   color: #6b7280;
   font-size: 0.8rem;
   position: relative;
+  cursor: default;
+  transition: background 0.12s, color 0.12s, transform 0.12s;
 }
 .cal-day.today {
-  background: #111827;
-  color: white;
-  font-weight: 600;
+  background: #f3f4f6;
+  color: #374151;
+  font-weight: 700;
 }
 .cal-day.has-session {
-  background: #eff6ff;
-  color: #3b82f6;
+  background: #fef2f2;
+  color: #991b1b;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid #fecaca;
+}
+.cal-day.has-session:hover {
+  background: #fecaca;
+  color: #7f1d1d;
+  transform: scale(1.06);
+}
+.cal-day.today.has-session {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1.5px solid #991b1b;
+}
+.cal-day.selected {
+  background: #991b1b !important;
+  color: #fff !important;
+  font-weight: 700;
+  border-color: #991b1b !important;
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(153,27,27,0.25);
+}
+
+/* Filter badge */
+.filter-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  font-size: 0.85rem;
   font-weight: 600;
+  color: #991b1b;
 }
-.cal-day.has-session::after {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  background: #3b82f6;
+.filter-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px; height: 22px;
+  border: none;
+  background: #991b1b;
+  color: #fff;
   border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.15s;
 }
+.filter-clear:hover { background: #7f1d1d; }
+
+/* Status group headers */
+.status-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  margin: 18px 0 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.status-group-header:first-child { margin-top: 12px; }
+.status-group-header.active { background: #f0fdf4; color: #16a34a; }
+.status-group-header.finished { background: #f3f4f6; color: #6b7280; }
+.status-group-header.cancelled { background: #fef2f2; color: #ef4444; }
 
 /* Sidebar nav */
 .sidebar-nav {
@@ -664,18 +747,29 @@ async function loadDashboard() {
 
     <div class="calendar-card">
       <div class="cal-header">
-        <button class="cal-btn" on:click={prevMonth}>‹</button>
+        <button class="cal-btn" on:click={prevMonth}><ChevronLeft size={14} /></button>
         <span>{calendarMonthName}</span>
-        <button class="cal-btn" on:click={nextMonth}>›</button>
+        <button class="cal-btn" on:click={nextMonth}><ChevronRight size={14} /></button>
       </div>
       <div class="cal-grid">
-        {#each ['D','L','M','M','J','V','S'] as label}
+        {#each ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] as label}
           <div class="cal-day-label">{label}</div>
         {/each}
-        {#each calendarDays as day}
-          <div class="cal-day" class:today={isToday(day)} class:has-session={hasSession(day)}>
-            {day ?? ''}
-          </div>
+        {#each calendarDays as cell}
+          {#if cell}
+            <div
+              class="cal-day"
+              class:has-session={allSessionDates.has(cell.dateStr)}
+              class:today={cell.dateStr === todayStr()}
+              class:selected={cell.dateStr === selectedDate}
+              on:click={() => allSessionDates.has(cell.dateStr) && selectDay(cell.dateStr)}
+              on:keydown={(e) => e.key === 'Enter' && allSessionDates.has(cell.dateStr) && selectDay(cell.dateStr)}
+              role="button"
+              tabindex={allSessionDates.has(cell.dateStr) ? 0 : -1}
+            >{cell.day}</div>
+          {:else}
+            <div class="cal-day"></div>
+          {/if}
         {/each}
       </div>
     </div>
@@ -705,53 +799,135 @@ async function loadDashboard() {
     {:else if error}
       <div class="error-message" in:fade>{error}</div>
     {:else}
+      {#if selectedDate}
+        <div class="filter-badge" in:fly={{ y: -6, duration: 180 }}>
+          Séances du {new Date(selectedDate + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          <button class="filter-clear" on:click={clearFilter}><X size={13} /></button>
+        </div>
+      {/if}
+
       <div class="sessions-panel" in:fly={{ y: 15, duration: 350, delay: 150 }}>
         <h2 class="section-title">Mes séances inscrites</h2>
-        {#if filteredMySessions.length === 0}
+        {#if myFiltered.length === 0}
           <div class="empty-state">
-            <p>Aucune séance inscrite.</p>
+            <p>{selectedDate ? 'Aucune séance inscrite pour cette date.' : 'Aucune séance inscrite.'}</p>
           </div>
         {:else}
-          {#each filteredMySessions as s, i}
-            <div class="session-card-wrapper" in:fly={{ x: -20, duration: 250, delay: 200 + i * 60 }}>
-              <div class="session-card">
-                <div class="session-icon"><SessionIcon title={s.title} size={20} /></div>
-                <div class="session-info">
-                  <div class="session-title-text">{s.title}</div>
-                  <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
-                </div>
-                <div class="session-coach-text">{s.coach_name}</div>
-                <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
-                {#if s.status === 'cancelled'}
-                  <span class="session-status status-cancelled">Annulée</span>
-                {:else if new Date(s.ends_at) < new Date()}
-                  <span class="session-status status-passed">Terminée</span>
-                {:else}
+          <!-- Active -->
+          {#if myActive.length > 0}
+            <div class="status-group-header active">🟢 Active ({myActive.length})</div>
+            {#each myActive as s, i}
+              {@const idx = i}
+              <div class="session-card-wrapper" in:fly={{ x: -20, duration: 250, delay: 200 + idx * 60 }}>
+                <div class="session-card">
+                  <div class="session-icon"><SessionIcon title={s.title} size={20} /></div>
+                  <div class="session-info">
+                    <div class="session-title-text">{s.title}</div>
+                    <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                  </div>
+                  <div class="session-coach-text">{s.coach_name}</div>
+                  <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
                   <span class="session-status status-confirmed">Confirmé</span>
+                  <div class="session-actions">
+                    <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                  </div>
+                </div>
+                {#if expandedSession === s.id}
+                  <div class="participants-dropdown" in:fade={{ duration: 150 }}>
+                    <div class="p-title">Participants inscrits</div>
+                    {#if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                      <div class="p-empty">Aucun participant inscrit.</div>
+                    {:else}
+                      <ul>
+                        {#each participantsCache[s.id] as p}
+                          <li>
+                            <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
+                            {p.first_name} {p.last_name}
+                          </li>
+                        {/each}
+                      </ul>
+                    {/if}
+                  </div>
                 {/if}
-                <div class="session-actions">
-                  <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>
-                </div>
               </div>
-              {#if expandedSession === s.id}
-                <div class="participants-dropdown" in:fade={{ duration: 150 }}>
-                  <div class="p-title">Participants inscrits</div>
-                  {#if !participantsCache[s.id] || participantsCache[s.id].length === 0}
-                    <div class="p-empty">Aucun participant inscrit.</div>
-                  {:else}
-                    <ul>
-                      {#each participantsCache[s.id] as p}
-                        <li>
-                          <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
-                          {p.first_name} {p.last_name}
-                        </li>
-                      {/each}
-                    </ul>
-                  {/if}
+            {/each}
+          {/if}
+          <!-- Terminée -->
+          {#if myFinished.length > 0}
+            <div class="status-group-header finished">⏹ Terminée ({myFinished.length})</div>
+            {#each myFinished as s, i}
+              <div class="session-card-wrapper" in:fly={{ x: -20, duration: 250, delay: 200 + i * 60 }}>
+                <div class="session-card">
+                  <div class="session-icon"><SessionIcon title={s.title} size={20} /></div>
+                  <div class="session-info">
+                    <div class="session-title-text">{s.title}</div>
+                    <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                  </div>
+                  <div class="session-coach-text">{s.coach_name}</div>
+                  <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
+                  <span class="session-status status-passed">Terminée</span>
+                  <div class="session-actions">
+                    <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                  </div>
                 </div>
-              {/if}
-            </div>
-          {/each}
+                {#if expandedSession === s.id}
+                  <div class="participants-dropdown" in:fade={{ duration: 150 }}>
+                    <div class="p-title">Participants inscrits</div>
+                    {#if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                      <div class="p-empty">Aucun participant inscrit.</div>
+                    {:else}
+                      <ul>
+                        {#each participantsCache[s.id] as p}
+                          <li>
+                            <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
+                            {p.first_name} {p.last_name}
+                          </li>
+                        {/each}
+                      </ul>
+                    {/if}
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          {/if}
+          <!-- Annulée -->
+          {#if myCancelled.length > 0}
+            <div class="status-group-header cancelled">✕ Annulée ({myCancelled.length})</div>
+            {#each myCancelled as s, i}
+              <div class="session-card-wrapper" in:fly={{ x: -20, duration: 250, delay: 200 + i * 60 }}>
+                <div class="session-card">
+                  <div class="session-icon"><SessionIcon title={s.title} size={20} /></div>
+                  <div class="session-info">
+                    <div class="session-title-text">{s.title}</div>
+                    <div class="session-date-text">{new Date(s.starts_at).toLocaleString('fr-FR')}</div>
+                  </div>
+                  <div class="session-coach-text">{s.coach_name}</div>
+                  <div class="session-price-text">{formatPrice(s.price_cents, s.currency)}</div>
+                  <span class="session-status status-cancelled">Annulée</span>
+                  <div class="session-actions">
+                    <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                  </div>
+                </div>
+                {#if expandedSession === s.id}
+                  <div class="participants-dropdown" in:fade={{ duration: 150 }}>
+                    <div class="p-title">Participants inscrits</div>
+                    {#if !participantsCache[s.id] || participantsCache[s.id].length === 0}
+                      <div class="p-empty">Aucun participant inscrit.</div>
+                    {:else}
+                      <ul>
+                        {#each participantsCache[s.id] as p}
+                          <li>
+                            <span class="p-avatar">{(p.first_name?.[0] ?? '')}{(p.last_name?.[0] ?? '')}</span>
+                            {p.first_name} {p.last_name}
+                          </li>
+                        {/each}
+                      </ul>
+                    {/if}
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          {/if}
         {/if}
       </div>
 

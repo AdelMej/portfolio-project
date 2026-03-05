@@ -37,10 +37,10 @@ export async function getMyProfile(): Promise<MeProfileResponse> {
 }
 
 // Registration API call for new users
-export async function createUser(email: string, password: string): Promise<void> {
+export async function createUser(email: string, password: string, first_name: string, last_name: string): Promise<void> {
   return apiFetch<void>('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ email, password }),
+    method: 'PUT',
+    body: JSON.stringify({ email, password, first_name, last_name }),
     headers: { 'Content-Type': 'application/json' }
   });
 }
