@@ -45,7 +45,6 @@
 		const startsAt = new Date(date + 'T' + startTime + ':00').toISOString();
 		const endsAt = new Date(date + 'T' + endTime + ':00').toISOString();
 
-<<<<<<< HEAD
   submitting = true;
   try {
     await createSession({
@@ -69,30 +68,6 @@
     submitting = false;
   }
 }
-=======
-		submitting = true;
-		try {
-			await createSession({
-				title: name.trim(),
-				starts_at: startsAt,
-				ends_at: endsAt,
-				price_cents: Math.round(priceNum * 100),
-				currency: 'EUR'
-			});
-			goto('/dashboard/coach');
-		} catch (e) {
-			if (e && typeof e === 'object' && 'code' in e && e.code === 'invalid_stripe_account') {
-				stripeError = true;
-				errorMsg =
-					"Votre compte Stripe n'est pas encore configuré. Veuillez compléter votre inscription Stripe avant de créer une séance.";
-			} else {
-				errorMsg = 'Erreur lors de la création de la séance.';
-			}
-		} finally {
-			submitting = false;
-		}
-	}
->>>>>>> 5699d43bbd46a4f5b7fde2172c3bf4df7ac9a0f1
 </script>
 
 <div class="form-container">
