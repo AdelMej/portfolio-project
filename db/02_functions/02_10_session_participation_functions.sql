@@ -78,6 +78,8 @@ BEGIN
         now(),
         p_expires_at
     );
+	ON CONFLICT (session_id, user_id)
+	DO NOTHING;
 END;
 $$;
 
