@@ -422,8 +422,13 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
         WHERE EXISTS (
             SELECT 1
                 FROM app.session_participation sp2
+                join app.sessions s2 on s2.id = sp2.session_id 
                 WHERE sp2.session_id = s.id
                     AND sp2.user_id = :user_id
+                    and (
+                    	sp2.paid_at is not null
+                    	or s2.price_cents = 0
+                    )
         )
         GROUP BY
             s.id,

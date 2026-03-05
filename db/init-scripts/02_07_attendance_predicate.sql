@@ -172,7 +172,7 @@ BEGIN
         OR (
         	s.price_cents > 0
         	AND sp.paid_at IS NULL
-        );
+        )
     )
     INTO invalid;
 

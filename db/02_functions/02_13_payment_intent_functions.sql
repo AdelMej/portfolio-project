@@ -39,6 +39,8 @@ AS $$
  *   - AP404: session not found
  *   - AP409: payment intent already exists
  */
+DECLARE
+	v_intent_id uuid;
 BEGIN
     IF NOT app_fcn.is_self(p_user_id) THEN
         RAISE EXCEPTION 'permission denied'
@@ -50,40 +52,53 @@ BEGIN
             USING ERRCODE = 'AP404';
     END IF;
 
-    IF EXISTS (
-        SELECT 1
-        FROM app.payment_intents
-        WHERE session_id = p_session_id
-          AND user_id = p_user_id
-          AND status NOT IN ('canceled', 'failed')
-    ) THEN
-        RAISE EXCEPTION 'payment intent already exists'
-            USING ERRCODE = 'AP409';
-    END IF;
+    SELECT id
+	INTO v_intent_id
+	FROM app.payment_intents
+	WHERE session_id = p_session_id
+	AND user_id = p_user_id
+	AND status NOT IN ('canceled','failed')
+	LIMIT 1;
+    
+	IF v_intent_id IS NOT NULL THEN
 
-    INSERT INTO app.payment_intents (
-		id,
-        user_id,
-        session_id,
-        provider,
-        provider_intent_id,
-        status,
-        amount_cents,
-        credit_applied_cents,
-        currency,
-        created_at
-    ) VALUES (
-		gen_random_uuid(),
-        p_user_id,
-        p_session_id,
-        p_provider,
-        p_provider_intent_id,
-        p_status,
-        p_amount_cents,
-        p_credit_applied_cents,
-        p_currency,
-        now()
-    );
+    UPDATE app.payment_intents
+    SET
+        provider = p_provider,
+        provider_intent_id = p_provider_intent_id,
+        status = p_status,
+        amount_cents = p_amount_cents,
+        credit_applied_cents = p_credit_applied_cents,
+        currency = p_currency
+    WHERE id = v_intent_id;
+
+	ELSE
+
+	    INSERT INTO app.payment_intents (
+			id,
+	        user_id,
+	        session_id,
+	        provider,
+	        provider_intent_id,
+	        status,
+	        amount_cents,
+	        credit_applied_cents,
+	        currency,
+	        created_at
+	    ) VALUES (
+			gen_random_uuid(),
+	        p_user_id,
+	        p_session_id,
+	        p_provider,
+	        p_provider_intent_id,
+	        p_status,
+	        p_amount_cents,
+	        p_credit_applied_cents,
+	        p_currency,
+	        now()
+	    );
+    
+    END IF;
 END;
 $$;
 
