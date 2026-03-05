@@ -45,28 +45,29 @@
 		const startsAt = new Date(date + 'T' + startTime + ':00').toISOString();
 		const endsAt = new Date(date + 'T' + endTime + ':00').toISOString();
 
-		submitting = true;
-		try {
-			await createSession({
-				title: name.trim(),
-				starts_at: startsAt,
-				ends_at: endsAt,
-				price_cents: Math.round(priceNum * 100),
-				currency: 'EUR'
-			});
-			goto('/dashboard/coach');
-		} catch (e) {
-			if (e && typeof e === 'object' && 'code' in e && e.code === 'invalid_stripe_account') {
-				stripeError = true;
-				errorMsg =
-					"Votre compte Stripe n'est pas encore configuré. Veuillez compléter votre inscription Stripe avant de créer une séance.";
-			} else {
-				errorMsg = 'Erreur lors de la création de la séance.';
-			}
-		} finally {
-			submitting = false;
-		}
-	}
+  submitting = true;
+  try {
+    await createSession({
+      title: name.trim(),
+      starts_at: startsAt,
+      ends_at: endsAt,
+      price_cents: Math.round(priceNum * 100),
+      currency: 'EUR'
+    });
+    goto('/dashboard/coach');
+  } catch (e) {
+    if (e && typeof e === 'object' && 'code' in e && e.code === 'invalid_stripe_account') {
+      stripeError = true;
+      errorMsg = 'Votre compte Stripe n\'est pas encore configuré. Veuillez compléter votre inscription Stripe avant de créer une séance.';
+    } else if (e && typeof e === 'object' && 'code' in e && e.code === 'session_overlapping') {
+      errorMsg = 'Une autre séance existe déjà sur ce créneau horaire. Veuillez choisir un autre horaire.';
+    } else {
+      errorMsg = 'Erreur lors de la création de la séance.';
+    }
+  } finally {
+    submitting = false;
+  }
+}
 </script>
 
 <div class="form-container">

@@ -2,6 +2,8 @@
   import { onMount } from 'svelte';
   import { fly, fade } from 'svelte/transition';
   import { createUser } from '$lib/api/auth.api';
+  let firstName = '';
+  let lastName = '';
   let email = '';
   let password = '';
   let error = '';
@@ -16,8 +18,10 @@
     success = '';
     loading = true;
     try {
-      await createUser(email, password);
+      await createUser(email, password, firstName, lastName);
       success = 'Inscription réussie ! Vous pouvez maintenant vous connecter.';
+      firstName = '';
+      lastName = '';
       email = '';
       password = '';
     } catch (e) {
@@ -134,6 +138,8 @@ button[type="submit"]:disabled {
   {#if error}<div class="error-message" in:fade={{ duration: 200 }}>{error}</div>{/if}
   {#if success}<div class="success-message" in:fade={{ duration: 200 }}>{success}</div>{/if}
   <form on:submit|preventDefault={handleRegister}>
+    <input type="text" bind:value={firstName} placeholder="Prénom" required />
+    <input type="text" bind:value={lastName} placeholder="Nom" required />
     <input type="email" bind:value={email} placeholder="Adresse e-mail" required />
     <input type="password" bind:value={password} placeholder="Mot de passe" required />
     <button type="submit" disabled={loading}>{loading ? 'Inscription...' : "S'inscrire"}</button>

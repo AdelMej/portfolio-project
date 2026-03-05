@@ -52,7 +52,11 @@
 			await updateSession(session.id, { title, starts_at, ends_at });
 			success = 'Seance mise a jour avec succes';
 		} catch (e: any) {
-			error = e?.detail ?? 'Erreur lors de la mise a jour';
+			if (e?.code === 'session_overlapping') {
+				error = 'Une autre séance existe déjà sur ce créneau horaire. Veuillez choisir un autre horaire.';
+			} else {
+				error = e?.detail ?? 'Erreur lors de la mise à jour';
+			}
 		} finally {
 			saving = false;
 		}
