@@ -1,0 +1,6 @@
+from typing import Protocol
+
+
+class PasswordHasherPort(Protocol):
+    def hash(self, plain: str) -> str: ...
+    def verify(self, plain: str, hashed: str) -> bool: ...
