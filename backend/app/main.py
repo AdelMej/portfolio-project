@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 
 from fastapi import FastAPI
-from sqlalchemy import text
+from fastapi.responses import JSONResponse
 
 from app.infrastructure.settings.app_settings import AppSettings
 from app.infrastructure.persistence.sqlalchemy.engines import (
