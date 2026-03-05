@@ -88,11 +88,11 @@ class SessionService:
 
     async def get_session_participants(
             self,
-            uow: SessionUoWPort,
+            uow: SessionPulbicUoWPort,
             session_id: UUID
     ) -> list:
         from app.feature.session.session_dto import ParticipantDTO
-        if not await uow.session_read_repo.exist_session(session_id):
+        if not await uow.session_read_repo.public_exists_session(session_id):
             raise SessionNotFoundError()
         participants = await uow.session_read_repo.get_session_participants(
             session_id=session_id
