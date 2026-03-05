@@ -1,55 +1,77 @@
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
-from app.domain.auth.actor_entity import Actor
 from app.feature.auth.auth_dependencies import get_auth_service
 from app.feature.auth.auth_service import AuthService
 from app.feature.auth.auth_dto import (
     LoginInputDTO,
-    TokenOutputDTO
+    RegistrationInputDTO,
+    TokenOutputDTO,
 )
 from app.domain.auth.auth_exceptions import (
+    AuthDomainError,
+    EmailAlreadyExistError,
     InvalidEmailError,
     InvalidPasswordError,
 )
-from app.feature.auth.auth_exception import InvalidCredentialsError
-from app.feature.auth.uow.login_uow import LoginUoWPort
-from app.infrastructure.persistence.sqlalchemy.provider import get_login_uow
+from app.feature.auth.auth_exception import (
+    InvalidCredentialsError,
+    InvalidTokenError,
+    RegistrationFailed
+)
+from app.feature.auth.uow.auth_uow_port import AuthUoWPort
+from app.infrastructure.persistence.sqlalchemy.provider import (
+    get_auth_uow,
+)
 from app.infrastructure.security.provider import (
-    get_current_actor,
     get_jwt,
     get_password_hasher,
-    get_refresh_token_generator,
+    get_token_generator,
     get_token_hasher
 )
 from app.infrastructure.settings.provider import get_refresh_token_ttl
+from app.shared.exceptions.commons import UnauthorizedError
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
-from app.shared.security.refresh_token_generator_port import (
-    RefreshTokenGeneratorPort
+from app.shared.security.token_generator_port import (
+    TokenGeneratorPort
 )
 from app.shared.security.token_hasher_port import TokenHasherPort
+import logging
 
 
-router = APIRouter(prefix="/auth")
+logger = logging.getLogger("app.auth")
+
+router = APIRouter(
+    prefix="/auth",
+    tags=["Auth"]
+)
 
 
-@router.post("/login")
+@router.post(
+    path="/login",
+    response_model=TokenOutputDTO,
+    status_code=200
+    )
 async def login(
     input: LoginInputDTO,
     request: Request,
     response: Response,
-    login_uow: LoginUoWPort = Depends(get_login_uow),
+    login_uow: AuthUoWPort = Depends(get_auth_uow),
     service: AuthService = Depends(get_auth_service),
     password_hasher: PasswordHasherPort = Depends(get_password_hasher),
     jwt: JwtPort = Depends(get_jwt),
     token_hasher: TokenHasherPort = Depends(get_token_hasher),
-    refresh_token_generator: RefreshTokenGeneratorPort = Depends(
-        get_refresh_token_generator
+    token_generator: TokenGeneratorPort = Depends(
+        get_token_generator
     ),
     refresh_ttl: int = Depends(get_refresh_token_ttl),
 ) -> TokenOutputDTO:
-    existing_refresh = request.cookies.get("refresh_token")
+    """
+    Authenticate a user and return an access token.
 
+    A refresh token is issued and stored in an HTTP-only cookie.
+    """
+    existing_refresh = request.cookies.get("refresh_token")
     try:
         access, refresh = await service.login(
             input=input,
@@ -57,7 +79,7 @@ async def login(
             uow=login_uow,
             jwt=jwt,
             token_hasher=token_hasher,
-            refresh_token_generator=refresh_token_generator,
+            token_generator=token_generator,
             refresh_token_ttl=refresh_ttl,
             password_hasher=password_hasher
         )
@@ -68,7 +90,7 @@ async def login(
         key="refresh_token",
         value=refresh,
         httponly=True,
-        secure=True,
+        secure=False, # Set to False for local development; ensure it's True in production
         samesite="lax",
         path="/refresh",
         max_age=refresh_ttl
@@ -85,41 +107,50 @@ async def token(
     request: Request,
     response: Response,
     form: OAuth2PasswordRequestForm = Depends(),
-    login_uow: LoginUoWPort = Depends(get_login_uow),
+    uow: AuthUoWPort = Depends(get_auth_uow),
     service: AuthService = Depends(get_auth_service),
     password_hasher: PasswordHasherPort = Depends(get_password_hasher),
     jwt: JwtPort = Depends(get_jwt),
     token_hasher: TokenHasherPort = Depends(get_token_hasher),
-    refresh_token_generator: RefreshTokenGeneratorPort = Depends(
-        get_refresh_token_generator
+    refresh_token_generator: TokenGeneratorPort = Depends(
+        get_token_generator
     ),
     refresh_ttl: int = Depends(get_refresh_token_ttl),
 ) -> TokenOutputDTO:
+    """
+    Authenticate a user and return an access token.
+
+    A refresh token is issued and stored in an HTTP-only cookie.
+    """
     existing_refresh = request.cookies.get("refresh_token")
 
-    input = LoginInputDTO(
-        email=form.username,
-        password=form.password
-    )
     try:
+        input = LoginInputDTO(
+            email=form.username,
+            password=form.password
+        )
+
         access, refresh = await service.login(
             input=input,
             existing_refresh=existing_refresh,
-            uow=login_uow,
+            uow=uow,
             jwt=jwt,
             token_hasher=token_hasher,
-            refresh_token_generator=refresh_token_generator,
+            token_generator=refresh_token_generator,
             refresh_token_ttl=refresh_ttl,
             password_hasher=password_hasher
         )
-    except (InvalidEmailError, InvalidPasswordError):
+    except (InvalidEmailError, InvalidPasswordError, ValueError) as e:
+        logger.info(
+            e.__class__.__name__
+        )
         raise InvalidCredentialsError()
 
     response.set_cookie(
         key="refresh_token",
         value=refresh,
         httponly=True,
-        secure=True,
+        secure=False, # Set to True in production with HTTPS
         samesite="lax",
         path="/auth",
         max_age=refresh_ttl
@@ -131,7 +162,102 @@ async def token(
     )
 
 
-@router.get("/me")
-async def me(actor: Actor = Depends(get_current_actor)):
-    print(actor)
-    return {"actor": actor.id}
+@router.post(
+    path="/refresh",
+    response_model=TokenOutputDTO,
+    status_code=200
+)
+async def refresh(
+    request: Request,
+    response: Response,
+    uow: AuthUoWPort = Depends(get_auth_uow),
+    jwt: JwtPort = Depends(get_jwt),
+    service: AuthService = Depends(get_auth_service),
+    token_hasher: TokenHasherPort = Depends(get_token_hasher),
+    token_generator: TokenGeneratorPort = Depends(get_token_generator),
+    refresh_ttl: int = Depends(get_refresh_token_ttl)
+) -> TokenOutputDTO:
+    current_refresh = request.cookies.get("refresh_token")
+
+    if current_refresh is None:
+        raise UnauthorizedError()
+
+    try:
+        access, refresh = await service.refresh(
+            current_refresh_token=current_refresh,
+            uow=uow,
+            jwt=jwt,
+            token_hasher=token_hasher,
+            token_generator=token_generator,
+            refresh_ttl=refresh_ttl,
+        )
+    except AuthDomainError as e:
+        logger.info(
+            e.__class__.__name__
+        )
+        raise InvalidTokenError()
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh,
+        httponly=True,
+        secure=False, # Set to False for local development; ensure it's True in production
+        samesite="lax",
+        path="/auth",
+        max_age=refresh_ttl
+    )
+
+    return TokenOutputDTO(
+        access_token=access,
+        token_type="bearer"
+    )
+
+
+@router.put(
+    path="/register",
+    status_code=201
+)
+async def register(
+    input: RegistrationInputDTO,
+    uow: AuthUoWPort = Depends(get_auth_uow),
+    password_hasher: PasswordHasherPort = Depends(get_password_hasher),
+    service: AuthService = Depends(get_auth_service)
+):
+    try:
+        await service.register(
+            input=input,
+            uow=uow,
+            password_hasher=password_hasher,
+        )
+    except EmailAlreadyExistError:
+        raise RegistrationFailed()
+
+    return {"message": "registration successful"}
+
+
+@router.post(
+    path="/logout",
+    status_code=204
+)
+async def logout(
+    request: Request,
+    response: Response,
+    uow: AuthUoWPort = Depends(get_auth_uow),
+    service: AuthService = Depends(get_auth_service),
+    token_hasher: TokenHasherPort = Depends(get_token_hasher)
+) -> None:
+    refresh_token = request.cookies.get("refresh_token")
+
+    if refresh_token is None:
+        return
+
+    await service.logout(
+        token=refresh_token,
+        uow=uow,
+        token_hasher=token_hasher
+    )
+
+    response.delete_cookie(
+        key="refresh_token",
+        path="/auth"
+    )

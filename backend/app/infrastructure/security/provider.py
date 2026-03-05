@@ -3,12 +3,12 @@ from app.feature.auth.auth_exception import InvalidTokenError
 from app.infrastructure.security.jwt import JoseJwt
 from app.infrastructure.security.password_hasher import Argon2PasswordHasher
 from app.infrastructure.security.refresh_token_generator import (
-    RefreshTokenGenerator
+    TokenGenerator
 )
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
-from app.shared.security.refresh_token_generator_port import (
-    RefreshTokenGeneratorPort
+from app.shared.security.token_generator_port import (
+    TokenGeneratorPort
 )
 from app.infrastructure.settings.provider import (
     get_jwt_algorithm,
@@ -24,8 +24,8 @@ from functools import lru_cache
 from app.feature.auth.auth_dependencies import oauth2_scheme
 
 
-def get_refresh_token_generator() -> RefreshTokenGeneratorPort:
-    return RefreshTokenGenerator()
+def get_token_generator() -> TokenGeneratorPort:
+    return TokenGenerator()
 
 
 def get_jwt(

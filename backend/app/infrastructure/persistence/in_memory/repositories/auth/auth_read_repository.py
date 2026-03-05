@@ -2,7 +2,7 @@ from app.domain.auth.refresh_token_entity import RefreshTokenEntity
 from app.infrastructure.persistence.in_memory.storage import (
     InMemoryAuthStorage
 )
-from app.feature.auth.repositories.auth_read_repository import (
+from app.feature.auth.repositories.auth_read_repository_port import (
     AuthReadRepositoryPort
 )
 

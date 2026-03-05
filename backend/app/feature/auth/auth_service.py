@@ -1,22 +1,43 @@
 from datetime import timedelta
 from app.domain.auth.actor_entity import TokenActor
-from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
+from app.domain.auth.refresh_token_entity import (
+    NewRefreshTokenEntity,
+)
+from app.domain.auth.refresh_tokens_rules import (
+    ensure_refresh_token_is_valid
+)
+from app.domain.auth.role import Role
+from app.domain.user.user_entity import NewUserEntity
+from app.domain.user.user_profile_entity import (
+    NewUserProfileEntity,
+)
+from app.domain.user.user_profile_rules import (
+    ensure_first_name_is_valid,
+    ensure_last_name_is_valid
+)
 from app.feature.auth.auth_dto import (
     LoginInputDTO,
+    RegistrationInputDTO,
 )
 from app.domain.auth.auth_exceptions import (
+    EmailAlreadyExistError,
+    ExpiredRefreshTokenError,
     InvalidEmailError,
     InvalidPasswordError,
+    InvalidRefreshTokenError,
+    RevokedRefreshTokenError,
     UserDisabledError
 )
-from app.feature.auth.uow.login_uow import LoginUoWPort
+from app.feature.auth.uow.auth_uow_port import AuthUoWPort
 from app.shared.security.jwt_port import JwtPort
 from app.shared.security.password_hasher_port import PasswordHasherPort
-from app.shared.security.refresh_token_generator_port import (
-    RefreshTokenGeneratorPort
+from app.shared.security.token_generator_port import (
+    TokenGeneratorPort
 )
 from app.shared.security.token_hasher_port import TokenHasherPort
 from app.shared.utils.time import utcnow
+from app.domain.auth.auth_password_rules import ensure_password_is_strong
+from app.domain.auth.auth_email_rules import ensure_email_is_valid
 
 
 class AuthService:
@@ -32,21 +53,17 @@ class AuthService:
     injected ports and repositories to perform side effects, making it
     suitable for use across different delivery mechanisms (e.g., HTTP APIs,
     background jobs).
-
-    Attributes:
-        _uow: Unit of work providing access to authentication repositories and
-            transactional boundaries.
     """
     async def login(
         self,
         input: LoginInputDTO,
         existing_refresh: str | None,
-        uow: LoginUoWPort,
+        uow: AuthUoWPort,
         refresh_token_ttl: int,
         jwt: JwtPort,
         password_hasher: PasswordHasherPort,
         token_hasher: TokenHasherPort,
-        refresh_token_generator: RefreshTokenGeneratorPort
+        token_generator: TokenGeneratorPort
     ) -> tuple[str, str]:
         """Authenticate a user and issue access and refresh tokens.
 
@@ -84,10 +101,10 @@ class AuthService:
         email = input.email.strip().lower()
         password = input.password.strip()
 
-        if not await uow.auth_read.exist_email(email):
+        if not await uow.auth_read_repo.exist_email(email):
             raise InvalidEmailError()
 
-        user = await uow.auth_read.system_get_user_by_email(email)
+        user = await uow.auth_read_repo.get_user_by_email(email)
 
         if user is None:
             raise InvalidEmailError()
@@ -101,13 +118,15 @@ class AuthService:
         token = None
         if existing_refresh:
             refresh_hash = token_hasher.hash(existing_refresh)
-            token = await uow.auth_read.get_refresh_token(refresh_hash)
+            token = await uow.auth_read_repo.get_refresh_token(
+                refresh_hash
+            )
 
-        refresh_plain = refresh_token_generator.generate()
+        refresh_plain = token_generator.generate()
         refresh_hash = token_hasher.hash(refresh_plain)
 
         if token:
-            await uow.auth_update.rotate_refresh_token(
+            await uow.auth_update_repo.rotate_refresh_token(
                 current_token_hash=token.token_hash,
                 new_token=NewRefreshTokenEntity(
                     user_id=user.id,
@@ -116,7 +135,7 @@ class AuthService:
                 )
             )
         else:
-            await uow.auth_update.rotate_refresh_token(
+            await uow.auth_update_repo.rotate_refresh_token(
                 current_token_hash=None,
                 new_token=NewRefreshTokenEntity(
                     user_id=user.id,
@@ -136,3 +155,100 @@ class AuthService:
             ),
             refresh_plain
         )
+
+    async def refresh(
+        self,
+        current_refresh_token: str,
+        uow: AuthUoWPort,
+        jwt: JwtPort,
+        token_hasher: TokenHasherPort,
+        token_generator: TokenGeneratorPort,
+        refresh_ttl: int,
+    ) -> tuple[str, str]:
+        ensure_refresh_token_is_valid(current_refresh_token)
+
+        current_refresh_hash = token_hasher.hash(current_refresh_token)
+        current_refresh = await uow.auth_read_repo.get_refresh_token(
+            current_refresh_hash
+        )
+
+        if current_refresh is None:
+            raise InvalidRefreshTokenError()
+
+        if current_refresh.is_expired():
+            raise ExpiredRefreshTokenError()
+
+        if current_refresh.is_revoked():
+            raise RevokedRefreshTokenError()
+
+        user = await uow.auth_read_repo.get_user_by_id(
+            current_refresh.user_id
+        )
+
+        new_token_plain = token_generator.generate()
+        new_token_hash = token_hasher.hash(new_token_plain)
+
+        new_refresh_token = NewRefreshTokenEntity(
+            user_id=user.id,
+            token_hash=new_token_hash,
+            expires_at=utcnow() + timedelta(seconds=refresh_ttl)
+        )
+
+        await uow.auth_update_repo.rotate_refresh_token(
+            current_token_hash=current_refresh_hash,
+            new_token=new_refresh_token
+        )
+
+        token_actor = TokenActor(
+            id=user.id,
+            roles=user.roles,
+        )
+
+        access_token = jwt.issue_access_token(
+            actor=token_actor
+        )
+
+        return access_token, new_token_plain
+
+    async def logout(
+        self,
+        token: str,
+        uow: AuthUoWPort,
+        token_hasher: TokenHasherPort,
+    ) -> None:
+        token_hash = token_hasher.hash(token)
+
+        await uow.auth_update_repo.revoke_refresh_token(token_hash)
+
+    async def register(
+        self,
+        input: RegistrationInputDTO,
+        uow: AuthUoWPort,
+        password_hasher: PasswordHasherPort,
+    ) -> None:
+        # normalization
+        email = input.email.strip().lower()
+        password = input.password.strip()
+        first_name = input.first_name.strip()
+        last_name = input.last_name.strip()
+
+        ensure_password_is_strong(password)
+        ensure_email_is_valid(email)
+        ensure_first_name_is_valid(first_name)
+        ensure_last_name_is_valid(last_name)
+
+        if await uow.auth_read_repo.exist_email(email):
+            raise EmailAlreadyExistError()
+
+        new_user = NewUserEntity(
+            email=email,
+            password_hash=password_hasher.hash(password),
+            role=Role.USER
+        )
+
+        new_user_profile = NewUserProfileEntity(
+            first_name=first_name,
+            last_name=last_name
+        )
+
+        await uow.auth_creation_repo.register(new_user, new_user_profile)

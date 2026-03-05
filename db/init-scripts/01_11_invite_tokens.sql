@@ -73,4 +73,3 @@ COMMENT ON COLUMN app.invite_tokens.created_at IS
 
 COMMENT ON COLUMN app.invite_tokens.created_by IS
 'User who generated the invite token, if applicable.';
-

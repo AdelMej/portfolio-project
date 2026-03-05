@@ -1,17 +1,13 @@
-from sqlalchemy import update
+from uuid import UUID
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import text
 from app.domain.auth.refresh_token_entity import NewRefreshTokenEntity
-from app.feature.auth.repositories.auth_update_repository import (
-    AuthUpdateRepositoryPort
+from app.feature.auth.repositories.auth_update_repository_port import (
+    AuthUpdateRepoPort
 )
-from app.infrastructure.persistence.sqlalchemy.models.refresh_tokens import (
-    RefreshToken
-)
-from app.shared.utils.time import utcnow
 
 
-class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
+class SqlAlchemyAuthUpdateRepo(AuthUpdateRepoPort):
     def __init__(
         self,
         session: AsyncSession,
@@ -20,13 +16,14 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
 
     async def revoke_refresh_token(self, token_hash: str) -> None:
         await self._session.execute(
-            update(RefreshToken)
-            .where(
-                RefreshToken.token_hash == token_hash,
-                RefreshToken.token_hash.is_(None),
+            text(
+                """
+                    SELECT
+                        app_fcn.revoke_refresh_token(:token_hash)
+                """
+            ),
+            {"token_hash": token_hash}
             )
-            .values(revoked_at=utcnow())
-        )
 
     async def rotate_refresh_token(
         self,
@@ -38,17 +35,12 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
         res = await self._session.execute(
             text(
                 """
-                INSERT INTO app.refresh_tokens (
-                    user_id,
-                    token_hash,
-                    expires_at
-                )
-                VALUES (
-                    :user_id,
-                    :token_hash,
-                    :expires_at
-                )
-                RETURNING id
+                    SELECT
+                        app_fcn.create_refresh_token(
+                            :user_id,
+                            :token_hash,
+                            :expires_at
+                        )
                 """
             ),
             {
@@ -64,12 +56,12 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
             await self._session.execute(
                 text(
                     """
-                    UPDATE app.refresh_tokens
-                    SET
-                        replaced_by_token_id = :new_id
-                        revoked_at = now()
-                    WHERE token_hash = :old_hash
-                        AND user_id = :user_id
+                        SELECT
+                            app_fcn.rotate_refresh_token(
+                                :new_id,
+                                :old_hash,
+                                :user_id
+                            )
                     """
                 ),
                 {
@@ -78,3 +70,16 @@ class SqlAlchemyAuthUpdateRepository(AuthUpdateRepositoryPort):
                     "user_id": new_token.user_id
                 }
             )
+
+    async def revoke_all_refresh_token(self, user_id: UUID) -> None:
+        await self._session.execute(
+            text("""
+                SELECT
+                    app_fcn.revoke_all_refresh_token(
+                        :user_id
+                    )
+            """),
+            {
+                "user_id": user_id
+            }
+        )

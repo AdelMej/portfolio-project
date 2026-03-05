@@ -1,9 +1,9 @@
-from .auth_read_repository import SqlAlchemyAuthReadRepository
-from .auth_update_repository import SqlAlchemyAuthUpdateRepository
-from .auth_creation_repository import SqlAlchemyAuthCreationRepository
+from .auth_read_repository import SqlAlchemyAuthReadRepo
+from .auth_update_repository import SqlAlchemyAuthUpdateRepo
+from .auth_creation_repository import SqlAlchemyAuthCreationRepo
 
 __all__ = [
-    "SqlAlchemyAuthReadRepository",
-    "SqlAlchemyAuthUpdateRepository",
-    "SqlAlchemyAuthCreationRepository"
+    "SqlAlchemyAuthReadRepo",
+    "SqlAlchemyAuthUpdateRepo",
+    "SqlAlchemyAuthCreationRepo",
 ]

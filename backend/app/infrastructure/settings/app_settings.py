@@ -34,6 +34,13 @@ class AppSettings(BaseSettings):
 
     refresh_token_hmac_secret: str
 
+    stripe_secret_key: str
+    stripe_webhook_secret: str
+
+    session_participation_ttl_seconds: int
+
+    frontend_base_url: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

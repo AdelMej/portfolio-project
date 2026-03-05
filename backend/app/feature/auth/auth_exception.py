@@ -4,3 +4,7 @@ class InvalidCredentialsError(Exception):
 
 class InvalidTokenError(Exception):
     pass
+
+
+class RegistrationFailed(Exception):
+    pass

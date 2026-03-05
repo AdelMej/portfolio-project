@@ -3,6 +3,7 @@ import pytest
 from uuid import uuid4
 
 from app.domain.auth.refresh_token_entity import RefreshTokenEntity
+from app.domain.auth.role import Role
 from app.infrastructure.persistence.in_memory.storage import (
     InMemoryAuthStorage,
 )
@@ -39,6 +40,7 @@ async def test_login_success():
     user = UserEntity(
         id=user_id,
         email="test@test.com",
+        roles={Role.USER, },
         password_hash="secret",
         disabled_at=None,
         disabled_reason=None
@@ -50,20 +52,19 @@ async def test_login_success():
     service = AuthService()
     uow = InMemoryLoginUoW(storage)
 
-    async with uow:
-        access, refresh = await service.login(
-            input=LoginInputDTO(
-                email="test@test.com",
-                password="secret"
-            ),
-            existing_refresh=None,
-            uow=uow,
-            refresh_token_ttl=3600,
-            token_hasher=InMemoryTokenHasher(),
-            refresh_token_generator=InMemoryRefreshTokenGenerator(),
-            jwt=InMemoryJwt(),
-            password_hasher=InMemoryPasswordHasher(),
-        )
+    access, refresh = await service.login(
+        input=LoginInputDTO(
+            email="test@test.com",
+            password="secret"
+        ),
+        existing_refresh=None,
+        uow=uow,
+        refresh_token_ttl=3600,
+        token_hasher=InMemoryTokenHasher(),
+        refresh_token_generator=InMemoryRefreshTokenGenerator(),
+        jwt=InMemoryJwt(),
+        password_hasher=InMemoryPasswordHasher(),
+    )
 
     assert access.startswith("access:")
     assert refresh is not None
@@ -76,18 +77,18 @@ async def test_login_invalid_email():
     service = AuthService()
 
     uow = InMemoryLoginUoW(storage)
-    async with uow:
-        with pytest.raises(InvalidEmailError):
-            await service.login(
-                LoginInputDTO(email="nope@test.com", password="secret"),
-                existing_refresh=None,
-                refresh_token_ttl=3600,
-                uow=uow,
-                jwt=InMemoryJwt(),
-                password_hasher=InMemoryPasswordHasher(),
-                token_hasher=InMemoryTokenHasher(),
-                refresh_token_generator=InMemoryRefreshTokenGenerator(),
-            )
+
+    with pytest.raises(InvalidEmailError):
+        await service.login(
+            LoginInputDTO(email="nope@test.com", password="secret"),
+            existing_refresh=None,
+            refresh_token_ttl=3600,
+            uow=uow,
+            jwt=InMemoryJwt(),
+            password_hasher=InMemoryPasswordHasher(),
+            token_hasher=InMemoryTokenHasher(),
+            refresh_token_generator=InMemoryRefreshTokenGenerator(),
+        )
 
     assert len(storage.refresh_tokens) == 0
 
@@ -101,6 +102,7 @@ async def test_login_invalid_password():
         id=user_id,
         email="test@test.com",
         password_hash="correct",
+        roles={Role.USER, },
         disabled_at=None,
         disabled_reason=None,
     )
@@ -109,18 +111,17 @@ async def test_login_invalid_password():
     service = AuthService()
     uow = InMemoryLoginUoW(storage)
 
-    async with uow:
-        with pytest.raises(InvalidPasswordError):
-            await service.login(
-                LoginInputDTO(email="test@test.com", password="wrong"),
-                existing_refresh=None,
-                refresh_token_ttl=3600,
-                uow=uow,
-                jwt=InMemoryJwt(),
-                password_hasher=InMemoryPasswordHasher(),
-                token_hasher=InMemoryTokenHasher(),
-                refresh_token_generator=InMemoryRefreshTokenGenerator(),
-            )
+    with pytest.raises(InvalidPasswordError):
+        await service.login(
+            LoginInputDTO(email="test@test.com", password="wrong"),
+            existing_refresh=None,
+            refresh_token_ttl=3600,
+            uow=uow,
+            jwt=InMemoryJwt(),
+            password_hasher=InMemoryPasswordHasher(),
+            token_hasher=InMemoryTokenHasher(),
+            refresh_token_generator=InMemoryRefreshTokenGenerator(),
+        )
 
 
 @pytest.mark.anyio
@@ -132,6 +133,7 @@ async def test_login_revokes_existing_refresh_token():
         id=user_id,
         email="test@test.com",
         password_hash="secret",
+        roles={Role.USER, },
         disabled_at=None,
         disabled_reason=None,
     )
@@ -151,17 +153,16 @@ async def test_login_revokes_existing_refresh_token():
     service = AuthService()
     uow = InMemoryLoginUoW(storage)
 
-    async with uow:
-        _, _ = await service.login(
-            LoginInputDTO(email="test@test.com", password="secret"),
-            existing_refresh=old_token_hash,
-            refresh_token_ttl=3600,
-            uow=uow,
-            jwt=InMemoryJwt(),
-            password_hasher=InMemoryPasswordHasher(),
-            token_hasher=InMemoryTokenHasher(),
-            refresh_token_generator=InMemoryRefreshTokenGenerator(),
-        )
+    _, _ = await service.login(
+        LoginInputDTO(email="test@test.com", password="secret"),
+        existing_refresh=old_token_hash,
+        refresh_token_ttl=3600,
+        uow=uow,
+        jwt=InMemoryJwt(),
+        password_hasher=InMemoryPasswordHasher(),
+        token_hasher=InMemoryTokenHasher(),
+        refresh_token_generator=InMemoryRefreshTokenGenerator(),
+    )
 
     assert storage.refresh_tokens[old_token_hash].revoked_at is not None
     assert len(storage.refresh_tokens) == 2
@@ -176,6 +177,7 @@ async def test_login_ignores_expired_refresh_token():
         id=user_id,
         email="test@test.com",
         password_hash="secret",
+        roles={Role.USER, },
         disabled_at=None,
         disabled_reason=None,
     )
@@ -193,17 +195,16 @@ async def test_login_ignores_expired_refresh_token():
     service = AuthService()
     uow = InMemoryLoginUoW(storage)
 
-    async with uow:
-        access, refresh = await service.login(
-            input=LoginInputDTO(email="test@test.com", password="secret"),
-            existing_refresh=token_hash,
-            refresh_token_ttl=3600,
-            uow=uow,
-            jwt=InMemoryJwt(),
-            password_hasher=InMemoryPasswordHasher(),
-            token_hasher=InMemoryTokenHasher(),
-            refresh_token_generator=InMemoryRefreshTokenGenerator(),
-        )
+    access, refresh = await service.login(
+        input=LoginInputDTO(email="test@test.com", password="secret"),
+        existing_refresh=token_hash,
+        refresh_token_ttl=3600,
+        uow=uow,
+        jwt=InMemoryJwt(),
+        password_hasher=InMemoryPasswordHasher(),
+        token_hasher=InMemoryTokenHasher(),
+        refresh_token_generator=InMemoryRefreshTokenGenerator(),
+    )
 
     new_hash = InMemoryTokenHasher().hash(refresh)
 
@@ -223,6 +224,7 @@ async def test_login_disabled_user():
         id=user_id,
         email="test@test.com",
         password_hash="secret",
+        roles={Role.USER, },
         disabled_at=utcnow(),
         disabled_reason="admin ban",
     )
@@ -231,18 +233,17 @@ async def test_login_disabled_user():
     service = AuthService()
     uow = InMemoryLoginUoW(storage)
 
-    async with uow:
-        with pytest.raises(UserDisabledError):
-            await service.login(
-                LoginInputDTO(email="test@test.com", password="secret"),
-                existing_refresh=None,
-                refresh_token_ttl=3600,
-                uow=uow,
-                jwt=InMemoryJwt(),
-                password_hasher=InMemoryPasswordHasher(),
-                token_hasher=InMemoryTokenHasher(),
-                refresh_token_generator=InMemoryRefreshTokenGenerator(),
-            )
+    with pytest.raises(UserDisabledError):
+        await service.login(
+            LoginInputDTO(email="test@test.com", password="secret"),
+            existing_refresh=None,
+            refresh_token_ttl=3600,
+            uow=uow,
+            jwt=InMemoryJwt(),
+            password_hasher=InMemoryPasswordHasher(),
+            token_hasher=InMemoryTokenHasher(),
+            refresh_token_generator=InMemoryRefreshTokenGenerator(),
+        )
 
     assert len(storage.refresh_tokens) == 0
 
@@ -256,6 +257,7 @@ async def test_login_rotates_existing_refresh_token():
         id=user_id,
         email="test@test.com",
         password_hash="secret",
+        roles={Role.USER, },
         disabled_at=None,
         disabled_reason=None,
     )
@@ -277,17 +279,16 @@ async def test_login_rotates_existing_refresh_token():
     service = AuthService()
     uow = InMemoryLoginUoW(storage)
 
-    async with uow:
-        access, new_refresh = await service.login(
-            input=LoginInputDTO(email="test@test.com", password="secret"),
-            existing_refresh=old_refresh_plain,
-            refresh_token_ttl=3600,
-            uow=uow,
-            jwt=InMemoryJwt(),
-            password_hasher=InMemoryPasswordHasher(),
-            token_hasher=InMemoryTokenHasher(),
-            refresh_token_generator=InMemoryRefreshTokenGenerator(),
-        )
+    access, new_refresh = await service.login(
+        input=LoginInputDTO(email="test@test.com", password="secret"),
+        existing_refresh=old_refresh_plain,
+        refresh_token_ttl=3600,
+        uow=uow,
+        jwt=InMemoryJwt(),
+        password_hasher=InMemoryPasswordHasher(),
+        token_hasher=InMemoryTokenHasher(),
+        refresh_token_generator=InMemoryRefreshTokenGenerator(),
+    )
 
     # old token revoked
     assert storage.refresh_tokens[old_refresh_hash].revoked_at is not None
@@ -307,6 +308,7 @@ async def test_login_fails_for_disabled_user():
         id=user_id,
         email="test@test.com",
         password_hash="secret",
+        roles={Role.USER, Role.ADMIN},
         disabled_at=utcnow(),
         disabled_reason="banned",
     )
