@@ -425,6 +425,7 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
                 join app.sessions s2 on s2.id = sp2.session_id 
                 WHERE sp2.session_id = s.id
                     AND sp2.user_id = :user_id
+                    and sp2.cancelled_at IS NULL
                     and (
                     	sp2.paid_at is not null
                     	or s2.price_cents = 0
@@ -486,6 +487,7 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
                 ]
             ) for row in rows
         ], has_more
+
     async def get_session_participants(
         self,
         session_id: UUID
@@ -502,6 +504,7 @@ class SqlAlchemySessionReadRepo(SessionReadRepoPort):
         )
         rows = res.all()
         return [(r[0], r[1]) for r in rows]
+
     async def get_complete_session_by_id(
         self,
         session_id: UUID
