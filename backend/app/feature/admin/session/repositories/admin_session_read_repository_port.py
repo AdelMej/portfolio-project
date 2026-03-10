@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from app.domain.session.session_entity import SessionEntity
+from app.domain.session.session_entity import SessionCompleteEntity
 
 
 class AdminSessionReadRepoPort(Protocol):
@@ -13,7 +13,7 @@ class AdminSessionReadRepoPort(Protocol):
         offset: int,
         _from: datetime | None,
         to: datetime | None
-    ) -> tuple[list[SessionEntity], bool]:
+    ) -> tuple[list[SessionCompleteEntity], bool]:
         ...
 
     async def get_all_sessions(
@@ -22,7 +22,7 @@ class AdminSessionReadRepoPort(Protocol):
         offset: int,
         _from: datetime | None,
         to: datetime | None
-    ) -> tuple[list[SessionEntity], bool]:
+    ) -> tuple[list[SessionCompleteEntity], bool]:
         ...
 
     async def exist_session(
