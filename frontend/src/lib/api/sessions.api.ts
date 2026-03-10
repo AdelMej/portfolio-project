@@ -140,6 +140,12 @@ export async function cancelSession(id: string) {
   });
 }
 
+export async function cancelRegistration(sessionId: string): Promise<void> {
+  return apiFetch<void>(`/sessions/${sessionId}/cancel-registration`, {
+    method: 'POST'
+  });
+}
+
 export async function listCoachSessions(): Promise<CompleteSession[]> {
   const res: CompleteSessionsResponse = await apiFetch('/coach/sessions');
   return res.items.map(mapCompleteSession);
