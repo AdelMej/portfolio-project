@@ -2,8 +2,11 @@ from datetime import datetime
 from uuid import UUID
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy.sql import text
-from app.domain.session.session_entity import SessionEntity
+from app.domain.session.session_entity import (
+    SessionCompleteEntity,
+)
 from app.domain.session.session_status import SessionStatus
+from app.domain.user.user_profile_entity import UserProfileEntity
 from app.feature.admin.session.repositories import (
     AdminSessionReadRepoPort
 )
@@ -20,52 +23,76 @@ class SqlAlchemyAdminSessionReadRepo(AdminSessionReadRepoPort):
         offset: int,
         _from: datetime | None,
         to: datetime | None
-    ) -> tuple[list[SessionEntity], bool]:
-        res = await self._session.execute(
-            text("""
-                SELECT
-                    id,
-                    coach_id,
-                    title,
-                    starts_at,
-                    ends_at,
-                    status::text,
-                    cancelled_at,
-                    price_cents,
-                    currency,
-                    created_at,
-                    updated_at
-                FROM app.sessions
-                WHERE coach_id = :coach_id
-                AND (
-                    CAST(:from_ts as timestamptz) IS NULL
-                    OR starts_at >= CAST(:from_ts as timestamptz)
-                )
-                AND (
-                    CAST(:to_ts as timestamptz) IS NULL
-                    OR ends_at <= CAST(:to_ts as timestamptz)
-                )
-                ORDER BY created_at DESC
-                LIMIT :limit
-                OFFSET :offset
-            """),
-            {
-                "coach_id": coach_id,
-                "from_ts": _from,
-                "to_ts": to,
-                "limit": limit + 1,
-                "offset": offset
-            }
-        )
+    ) -> tuple[list[SessionCompleteEntity], bool]:
+        stmt = text("""
+           SELECT
+            s.id,
+            cp.user_id,
+            cp.first_name,
+            cp.last_name,
+            s.title,
+            s.starts_at,
+            s.ends_at,
+            s.status,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency,
+            s.created_at,
+            s.updated_at,
+            COALESCE(
+                array_agg(
+                    json_build_object(
+                        'user_id', up.user_id,
+                        'first_name', up.first_name,
+                        'last_name', up.last_name
+                    )
+                ) FILTER (WHERE up.user_id IS NOT NULL),
+                '{}'
+            ) AS participants
+        FROM app.sessions s
+        JOIN app.v_coach_public cp
+            ON cp.user_id = s.coach_id
+        LEFT JOIN app.session_participation sp
+            ON sp.session_id = s.id
+        LEFT JOIN app.user_profiles up
+            ON up.user_id = sp.user_id
+        WHERE cp.user_id = :coach_id
+        GROUP BY
+            s.id,
+            cp.user_id,
+            cp.first_name,
+            cp.last_name,
+            s.title,
+            s.starts_at,
+            s.ends_at,
+            s.status,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency,
+            s.created_at,
+            s.updated_at
+        OFFSET :offset
+        LIMIT :limit
+        """)
+
+        res = await self._session.execute(stmt, {
+            "coach_id": coach_id,
+            "offset": offset,
+            "limit": limit
+        })
 
         rows = res.mappings().all()
         has_more = len(rows) > limit
         rows[:limit]
 
         return [
-            SessionEntity(
+            SessionCompleteEntity(
                 id=row["id"],
-                coach_id=row["coach_id"],
+                coach=UserProfileEntity(
+                    user_id=row["user_id"],
+                    first_name=row["first_name"],
+                    last_name=row["last_name"]
+                ),
                 title=row["title"],
                 starts_at=row["starts_at"],
                 ends_at=row["ends_at"],
@@ -74,7 +101,14 @@ class SqlAlchemyAdminSessionReadRepo(AdminSessionReadRepoPort):
                 price_cents=row["price_cents"],
                 currency=row["currency"],
                 created_at=row["created_at"],
-                updated_at=row["updated_at"]
+                updated_at=row["updated_at"],
+                participants=[
+                    UserProfileEntity(
+                        user_id=participant["user_id"],
+                        first_name=participant["first_name"],
+                        last_name=participant["last_name"]
+                    ) for participant in row["participants"]
+                ]
             ) for row in rows
         ], has_more
 
@@ -84,50 +118,74 @@ class SqlAlchemyAdminSessionReadRepo(AdminSessionReadRepoPort):
         offset: int,
         _from: datetime | None,
         to: datetime | None
-    ) -> tuple[list[SessionEntity], bool]:
-        res = await self._session.execute(
-            text("""
-                SELECT
-                    id,
-                    coach_id,
-                    title,
-                    starts_at,
-                    ends_at,
-                    status::text,
-                    cancelled_at,
-                    price_cents,
-                    currency,
-                    created_at,
-                    updated_at
-                FROM app.sessions
-                WHERE (
-                    CAST(:from_ts as timestamptz) IS NULL
-                    OR starts_at >= CAST(:from_ts as timestamptz)
-                )
-                AND (
-                    CAST(:to_ts as timestamptz) IS NULL
-                    OR ends_at <= CAST(:to_ts as timestamptz)
-                )
-                ORDER BY created_at DESC
-                LIMIT :limit
-                OFFSET :offset
-            """),
-            {
-                "from_ts": _from,
-                "to_ts": to,
-                "limit": limit + 1,
-                "offset": offset
-            }
-        )
+    ) -> tuple[list[SessionCompleteEntity], bool]:
+        stmt = text("""
+           SELECT
+            s.id,
+            cp.user_id,
+            cp.first_name,
+            cp.last_name,
+            s.title,
+            s.starts_at,
+            s.ends_at,
+            s.status,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency,
+            s.created_at,
+            s.updated_at,
+            COALESCE(
+                array_agg(
+                    json_build_object(
+                        'user_id', up.user_id,
+                        'first_name', up.first_name,
+                        'last_name', up.last_name
+                    )
+                ) FILTER (WHERE up.user_id IS NOT NULL),
+                '{}'
+            ) AS participants
+        FROM app.sessions s
+        JOIN app.v_coach_public cp
+            ON cp.user_id = s.coach_id
+        LEFT JOIN app.session_participation sp
+            ON sp.session_id = s.id
+        LEFT JOIN app.user_profiles up
+            ON up.user_id = sp.user_id
+        GROUP BY
+            s.id,
+            cp.user_id,
+            cp.first_name,
+            cp.last_name,
+            s.title,
+            s.starts_at,
+            s.ends_at,
+            s.status,
+            s.cancelled_at,
+            s.price_cents,
+            s.currency,
+            s.created_at,
+            s.updated_at
+        OFFSET :offset
+        LIMIT :limit
+        """)
+
+        res = await self._session.execute(stmt, {
+            "offset": offset,
+            "limit": limit
+        })
 
         rows = res.mappings().all()
         has_more = len(rows) > limit
         rows[:limit]
 
         return [
-            SessionEntity(
+            SessionCompleteEntity(
                 id=row["id"],
-                coach_id=row["coach_id"],
+                coach=UserProfileEntity(
+                    user_id=row["user_id"],
+                    first_name=row["first_name"],
+                    last_name=row["last_name"]
+                ),
                 title=row["title"],
                 starts_at=row["starts_at"],
                 ends_at=row["ends_at"],
@@ -136,7 +194,14 @@ class SqlAlchemyAdminSessionReadRepo(AdminSessionReadRepoPort):
                 price_cents=row["price_cents"],
                 currency=row["currency"],
                 created_at=row["created_at"],
-                updated_at=row["updated_at"]
+                updated_at=row["updated_at"],
+                participants=[
+                    UserProfileEntity(
+                        user_id=participant["user_id"],
+                        first_name=participant["first_name"],
+                        last_name=participant["last_name"]
+                    ) for participant in row["participants"]
+                ]
             ) for row in rows
         ], has_more
 
