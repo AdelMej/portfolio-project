@@ -4,9 +4,20 @@ from pydantic import BaseModel
 from app.domain.session.session_status import SessionStatus
 
 
+class CoachPublicDto(BaseModel):
+    id: UUID
+    first_name: str
+    last_name: str
+
+
+class ParticipationOutputDTO(BaseModel):
+    first_name: str
+    last_name: str
+
+
 class AdminSessionOutputDTO(BaseModel):
     id: UUID
-    coach_id: UUID
+    coach: CoachPublicDto
     title: str
     starts_at: datetime
     ends_at: datetime
@@ -16,6 +27,7 @@ class AdminSessionOutputDTO(BaseModel):
     currency: str
     created_at: datetime
     updated_at: datetime
+    participants: list[ParticipationOutputDTO]
 
 
 class PaginatedAdminSessionOutputDTO(BaseModel):
