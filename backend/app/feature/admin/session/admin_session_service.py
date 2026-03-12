@@ -14,6 +14,8 @@ from app.domain.session.session_exception import (
 from app.feature.admin.session.admin_session_dto import (
     AdminSessionOutputDTO,
     AdminParticipantDTO,
+    CoachPublicDto,
+    ParticipationOutputDTO,
     UserProfileOutputDTO
 )
 from app.feature.admin.session.uow.admin_session_system_uow_port import (
@@ -54,7 +56,11 @@ class AdminSessionService:
         return [
             AdminSessionOutputDTO(
                 id=s.id,
-                coach_id=s.coach_id,
+                coach=CoachPublicDto(
+                    id=s.coach.user_id,
+                    first_name=s.coach.first_name,
+                    last_name=s.coach.last_name
+                ),
                 title=s.title,
                 starts_at=s.starts_at,
                 ends_at=s.ends_at,
@@ -63,7 +69,13 @@ class AdminSessionService:
                 price_cents=s.price_cents,
                 currency=s.currency,
                 created_at=s.created_at,
-                updated_at=s.updated_at
+                updated_at=s.updated_at,
+                participants=[
+                    ParticipationOutputDTO(
+                        first_name=participant.first_name,
+                        last_name=participant.last_name
+                    ) for participant in s.participants
+                ]
             ) for s in sessions
         ], has_more
 
@@ -96,7 +108,11 @@ class AdminSessionService:
         return [
             AdminSessionOutputDTO(
                 id=s.id,
-                coach_id=s.coach_id,
+                coach=CoachPublicDto(
+                    id=s.coach.user_id,
+                    first_name=s.coach.first_name,
+                    last_name=s.coach.last_name
+                ),
                 title=s.title,
                 starts_at=s.starts_at,
                 ends_at=s.ends_at,
@@ -105,7 +121,13 @@ class AdminSessionService:
                 price_cents=s.price_cents,
                 currency=s.currency,
                 created_at=s.created_at,
-                updated_at=s.updated_at
+                updated_at=s.updated_at,
+                participants=[
+                    ParticipationOutputDTO(
+                        first_name=participant.first_name,
+                        last_name=participant.last_name
+                    ) for participant in s.participants
+                ],
             )
             for s in sessions
         ], has_more
