@@ -176,27 +176,24 @@ body {
 	font-weight: 600;
 }
 
+/* Ensure logo container aligns items vertically with nav */
 .network-logo {
+	display: flex;
+	align-items: center;
+	gap: 12px;
 	font-size: 18px;
 	font-weight: 600;
 	color: white;
 	text-decoration: none;
 }
 
-/* Ensure logo container aligns items vertically with nav */
-.network-logo {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
 .network-logo img {
 	display: block;
 	height: 40px;
-	margin: 0;
-	padding: 6px;
 	background: rgba(255, 255, 255, 0.85);
-	border-radius: 10px;
+	border-radius: 12px;
+	padding: 3px;
+	box-sizing: border-box;
 }
 
 .network-nav {
@@ -456,7 +453,7 @@ body {
 }
 
 .team-avatar img {
-	width: 100%;
+	width: 10%;
 	height: 100%;
 	background: var(--bg-subtle);
 	border-radius: 50%;
