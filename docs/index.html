@@ -1,3 +1,4 @@
+<script src="https://unpkg.com/lucide@latest"></script>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,34 +9,148 @@
 	<link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
 
-	<header>
-		<nav>
-			<h1>Gym Sessions</h1>
-			<a href="#Feature">Feature</a>
-			<a href="#Architecture">Architecture</a>
-			<a href="#Infrastructure">infrastructure</a>
-			<a href="#Demo">demo</a>
-			<a href="#About">about</a>
-		</nav>
-	</header>
+    <!-- Navigation Header -->
+    <header class="network-header">
+        <div class="nav-wrapper">
+            <div class="network-logo">
+                <img src="../frontend/static/actual-logo.png" alt="Actual Gym Logo" style="display:block; margin:0 auto 12px auto; height:40px; background: rgba(255,255,255,0.85); border-radius: 12px; padding: 3px;">
+                <div class="logo-placeholder">
+                </div>
+            </div>
+            <nav class="network-nav">
+                <button onclick="scrollToSection('problem')" class="network-nav-link">Problem</button>
+                <button onclick="scrollToSection('solution')" class="network-nav-link">Solution</button>
+                <button onclick="scrollToSection('features')" class="network-nav-link">Features</button>
+                <button onclick="scrollToSection('tech-stack')" class="network-nav-link">Tech Stack</button>
+                <button onclick="scrollToSection('team')" class="network-nav-link">Team</button>
+                <button onclick="scrollToSection('contact')" class="network-nav-link">Contact</button>
+            </nav>
+        </div>
+    </header>
+    
 
-	<section class="hero">
-		<h2>Book Gym Sessions Easily</h2>
-		<p>Find coaches, reserve sessions, and track attendance.</p>
-		<a>github</a>
-	</section>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-content animated">
+                <div class="hero-logo-large">
+                    <img src="../frontend/static/ICON%20Actual.png" alt="Actual Gym Icon" style="width:80px;height:80px;object-fit:contain;">
+                </div>
+                <h1 class="display-large">Actual Gym</h1>
+                <p class="hero-tagline body-large">A modern platform for gym management.</p>
+                <div class="hero-cta">
+                    <button onclick="scrollToSection('features')" class="btn-primary">
+                        Explore Features
+                    </button>
+                    <button onclick="scrollToSection('contact')" class="btn-secondary">
+                        Get in Touch
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
 
-	<section id="Feature">
-		<h2>Problem</h2>
+    <!-- Problem Section -->
+    <section id="problem" class="section-problem">
+        <div class="container">
+            <div class="section-header animated">
+                <i data-lucide="alert-circle" class="section-icon" style="width: 48px; height: 48px;"></i>
+                <h2 class="heading-1">The Problem</h2>
+                <p class="body-large section-subtitle">Gym management shouldn't be a workout in itself</p>
+            </div>
+            <div class="problem-grid">
+                <div class="network-card animated delay-200ms">
+                    <div class="card-header">
+                        <h3 class="heading-3">For Gym Managers</h3>
+                    </div>
+                    <div class="card-content">
+                        <ul class="problem-list">
+                            <li class="body-medium">Juggling spreadsheets for member tracking and scheduling</li>
+                            <li class="body-medium">Manual payment tracking leading to errors and delays</li>
+                            <li class="body-medium">Difficulty managing multiple coaches and their schedules</li>
+                            <li class="body-medium">Lack of real-time insights into gym operations</li>
+                            <li class="body-medium">Time-consuming administrative tasks reducing focus on members</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="network-card animated delay-500ms">
+                    <div class="card-header">
+                        <h3 class="heading-3">For Gym Members</h3>
+                    </div>
+                    <div class="card-content">
+                        <ul class="problem-list">
+                            <li class="body-medium">Complicated registration and onboarding processes</li>
+                            <li class="body-medium">Unclear session availability and booking procedures</li>
+                            <li class="body-medium">Payment confusion and lack of transparency</li>
+                            <li class="body-medium">Limited visibility into their membership status</li>
+                            <li class="body-medium">Poor communication with gym staff and coaches</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-		<div class="feature">
-			<h3>Book Sessions</h3>
-			<p>Reserve sessions with your favorite coaches.</p>
-		</div>
+    <!-- Solution Section -->
+    <section id="solution" class="section-solution">
+        <div class="container">
+            <div class="section-header animated">
+                <i data-lucide="check-circle-2" class="section-icon" style="width: 48px; height: 48px;"></i>
+                <h2 class="heading-1">Our Solution</h2>
+                <p class="body-large section-subtitle">Streamlined gym management, empowered members</p>
+            </div>
+            <div class="solution-content animated delay-200ms">
+                <div class="network-card solution-card">
+                    <div class="card-content solution-card-content">
+                        <p class="body-large">
+                            Actual Gym is a comprehensive platform that bridges the gap between gym operations and member experience.
+                            We provide an intuitive, all-in-one solution that automates administrative tasks, simplifies payment processing,
+                            and creates a seamless experience for both managers and members.
+                        </p>
+                        <div class="solution-highlights">
+                            <div class="highlight-item">
+                                <i data-lucide="zap" class="highlight-icon" style="width: 24px; height: 24px;"></i>
+                                <span class="body-medium">Real-time operations management</span>
+                            </div>
+                            <div class="highlight-item">
+                                <i data-lucide="zap" class="highlight-icon" style="width: 24px; height: 24px;"></i>
+                                <span class="body-medium">Automated payment processing with Stripe</span>
+                            </div>
+                            <div class="highlight-item">
+                                <i data-lucide="zap" class="highlight-icon" style="width: 24px; height: 24px;"></i>
+                                <span class="body-medium">Easy member and coach management</span>
+                            </div>
+                            <div class="highlight-item">
+                                <i data-lucide="zap" class="highlight-icon" style="width: 24px; height: 24px;"></i>
+                                <span class="body-medium">Intuitive booking and scheduling system</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-	</section>
+    <!-- Features Section -->
+    <section id="features" class="section-features">
+        <div class="container">
+            <div class="section-header animated">
+                <h2 class="heading-1">Key Features</h2>
+                <p class="body-large section-subtitle">Everything you need to run a modern gym</p>
+            </div>
+            <div class="features-grid">
+                <div class="network-card feature-card animated delay-200ms">
+                    <div class="card-header">
+                        <i data-lucide="users" class="feature-icon" style="width: 40px; height: 40px;"></i>
+                        <h3 class="heading-3">Member Registration</h3>
+                    </div>
+                    <div class="card-content">
+                        <p class="body-medium">Quick and easy member onboarding with digital forms, profile management, and membership tier selection.</p>
+                    </div>
+                </div>
 
 	<section id="TechStack">
 		<h2>Technology used</h2>
@@ -87,48 +202,223 @@
 			</div>
 		</div>
 
-	</section>
+                <div class="network-card feature-card animated delay-500ms">
+                    <div class="card-header">
+                        <i data-lucide="layout-dashboard" class="feature-icon" style="width: 40px; height: 40px;"></i>
+                        <h3 class="heading-3">Admin Dashboard</h3>
+                    </div>
+                    <div class="card-content">
+                        <p class="body-medium">Comprehensive analytics and reporting dashboard with member insights, revenue tracking, and operational metrics.</p>
+                    </div>
+                </div>
 
-	<section id="Architecture">
-		<h2>architecture</h2>
+                <div class="network-card feature-card animated delay-500ms">
+                    <div class="card-header">
+                        <i data-lucide="dumbbell" class="feature-icon" style="width: 40px; height: 40px;"></i>
+                        <h3 class="heading-3">Coach Management</h3>
+                    </div>
+                    <div class="card-content">
+                        <p class="body-medium">Manage coach profiles, schedules, specializations, and performance tracking all in one place.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
+    <!-- Tech Stack Section -->
+    <section id="tech-stack" class="section-tech-stack">
+        <div class="container">
+            <div class="section-header animated">
+                <h2 class="heading-1">Built With Modern Technology</h2>
+                <p class="body-large section-subtitle">Reliable, scalable, and efficient</p>
+            </div>
+            <div class="tech-stack-grid">
+                <div class="network-card tech-card animated delay-200ms">
+                    <div class="card-content tech-card-content">
+                        <i data-lucide="code" style="width: 48px; height: 48px;"></i>
+                        <h3 class="heading-3">SvelteKit</h3>
+                        <p class="body-small">Fast, modern frontend framework</p>
+                    </div>
+                </div>
 
-	</section>
+                <div class="network-card tech-card animated delay-200ms">
+                    <div class="card-content tech-card-content">
+                        <i data-lucide="zap" style="width: 48px; height: 48px;"></i>
+                        <h3 class="heading-3">FastAPI</h3>
+                        <p class="body-small">High-performance backend API</p>
+                    </div>
+                </div>
 
-	<section id="Infrastructure">
-		<h2>Infrastructure</h2>
+                <div class="network-card tech-card animated delay-500ms">
+                    <div class="card-content tech-card-content">
+                        <i data-lucide="database" style="width: 48px; height: 48px;"></i>
+                        <h3 class="heading-3">PostgreSQL</h3>
+                        <p class="body-small">Robust relational database</p>
+                    </div>
+                </div>
 
-		<div class="infrastructure">
-			<h3>diagram</h3>
-			<p>a simple 3 layered architecture with a front end, backend and database</p>
-			<img src="img/architecture-diagram.png" height="" width="" />
-		</div>
+                <div class="network-card tech-card animated delay-500ms">
+                    <div class="card-content tech-card-content">
+                        <i data-lucide="box" style="width: 48px; height: 48px;"></i>
+                        <h3 class="heading-3">Docker</h3>
+                        <p class="body-small">Containerization for deployment</p>
+                    </div>
+                </div>
 
-	</section>
+                <div class="network-card tech-card animated delay-500ms">
+                    <div class="card-content tech-card-content">
+                        <i data-lucide="credit-card" style="width: 48px; height: 48px;"></i>
+                        <h3 class="heading-3">Stripe</h3>
+                        <p class="body-small">Secure payment processing</p>
+                    </div>
+                </div>
 
-	<section id="Demo">
-		<h2>Problem</h2>
+                <div class="network-card tech-card animated delay-500ms">
+                    <div class="card-content tech-card-content">
+                        <i data-lucide="database" style="width: 48px; height: 48px;"></i>
+                        <h3 class="heading-3">DBeaver</h3>
+                        <p class="body-small">Database management tool</p>
+                    </div>
+                </div>
 
-		<div class="demo">
-			<h3>Book Sessions</h3>
-			<p>Reserve sessions with your favorite coaches.</p>
-		</div>
+                <div class="network-card tech-card animated delay-500ms">
+                    <div class="card-content tech-card-content">
+                        <i data-lucide="box" style="width: 48px; height: 48px;"></i>
+                        <h3 class="heading-3">Podman</h3>
+                        <p class="body-small">Container management</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-	</section>
+    <!-- Team Section -->
+    <section id="team" class="section-team">
+        <div class="container">
+            <div class="section-header animated">
+                <h2 class="heading-1">Meet The Team</h2>
+                <p class="body-large section-subtitle">The minds behind Actual Gym</p>
+            </div>
+            <div class="team-grid">
+                <div class="network-card team-card animated delay-200ms">
+                    <div class="card-header">
+                        <div class="team-avatar">
+                            <i data-lucide="users" style="width: 60px; height: 60px;"></i>
+                        </div>
+                        <h3 class="heading-2">Adel Mejriss</h3>
+                        <p class="body-medium team-role">Lead Developer & Architect</p>
+                    </div>
+                    <div class="card-content">
+                        <p class="body-medium">
+                            Full-stack developer specializing in backend architecture and API design.
+                            Responsible for FastAPI implementation, database design, and system architecture.
+                            Passionate about building scalable and maintainable solutions.
+                        </p>
+                    </div>
+                </div>
 
-	<section id="About">
-		<h2>Problem</h2>
+                <div class="network-card team-card animated delay-500ms">
+                    <div class="card-header">
+                        <div class="team-avatar">
+                            <i data-lucide="users" style="width: 60px; height: 60px;"></i>
+                        </div>
+                        <h3 class="heading-2">Daniel Ramirez</h3>
+                        <p class="body-medium team-role">Frontend Developer & UX Designer</p>
+                    </div>
+                    <div class="card-content">
+                        <p class="body-medium">
+                            Frontend specialist focused on creating intuitive user experiences.
+                            Led the SvelteKit implementation, UI/UX design, and user flow optimization.
+                            Dedicated to making complex systems simple and accessible.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-		<div class="about">
-			<h3>Book Sessions</h3>
-			<p>Reserve sessions with your favorite coaches.</p>
-		</div>
+    <!-- Contact Section -->
+    <section id="contact" class="section-contact">
+        <div class="container">
+            <div class="section-header animated">
+                <h2 class="heading-1">Get In Touch</h2>
+                <p class="body-large section-subtitle">We'd love to hear from you</p>
+            </div>
+            <div class="network-card contact-card animated delay-200ms">
+                <div class="card-content contact-content">
+                    <div class="contact-methods">
+                        <a href="https://github.com/actualgym" target="_blank" rel="noopener noreferrer" class="contact-link">
+                            <i data-lucide="github" style="width: 32px; height: 32px;"></i>
+                            <div class="contact-link-text">
+                                <h3 class="heading-3">GitHub</h3>
+                                <p class="body-medium">github.com/actualgym</p>
+                            </div>
+                        </a>
+                        <a href="mailto:contact@actualgym.com" class="contact-link">
+                            <i data-lucide="mail" style="width: 32px; height: 32px;"></i>
+                            <div class="contact-link-text">
+                                <h3 class="heading-3">Email</h3>
+                                <p class="body-medium">contact@actualgym.com</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-	</section>
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <img src="../frontend/static/ICON%20Actual.png" alt="Actual Gym Icon" style="width:50px;height:50px;object-fit:contain;">
+                </div>
+                <p class="body-small footer-text">© 2026 Actual Gym. A modern platform for gym management.</p>
+            </div>
+        </div>
+    </footer>
 
-	<footer>
-		<p>© 2026 Actual digital</p>
-	</footer>
+    <!-- JavaScript for smooth scrolling -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Smooth scroll function
+        function scrollToSection(id) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fadeIn');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animated').forEach((el) => observer.observe(el));
+    </script>
+<script>
+    lucide.createIcons();
+    
+    function scrollToSection(id) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+</script>
+    
 </body>
 
 </html>

@@ -4,7 +4,7 @@ import { fly, fade } from 'svelte/transition';
 import { apiFetch } from '$lib/api/client';
 import { goto } from '$app/navigation';
 import { auth } from '$lib/stores/auth.store';
-import { listSessions, type Session } from '$lib/api/sessions.api';
+import { listSessions, type Session, cancelRegistration } from '$lib/api/sessions.api';
 import SessionIcon from '$lib/components/SessionIcon.svelte';
 import { Search, ChevronLeft, ChevronRight, X } from 'lucide-svelte';
 
@@ -188,6 +188,15 @@ async function joinSession(sessionId: string) {
     console.error(e);
   } finally {
     joiningId = '';
+  }
+}
+
+async function handleCancel(sessionId: string) {
+  try {
+    await cancelRegistration(sessionId);
+    await loadDashboard();
+  } catch (e) {
+    error = "Erreur lors de l'annulation";
   }
 }
 
@@ -830,6 +839,7 @@ async function loadDashboard() {
                   <span class="session-status status-confirmed">Confirmé</span>
                   <div class="session-actions">
                     <button class="btn-participants" on:click={() => toggleParticipants(s.id)}>Participants</button>
+                      <button class="btn-join" on:click={() => handleCancel(s.id)} style="background:#ef4444;" title="Annuler la séance">Annuler</button>
                   </div>
                 </div>
                 {#if expandedSession === s.id}
